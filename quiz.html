@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>測驗中 | 農田水利考古題</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; }
+    .q-jump-bar { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; padding: 12px; background: var(--card); border: 2px solid var(--border); border-radius: 12px; }
+    .q-jump-btn { width: 42px; height: 42px; border: 2px solid var(--border); border-radius: 8px; background: white; font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: var(--text-dim); }
+    .q-jump-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .q-jump-btn.current { background: var(--accent); color: white; border-color: var(--accent); }
+    .q-jump-btn.answered { background: var(--selected-bg); border-color: var(--selected-border); color: var(--selected-border); }
+    .jump-legend { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 16px; flex-wrap: wrap; }
+    .jump-legend span { display: flex; align-items: center; gap: 4px; }
+    .ldot { width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--border); display: inline-block; }
+    .ldot.l-cur { background: var(--accent); border-color: var(--accent); }
+    .ldot.l-ans { background: var(--selected-bg); border-color: var(--selected-border); }
+    .ldot.l-empty { background: white; }
+    .option-btn { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; background: white; border: 3px solid var(--border); border-radius: 14px; cursor: pointer; transition: all 0.15s; text-align: left; font-family: inherit; font-size: 1.1rem; color: var(--text); line-height: 1.7; width: 100%; }
+    .option-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+    .option-btn .opt-letter { flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; color: var(--text-dim); transition: all 0.15s; margin-top: 2px; border: 2px solid var(--border); }
+    .option-btn:hover .opt-letter { background: var(--accent); color: white; border-color: var(--accent); }
+    .option-btn.selected { border-color: var(--selected-border); background: var(--selected-bg); }
+    .option-btn.selected .opt-letter { background: var(--selected-border); color: white; border-color: var(--selected-border); }
+    .q-text { font-size: 1.25rem; line-height: 1.9; font-weight: 500; margin-bottom: 24px; }
+    .warn-box { background: #fff8e1; border: 2px solid #ffb300; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; font-size: 1rem; display: none; }
+    .warn-box strong { color: #e65100; }
+    .nav-row { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  </style>
+</head>
+
+<body>
+  <div class="container fade-in">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:1rem;color:var(--text-dim)">
+        第 <strong style="color:var(--accent);font-size:1.15rem" id="curNum">1</strong> / <span id="totNum">50</span> 題
+        &nbsp;‧&nbsp; 已答 <strong style="color:var(--accent)" id="ansCount">0</strong> 題
+      </div>
+      <div style="font-size:1rem;color:var(--text-dim);font-variant-numeric:tabular-nums" id="timer">00:00</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    <div class="q-jump-bar" id="jumpBar"></div>
+    <div class="jump-legend">
+      <span><span class="ldot l-cur"></span> 目前</span>
+      <span><span class="ldot l-ans"></span> 已答</span>
+      <span><span class="ldot l-empty"></span> 未答</span>
+    </div>
+    <div class="card" id="qCard" style="padding:28px"></div>
+    <div class="warn-box" id="warnBox">
+      ⚠️ 您還有 <strong id="warnNum">0</strong> 題尚未回答，確定要提交嗎？
+      <div style="margin-top:10px;display:flex;gap:10px">
+        <button class="btn btn-danger btn-sm" onclick="doSubmit()">確定提交</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('warnBox').style.display='none'">繼續作答</button>
+      </div>
+    </div>
+    <div class="nav-row">
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary btn-sm" id="btnPrev" onclick="go(cur-1)">← 上一題</button>
+        <button class="btn btn-secondary btn-sm" id="btnNext" onclick="go(cur+1)">下一題 →</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="trySubmit()">✅ 提交測驗</button>
+    </div>
+  </div>
+
+  <script src="js/shared.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode') || 'random';
+    let numQ = parseInt(params.get('num') || '50');
+    const retryIds = params.get('retryIds');
+    const isResume = params.get('resume') === '1';
+    const bank = params.get('bank') || 'questions/questions.json';
+
+    let allQ = [];
+    let quizQ = [];
+    let cur = 0;
+    let userAns = {};
+    let elapsedBefore = 0;
+    let sessionStart = 0;
+    let timerIv = null;
+    let autoSaveIv = null;
+    let isSubmitting = false;
+
+    const SAVE_KEY = 'quiz_session';
+
+    function shuffle(a) { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[b[i], b[j]] = [b[j], b[i]]; } return b; }
+
+    function prepareQuestion(q) {
+      if (q.noShuffle) return { ...q };
+      const idx = q.options.map((_, i) => i);
+      const sh = shuffle(idx);
+      return { ...q, options: sh.map(i => q.options[i]), answer: sh.indexOf(q.answer) };
+    }
+
+    function saveSession() {
+      const now = Date.now();
+      const totalElapsed = elapsedBefore + Math.floor((now - sessionStart) / 1000);
+      const data = { quizQ, cur, userAns, elapsed: totalElapsed, savedAt: now };
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch { }
+    }
+
+    function loadSession() { try { const raw = localStorage.getItem(SAVE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } }
+    function clearSession() { try { localStorage.removeItem(SAVE_KEY); } catch { } }
+
+    function startAutoSave() {
+      autoSaveIv = setInterval(saveSession, 3000);
+      window.addEventListener('beforeunload', saveSession);
+    }
+
+    async function init() {
+      if (isResume) {
+        const saved = loadSession();
+        if (saved && saved.quizQ && saved.quizQ.length > 0) {
+          quizQ = saved.quizQ;
+          cur = saved.cur || 0;
+          userAns = saved.userAns || {};
+          elapsedBefore = saved.elapsed || 0;
+          sessionStart = Date.now();
+          timerIv = setInterval(tick, 1000);
+          document.getElementById('totNum').textContent = quizQ.length;
+          buildJump(); render(); startAutoSave();
+          return;
+        }
+      }
+
+      let pool = [];
+      if (mode === 'retry_session') {
+        const stored = sessionStorage.getItem('retry_questions');
+        if (!stored) { location.href = 'index.html'; return; }
+        sessionStorage.removeItem('retry_questions');
+        pool = JSON.parse(stored);
+      } else if (mode === 'wrong' || mode === 'still-wrong') {
+        const wp = getWrongPool();
+        const items = mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
+        if (!items.length) { alert('沒有錯題可以練習！'); location.href = 'index.html'; return; }
+        const byBank = {};
+        for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
+        for (const [bf, qids] of Object.entries(byBank)) {
+          try {
+            const bankQ = await (await fetch(bf)).json();
+            pool.push(...bankQ.filter(q => qids.has(q.id)).map(q => ({ ...q, _bank: bf })));
+          } catch(e) {}
+        }
+      } else {
+        const banksParam = params.get('banks');
+        if (banksParam) {
+          for (const bf of banksParam.split(',').map(decodeURIComponent)) {
+            try {
+              const qs = await (await fetch(bf)).json();
+              pool.push(...qs.map(q => ({ ...q, _bank: bf })));
+            } catch(e) {}
+          }
+        } else {
+          try {
+            const rawQ = await (await fetch(decodeURIComponent(bank))).json();
+            pool = rawQ.map(q => ({ ...q, _bank: bank }));
+          } catch(e) {}
+        }
+      }
+
+      if (mode !== 'all') pool = shuffle(pool);
+      if (numQ === 0 || numQ > pool.length) numQ = pool.length;
+      pool = pool.slice(0, numQ);
+      quizQ = pool.map(prepareQuestion);
+
+      sessionStart = Date.now();
+      timerIv = setInterval(tick, 1000);
+      document.getElementById('totNum').textContent = quizQ.length;
+      buildJump(); render(); startAutoSave();
+    }
+
+    function tick() {
+      const total = elapsedBefore + Math.floor((Date.now() - sessionStart) / 1000);
+      document.getElementById('timer').textContent = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    }
+
+    function buildJump() {
+      document.getElementById('jumpBar').innerHTML = quizQ.map((_, i) => `<button class="q-jump-btn" data-i="${i}" onclick="go(${i})">${i + 1}</button>`).join('');
+    }
+
+    function updateJump() {
+      document.querySelectorAll('.q-jump-btn').forEach(b => {
+        const i = +b.dataset.i;
+        b.className = 'q-jump-btn';
+        if (i === cur) b.classList.add('current');
+        else if (userAns[i] !== undefined) b.classList.add('answered');
+      });
+      document.getElementById('ansCount').textContent = Object.keys(userAns).length;
+    }
+
+    function render() {
+      const q = quizQ[cur];
+      document.getElementById('curNum').textContent = cur + 1;
+      document.getElementById('progFill').style.width = `${((cur + 1) / quizQ.length) * 100}%`;
+      const sel = userAns[cur];
+      document.getElementById('qCard').innerHTML = `
+        <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px;margin-bottom:16px">第 ${cur + 1} 題</span>
+        <div class="q-text">${esc(q.question)}</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i})"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('')}
+        </div>`;
+      document.getElementById('btnPrev').style.visibility = cur > 0 ? 'visible' : 'hidden';
+      document.getElementById('btnNext').style.visibility = cur < quizQ.length - 1 ? 'visible' : 'hidden';
+      updateJump();
+    }
+
+    function pick(i) { userAns[cur] = i; render(); if (cur < quizQ.length - 1) setTimeout(() => go(cur + 1), 200); }
+    function go(i) { if (i < 0 || i >= quizQ.length) return; cur = i; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+    function trySubmit() {
+      const unanswered = quizQ.length - Object.keys(userAns).length;
+      if (unanswered > 0) {
+        document.getElementById('warnNum').textContent = unanswered;
+        document.getElementById('warnBox').style.display = 'block';
+        document.getElementById('warnBox').scrollIntoView({ behavior: 'smooth' });
+      } else { doSubmit(); }
+    }
+
+    function doSubmit() {
+      if (isSubmitting) return;
+      isSubmitting = true;
+      clearInterval(timerIv);
+      const elapsed = elapsedBefore + Math.floor((Date.now() - sessionStart) / 1000);
+      let correct = 0, wrong = 0, skip = 0;
+      const answers = quizQ.map((q, i) => {
+        const ua = userAns[i];
+        const ok = ua === q.answer;
+        const skipped = ua === undefined;
+        if (skipped) skip++; else if (ok) correct++; else wrong++;
+        return { qid: q.id, bank: q._bank || bank, userAnswer: ua !== undefined ? ua : null, correct: ok && !skipped };
+      });
+
+      const now = new Date();
+      const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const pct = Math.round(correct / quizQ.length * 100);
+
+      const record = {
+        date: dateStr, date_iso: now.toISOString(), total: quizQ.length, correct, wrong, skip, score: pct, elapsed, answers,
+        questions: quizQ.map(q => ({ id: q.id, question: q.question, options: q.options, answer: q.answer, _bank: q._bank }))
+      };
+
+      saveLocalHistory(record);
+      clearInterval(autoSaveIv);
+      clearSession();
+      const history = loadLocalHistory();
+      location.href = `review.html?historyIdx=${history.length - 1}`;
+    }
+
+    init();
+  </script>
+</body>
+</html>

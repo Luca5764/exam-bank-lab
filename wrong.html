@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>錯題集 | 農田水利考古題</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container fade-in">
+    <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
+    <h2 id="pageTitle" style="margin-bottom:4px">錯題複習</h2>
+    <p class="text-dim mb-16" id="pageDesc">讀取中...</p>
+    <div id="actions" class="mb-16" style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" id="btnCopyAll" onclick="copyAllWrongPool()">📋 複製所有錯題 (傳送給 AI)</button>
+      <button class="btn btn-primary" id="btnRetry" onclick="retryAll()">🔥 開始錯題挑戰測驗</button>
+    </div>
+    <div id="list"><p class="text-dim text-center mt-24">讀取中...</p></div>
+  </div>
+  <script src="js/shared.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const scope = params.get('scope') || 'today';
+    let wrongQ = [];
+
+    function copyBrowse(idx) {
+      const q = wrongQ[idx];
+      copyText(buildBrowsePrompt(q), document.getElementById(`cpbtn-${idx}`));
+    }
+
+    async function init() {
+      const history = loadLocalHistory();
+      const qMap = {};
+      history.forEach(session => {
+        (session.questions || []).forEach(q => {
+          if (q._bank) qMap[`${q._bank}:${q.id}`] = q;
+          qMap[q.id] = q;
+        });
+      });
+
+      const wp = getWrongPool();
+      let ids = (scope === 'today') ? wp.today_wrong : (scope === 'past' ? wp.past_wrong : wp.ever_wrong);
+      const title = (scope === 'today') ? '今日錯題' : (scope === 'past' ? '往日錯題' : '累積錯題');
+      document.getElementById('pageTitle').textContent = `🚩 ${title}`;
+      document.getElementById('pageDesc').textContent = `系統記錄中 ${title} 共 ${ids.length} 題`;
+
+      wrongQ = ids.map(item => qMap[`${item.bank}:${item.qid}`] || qMap[item.qid]).filter(Boolean);
+
+      if (wrongQ.length === 0) {
+        document.getElementById('list').innerHTML = '<div class="card text-center" style="padding:40px"><p style="font-size:1.2rem">🎉 這裡目前沒有題目！</p><p class="text-dim mt-16">太棒了，繼續保持下去吧。</p></div>';
+        document.getElementById('actions').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('list').innerHTML = wrongQ.map((q, i) =>
+        buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })
+      ).join('');
+    }
+
+    function copyAllWrongPool() {
+      const header = `以下為我在「${document.getElementById('pageTitle').textContent}」分類中的 ${wrongQ.length} 題農田水利考古題：\n請詳細為我解析正確答案與相關法規。\n`;
+      copyText(header + '\n' + wrongQ.map(q => buildBrowsePrompt(q)).join('\n' + '='.repeat(50) + '\n'), document.getElementById('btnCopyAll'));
+    }
+
+    function retryAll() {
+      sessionStorage.setItem('retry_questions', JSON.stringify(wrongQ));
+      location.href = 'quiz.html?mode=retry_session&num=0';
+    }
+    init();
+  </script>
+</body>
+</html>
