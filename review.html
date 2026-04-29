@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>測驗結果 | 農田水利考古題</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container fade-in">
+    <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
+    <div id="content"><p class="text-dim text-center mt-24">讀取中...</p></div>
+  </div>
+  <script src="js/shared.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const histIdx = parseInt(params.get('historyIdx'));
+    let reviewQuestions = [];
+    let reviewAnswers = {};
+
+    function copyReview(idx) {
+      const q = reviewQuestions[idx];
+      const ua = reviewAnswers[idx];
+      const text = buildPrompt(q, ua);
+      copyText(text, document.getElementById(`cpbtn-${idx}`));
+    }
+
+    async function init() {
+      const history = loadLocalHistory();
+      if (isNaN(histIdx) || histIdx < 0 || histIdx >= history.length) {
+        document.getElementById('content').innerHTML = '<p class="text-red">找不到此筆測驗紀錄</p>';
+        return;
+      }
+      const s = history[histIdx];
+      reviewQuestions = s.questions || [];
+      (s.answers || []).forEach((a, i) => { reviewAnswers[i] = a.userAnswer; });
+
+      const pct = s.score || 0;
+      const elapsed = s.elapsed || 0;
+      const timeStr = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
+
+      let title, desc;
+      if (pct >= 90) { title = '🏆 太強了！'; desc = '您已經對法規滾瓜爛熟！'; }
+      else if (pct >= 70) { title = '👏 表現不錯！'; desc = '再加把勁就滿分了'; }
+      else if (pct >= 50) { title = '📈 還有空間！'; desc = '多做幾次題目增加熟練度'; }
+      else { title = '💪 繼續努力！'; desc = '萬事起頭難，多看幾遍題目'; }
+
+      let wrongHtml = '', correctHtml = '';
+      const wrongIds = [];
+      reviewQuestions.forEach((q, i) => {
+        const ua = reviewAnswers[i];
+        const ok = ua !== null && ua !== undefined && ua === q.answer;
+        const html = buildReviewItemHTML(q, { idx: i, userAns: ua, mode: 'result' });
+        if (ok) correctHtml += html; else { wrongHtml += html; wrongIds.push(q.id); }
+      });
+
+      document.getElementById('content').innerHTML = `
+    <div class="text-center" style="padding:24px 0 16px">
+      <div style="font-size:4rem;font-weight:900;color:var(--accent);line-height:1">${pct}<span style="font-size:1.4rem;color:var(--text-dim)"> 分</span></div>
+      <h2 style="margin:10px 0 4px;font-size:1.3rem">${title}</h2>
+      <p class="text-dim">${desc} (${s.correct}/${s.total})&nbsp;&nbsp;${s.date || ''}</p>
+    </div>
+    <div class="stat-row mb-24">
+      <div class="stat-box"><div class="num text-green">${s.correct}</div><div class="lbl">答對</div></div>
+      <div class="stat-box"><div class="num text-red">${s.wrong}</div><div class="lbl">答錯</div></div>
+      <div class="stat-box"><div class="num">${s.skip || 0}</div><div class="lbl">未答</div></div>
+      <div class="stat-box"><div class="num text-gold">${timeStr}</div><div class="lbl">用時</div></div>
+    </div>
+    <div class="text-center mb-16"><button class="btn btn-secondary" onclick="copyAllWrong()">📋 複製所有錯題 (傳送給 AI)</button></div>
+    ${wrongHtml ? `<div class="mb-24"><h3 style="background:var(--wrong-bg);color:var(--wrong);padding:12px 16px;border-radius:10px;margin-bottom:12px">❌ 答錯或未答 (${wrongIds.length} 題)</h3>${wrongHtml}</div>` : ''}
+    ${correctHtml ? `<div class="mb-24"><h3 style="background:var(--correct-bg);color:var(--correct);padding:12px 16px;border-radius:10px;margin-bottom:12px">✅ 答對題目 (${s.correct} 題)</h3>${correctHtml}</div>` : ''}
+    <div class="gap-row" style="justify-content:center;margin:28px 0 40px">
+      <button class="btn btn-secondary" onclick="location.href='index.html'">← 返回主選單</button>
+      ${wrongIds.length > 0 ? `<button class="btn btn-primary" onclick="retryWrong()">🔥 重新挑戰錯題</button>` : ''}
+    </div>`;
+    }
+
+    function copyAllWrong() {
+      let texts = [];
+      reviewQuestions.forEach((q, i) => {
+        const ua = reviewAnswers[i];
+        if (ua === null || ua === undefined || ua !== q.answer) texts.push(buildPrompt(q, ua));
+      });
+      const header = `以下為 ${texts.length} 題我答錯的農田水利相關考古題：\n請詳細為我解析正確答案與錯誤原因。\n`;
+      copyText(header + '\n' + texts.join('\n' + '='.repeat(50) + '\n'), event.target);
+    }
+
+    function retryWrong() {
+      const wrongQ = reviewQuestions.filter((q, i) => {
+        const ua = reviewAnswers[i];
+        return ua === null || ua === undefined || ua !== q.answer;
+      });
+      if (!wrongQ.length) return;
+      sessionStorage.setItem('retry_questions', JSON.stringify(wrongQ));
+      location.href = 'quiz.html?mode=retry_session&num=0';
+    }
+    init();
+  </script>
+</body>
+</html>
