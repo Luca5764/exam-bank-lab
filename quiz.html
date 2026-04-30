@@ -142,28 +142,39 @@
         for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
         for (const [bf, qids] of Object.entries(byBank)) {
           try {
-            const bankQ = await (await fetch(bf)).json();
+            const bankQ = await fetchJson(bf);
             pool.push(...bankQ.filter(q => qids.has(q.id)).map(q => ({ ...q, _bank: bf })));
-          } catch(e) {}
+          } catch(e) {
+            console.error('Failed to load wrong-question bank', bf, e);
+          }
         }
       } else {
         const banksParam = params.get('banks');
         if (banksParam) {
           for (const bf of banksParam.split(',').map(decodeURIComponent)) {
             try {
-              const qs = await (await fetch(bf)).json();
+              const qs = await fetchJson(bf);
               pool.push(...qs.map(q => ({ ...q, _bank: bf })));
-            } catch(e) {}
+            } catch(e) {
+              console.error('Failed to load selected bank', bf, e);
+            }
           }
         } else {
           try {
-            const rawQ = await (await fetch(decodeURIComponent(bank))).json();
+            const rawQ = await fetchJson(decodeURIComponent(bank));
             pool = rawQ.map(q => ({ ...q, _bank: bank }));
-          } catch(e) {}
+          } catch(e) {
+            console.error('Failed to load default bank', bank, e);
+          }
         }
       }
 
       if (mode !== 'all') pool = shuffle(pool);
+      if (!pool.length) {
+        alert('題庫讀取失敗或內容為空，請回首頁重新選擇題庫。');
+        location.href = 'index.html';
+        return;
+      }
       if (numQ === 0 || numQ > pool.length) numQ = pool.length;
       pool = pool.slice(0, numQ);
       quizQ = pool.map(prepareQuestion);

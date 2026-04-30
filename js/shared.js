@@ -118,6 +118,18 @@ function navigateTo(page) {
 // ===== LocalStorage Data Access (Static Site replacement for /api/...) =====
 const DB_KEY = 'quiz_history';
 
+function toAssetUrl(path) {
+  return new URL(encodeURI(path), document.baseURI).toString();
+}
+
+async function fetchJson(path) {
+  const res = await fetch(toAssetUrl(path), { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${path}: ${res.status}`);
+  }
+  return res.json();
+}
+
 function loadLocalHistory() {
   try {
     const raw = localStorage.getItem(DB_KEY);

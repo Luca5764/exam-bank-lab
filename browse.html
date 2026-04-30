@@ -40,9 +40,7 @@ async function loadBank() {
   const bank = document.getElementById('bankSelect').value;
   if (!bank) return;
   try {
-    const res = await fetch(bank);
-    if (!res.ok) throw new Error('Not found');
-    browseQ = await res.json();
+    browseQ = await fetchJson(bank);
     document.getElementById('count').textContent = browseQ.length;
     document.getElementById('list').innerHTML = browseQ.map((q, i) =>
       buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })
@@ -55,8 +53,7 @@ async function loadBank() {
 
 async function loadBanks() {
   try {
-    const res = await fetch('data/banks.json');
-    const banks = await res.json();
+    const banks = await fetchJson('data/banks.json');
     const sel = document.getElementById('bankSelect');
     sel.innerHTML = banks.map(b => `<option value="${b.file}">${b.name}</option>`).join('');
 
