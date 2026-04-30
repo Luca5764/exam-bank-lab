@@ -104,6 +104,53 @@
       return { ...q, options: sh.map(i => q.options[i]), answer: sh.indexOf(q.answer) };
     }
 
+    function getQuestionGroupKey(q) {
+      if (q.group || q.groupId) return `${q._bank || ''}|${q.group || q.groupId}`;
+      const reading = (q.materials || []).find(m =>
+        m && m.type === 'text' && /^閱讀資料（第\s*\d+\s*[-－~～]\s*\d+\s*題）$/.test(m.title || '')
+      );
+      return reading ? `${q._bank || ''}|${reading.title}|${reading.content || ''}` : '';
+    }
+
+    function buildQuestionBlocks(questions) {
+      const blocks = [];
+      const grouped = new Map();
+
+      questions.forEach(q => {
+        const key = getQuestionGroupKey(q);
+        if (!key) {
+          blocks.push([q]);
+          return;
+        }
+        if (!grouped.has(key)) {
+          const block = [];
+          grouped.set(key, block);
+          blocks.push(block);
+        }
+        grouped.get(key).push(q);
+      });
+
+      return blocks;
+    }
+
+    function takeQuestionBlocks(blocks, desiredCount) {
+      if (desiredCount === 0) return blocks.flat();
+
+      const selected = [];
+      for (const block of blocks) {
+        if (selected.length >= desiredCount) break;
+        selected.push(...block);
+      }
+
+      return selected;
+    }
+
+    function selectQuestionPool(pool, mode, desiredCount) {
+      const blocks = buildQuestionBlocks(pool);
+      const orderedBlocks = mode === 'all' ? blocks : shuffle(blocks);
+      return takeQuestionBlocks(orderedBlocks, desiredCount);
+    }
+
     function saveSession() {
       const now = Date.now();
       const totalElapsed = elapsedBefore + Math.floor((now - sessionStart) / 1000);
@@ -176,14 +223,14 @@
         }
       }
 
-      if (mode !== 'all') pool = shuffle(pool);
       if (!pool.length) {
         alert('題庫讀取失敗或內容為空，請回首頁重新選擇題庫。');
         location.href = 'index.html';
         return;
       }
       if (numQ === 0 || numQ > pool.length) numQ = pool.length;
-      pool = pool.slice(0, numQ);
+      pool = selectQuestionPool(pool, mode, numQ);
+      numQ = pool.length;
       quizQ = pool.map(prepareQuestion);
 
       sessionStart = Date.now();

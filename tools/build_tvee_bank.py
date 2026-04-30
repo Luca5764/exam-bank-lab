@@ -143,11 +143,13 @@ def apply_reading_passages(questions: list[dict[str, Any]], report: list[dict[st
                 "title": f"閱讀資料（第 {start_id}-{end_id} 題）",
                 "content": passage,
             }
+            group_id = f"reading-{start_id}-{end_id}"
 
             for target_id in range(start_id, end_id + 1):
                 target = by_id.get(target_id)
                 if not target:
                     continue
+                target["group"] = group_id
                 materials = target.setdefault("materials", [])
                 if not any(m.get("title") == material["title"] and m.get("content") == material["content"] for m in materials):
                     materials.insert(0, material)
