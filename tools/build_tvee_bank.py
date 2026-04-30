@@ -16,6 +16,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import shutil
@@ -46,6 +47,16 @@ READING_PASSAGE_RE = re.compile(
     r"▲\s*閱讀下文\s*[，,]\s*回答第\s*(\d+)\s*[-－~～]\s*(\d+)\s*題\s*(.*)$"
 )
 ANSWER_MAP = {"A": 0, "B": 1, "C": 2, "D": 3}
+MATERIAL_OVERRIDES: dict[str, dict[int, list[dict[str, Any]]]] = {
+    "109": {
+        34: [{
+            "type": "table",
+            "title": "表（一）產量及總成本",
+            "headers": ["Q", "3", "4", "5", "6", "7", "8"],
+            "rows": [["TC", "80", "100", "125", "156", "210", "320"]],
+        }],
+    },
+}
 
 
 def find_answer_pdf(source_dir: Path, year: str) -> Path:
@@ -121,6 +132,10 @@ def parse_question_text(raw: str, qid: int) -> tuple[str, list[str], list[str]]:
 
 def needs_image_material(question: str) -> bool:
     return any(pattern.search(question) for pattern in MATERIAL_PATTERNS)
+
+
+def get_material_override(year: str, qid: int) -> list[dict[str, Any]]:
+    return copy.deepcopy(MATERIAL_OVERRIDES.get(year, {}).get(qid, []))
 
 
 def apply_reading_passages(questions: list[dict[str, Any]], report: list[dict[str, Any]]) -> None:
@@ -209,16 +224,20 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
             "id": crop.id,
         }
 
-        add_image = include_all_images or needs_image_material(question)
+        material_override = get_material_override(year, crop.id)
+        if material_override:
+            item["materials"] = material_override
+
+        add_image = include_all_images or (not material_override and needs_image_material(question))
         if add_image and crop.image:
             asset_path = asset_dir / f"q{crop.id:02d}.png"
             shutil.copyfile(crop_out / crop.image, asset_path)
-            item["materials"] = [{
+            item.setdefault("materials", []).append({
                 "type": "image",
                 "title": f"第 {crop.id} 題附圖",
                 "src": str(asset_path.as_posix()),
                 "alt": f"{year} 統測專二第 {crop.id} 題截圖",
-            }]
+            })
 
         questions.append(item)
         report.append({
