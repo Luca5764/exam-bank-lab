@@ -133,22 +133,65 @@
       return blocks;
     }
 
-    function takeQuestionBlocks(blocks, desiredCount) {
+    function findRemovalIndexes(blocks, targetCount) {
+      const sums = new Map([[0, []]]);
+      for (let i = blocks.length - 1; i >= 0; i--) {
+        const size = blocks[i].length;
+        for (const [sum, indexes] of [...sums]) {
+          const nextSum = sum + size;
+          if (nextSum > targetCount || sums.has(nextSum)) continue;
+          const nextIndexes = [...indexes, i];
+          if (nextSum === targetCount) return nextIndexes;
+          sums.set(nextSum, nextIndexes);
+        }
+      }
+      return null;
+    }
+
+    function takeQuestionBlocks(blocks, desiredCount, exactCount = false) {
       if (desiredCount === 0) return blocks.flat();
 
-      const selected = [];
-      for (const block of blocks) {
-        if (selected.length >= desiredCount) break;
-        selected.push(...block);
+      if (!exactCount) {
+        const selected = [];
+        for (const block of blocks) {
+          if (selected.length >= desiredCount) break;
+          selected.push(...block);
+        }
+        return selected;
       }
 
-      return selected;
+      let selectedBlocks = [];
+      let selectedCount = 0;
+      for (const block of blocks) {
+        if (selectedCount === desiredCount) break;
+
+        const overflow = selectedCount + block.length - desiredCount;
+        if (overflow <= 0) {
+          selectedBlocks.push(block);
+          selectedCount += block.length;
+          continue;
+        }
+
+        const removalIndexes = findRemovalIndexes(selectedBlocks, overflow);
+        if (!removalIndexes) continue;
+
+        const removeSet = new Set(removalIndexes);
+        selectedBlocks = selectedBlocks.filter((selectedBlock, index) => {
+          if (!removeSet.has(index)) return true;
+          selectedCount -= selectedBlock.length;
+          return false;
+        });
+        selectedBlocks.push(block);
+        selectedCount += block.length;
+      }
+
+      return selectedBlocks.flat();
     }
 
     function selectQuestionPool(pool, mode, desiredCount) {
       const blocks = buildQuestionBlocks(pool);
       const orderedBlocks = mode === 'all' ? blocks : shuffle(blocks);
-      return takeQuestionBlocks(orderedBlocks, desiredCount);
+      return takeQuestionBlocks(orderedBlocks, desiredCount, mode !== 'all');
     }
 
     function saveSession() {
