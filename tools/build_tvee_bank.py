@@ -42,6 +42,9 @@ MATERIAL_PATTERNS = [
     re.compile(r"上[圖表]"),
 ]
 MATERIAL_TAIL_RE = re.compile(r"\s+[圖表]\s*[（(]\s*[一二三四五六七八九十\d]+\s*[)）].*$")
+READING_PASSAGE_RE = re.compile(
+    r"▲\s*閱讀下文\s*[，,]\s*回答第\s*(\d+)\s*[-－~～]\s*(\d+)\s*題\s*(.*)$"
+)
 ANSWER_MAP = {"A": 0, "B": 1, "C": 2, "D": 3}
 
 
@@ -120,6 +123,43 @@ def needs_image_material(question: str) -> bool:
     return any(pattern.search(question) for pattern in MATERIAL_PATTERNS)
 
 
+def apply_reading_passages(questions: list[dict[str, Any]], report: list[dict[str, Any]]) -> None:
+    by_id = {q["id"]: q for q in questions}
+    report_by_id = {row["id"]: row for row in report}
+
+    for q in questions:
+        for opt_index, option in enumerate(q.get("options", [])):
+            match = READING_PASSAGE_RE.search(option)
+            if not match:
+                continue
+
+            start_id = int(match.group(1))
+            end_id = int(match.group(2))
+            passage = match.group(3).strip()
+            q["options"][opt_index] = option[:match.start()].strip()
+
+            material = {
+                "type": "text",
+                "title": f"閱讀資料（第 {start_id}-{end_id} 題）",
+                "content": passage,
+            }
+
+            for target_id in range(start_id, end_id + 1):
+                target = by_id.get(target_id)
+                if not target:
+                    continue
+                materials = target.setdefault("materials", [])
+                if not any(m.get("title") == material["title"] and m.get("content") == material["content"] for m in materials):
+                    materials.insert(0, material)
+                report_by_id.get(target_id, {}).setdefault("warnings", []).append(
+                    f"attached shared reading passage from Q{q['id']}"
+                )
+
+            report_by_id.get(q["id"], {}).setdefault("warnings", []).append(
+                f"removed shared reading passage from option {chr(65 + opt_index)}"
+            )
+
+
 def read_clip_text(pdf_path: Path, crop: dict[str, Any]) -> str:
     fitz = load_fitz()
     with fitz.open(str(pdf_path)) as doc:
@@ -187,6 +227,10 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
             "warnings": warnings,
             "preview": question[:100],
         })
+
+    apply_reading_passages(questions, report)
+    for row, item in zip(report, questions):
+        row["has_material"] = bool(item.get("materials"))
 
     return questions, report
 
