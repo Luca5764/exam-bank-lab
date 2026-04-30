@@ -22,9 +22,14 @@
     .ldot.l-ans { background: var(--selected-bg); border-color: var(--selected-border); }
     .ldot.l-empty { background: white; }
     .option-btn { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; background: white; border: 3px solid var(--border); border-radius: 14px; cursor: pointer; transition: all 0.15s; text-align: left; font-family: inherit; font-size: 1.1rem; color: var(--text); line-height: 1.7; width: 100%; }
-    .option-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+    .option-btn { touch-action: manipulation; }
     .option-btn .opt-letter { flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; color: var(--text-dim); transition: all 0.15s; margin-top: 2px; border: 2px solid var(--border); }
-    .option-btn:hover .opt-letter { background: var(--accent); color: white; border-color: var(--accent); }
+    .option-btn:focus { outline: none; }
+    .option-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    @media (hover: hover) and (pointer: fine) {
+      .option-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+      .option-btn:hover .opt-letter { background: var(--accent); color: white; border-color: var(--accent); }
+    }
     .option-btn.selected { border-color: var(--selected-border); background: var(--selected-bg); }
     .option-btn.selected .opt-letter { background: var(--selected-border); color: white; border-color: var(--selected-border); }
     .q-text { font-size: 1.25rem; line-height: 1.9; font-weight: 500; margin-bottom: 24px; }
@@ -85,6 +90,8 @@
     let timerIv = null;
     let autoSaveIv = null;
     let isSubmitting = false;
+    let pendingAdvanceTimer = null;
+    let optionInputLockedUntil = 0;
 
     const SAVE_KEY = 'quiz_session';
 
@@ -214,15 +221,49 @@
         <div class="q-text">${esc(q.question)}</div>
         ${renderMaterialsHTML(q.materials)}
         <div style="display:flex;flex-direction:column;gap:10px">
-          ${q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i})"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('')}
+          ${q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('')}
         </div>`;
       document.getElementById('btnPrev').style.visibility = cur > 0 ? 'visible' : 'hidden';
       document.getElementById('btnNext').style.visibility = cur < quizQ.length - 1 ? 'visible' : 'hidden';
       updateJump();
     }
 
-    function pick(i) { userAns[cur] = i; render(); if (cur < quizQ.length - 1) setTimeout(() => go(cur + 1), 200); }
-    function go(i) { if (i < 0 || i >= quizQ.length) return; cur = i; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function clearPendingAdvance() {
+      if (pendingAdvanceTimer) {
+        clearTimeout(pendingAdvanceTimer);
+        pendingAdvanceTimer = null;
+      }
+    }
+
+    function pick(i, ev) {
+      if (Date.now() < optionInputLockedUntil) {
+        ev?.currentTarget?.blur();
+        return;
+      }
+      userAns[cur] = i;
+      const answeredIdx = cur;
+      render();
+
+      clearPendingAdvance();
+      if (answeredIdx < quizQ.length - 1) {
+        optionInputLockedUntil = Date.now() + 1200;
+        pendingAdvanceTimer = setTimeout(() => {
+          pendingAdvanceTimer = null;
+          if (cur === answeredIdx) {
+            go(answeredIdx + 1, { autoAdvance: true });
+            optionInputLockedUntil = Date.now() + 900;
+          }
+        }, 250);
+      }
+    }
+
+    function go(i, opts = {}) {
+      if (i < 0 || i >= quizQ.length) return;
+      if (!opts.autoAdvance) clearPendingAdvance();
+      cur = i;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     function trySubmit() {
       const unanswered = quizQ.length - Object.keys(userAns).length;
