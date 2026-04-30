@@ -1,14 +1,15 @@
-﻿// ===== shared.js ???梁撌亙 =====
-
 const LETTERS = ['A', 'B', 'C', 'D'];
 
 function esc(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
-// ===== Toast =====
 let _toastEl = null;
 let _toastTimer = null;
+
 function showToast(msg, ms = 1800) {
   if (!_toastEl) {
     _toastEl = document.createElement('div');
@@ -21,12 +22,10 @@ function showToast(msg, ms = 1800) {
   _toastTimer = setTimeout(() => _toastEl.classList.remove('show'), ms);
 }
 
-// ===== Clipboard with feedback =====
 async function copyText(text, btnEl) {
   try {
     await navigator.clipboard.writeText(text);
   } catch {
-    // fallback
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.cssText = 'position:fixed;left:-9999px';
@@ -35,42 +34,47 @@ async function copyText(text, btnEl) {
     document.execCommand('copy');
     document.body.removeChild(ta);
   }
+
   if (btnEl) {
     const orig = btnEl.innerHTML;
-    btnEl.innerHTML = '??撌脰?鋆踝?';
+    btnEl.innerHTML = '已複製';
     btnEl.classList.add('copied');
-    setTimeout(() => { btnEl.innerHTML = orig; btnEl.classList.remove('copied'); }, 2000);
+    setTimeout(() => {
+      btnEl.innerHTML = orig;
+      btnEl.classList.remove('copied');
+    }, 2000);
   }
-  showToast('??撌脰?鋆賢?芾票蝪?);
+
+  showToast('文字已複製到剪貼簿');
 }
 
-// ===== Build AI prompt for a question =====
 function buildPrompt(q, userAns) {
-  const userLetter = (userAns !== undefined && userAns !== null) ? LETTERS[userAns] : '?芯?蝑?;
+  const userLetter = userAns !== undefined && userAns !== null ? LETTERS[userAns] : '未作答';
   const correctLetter = LETTERS[q.answer];
   let t = '';
-  t += `隞乩??臭??噙?唳偌?拇?閬???嚗蝙?刻鈭?${userLetter}嚗迤蝣箇?獢 ${correctLetter}?n`;
-  t += `隢?質店??瘛粹＊???撘?閫?????箔?暻潛?獢 ${correctLetter}嚗蒂???嫣噶閮?見蝡???見?n\n`;
-  t += `???柴?{q.question}\n`;
-  q.options.forEach((opt, i) => { t += `(${LETTERS[i]}) ${opt}\n`; });
-  t += `\n雿輻?嚗?{userLetter}\n甇?Ⅱ蝑?嚗?{correctLetter}\n`;
+  t += `請說明這題為什麼正確答案是 ${correctLetter}，並分析我選的答案 ${userLetter}。\n`;
+  t += `請用簡潔、易懂的方式說明，先講解題意，再比較各選項，最後指出判斷關鍵。\n\n`;
+  t += `題目：${q.question}\n`;
+  q.options.forEach((opt, i) => {
+    t += `(${LETTERS[i]}) ${opt}\n`;
+  });
+  t += `\n我的答案：${userLetter}\n正確答案：${correctLetter}\n`;
   return t;
 }
 
-// Browse-only prompt (no user answer)
 function buildBrowsePrompt(q) {
   const correctLetter = LETTERS[q.answer];
   let t = '';
-  t += `隞乩??臭??噙?唳偌?拇?閬???嚗迤蝣箇?獢 ${correctLetter}?n`;
-  t += `隢?質店??瘛粹＊???撘?閫???箔?暻潛?獢 ${correctLetter}嚗蒂???嫣噶閮?見蝡???見?n\n`;
-  t += `???柴?{q.question}\n`;
-  q.options.forEach((opt, i) => { t += `(${LETTERS[i]}) ${opt}\n`; });
-  t += `\n甇?Ⅱ蝑?嚗?{correctLetter}\n`;
+  t += `請說明這題為什麼正確答案是 ${correctLetter}。\n`;
+  t += `請用簡潔、易懂的方式說明，先講解題意，再比較各選項，最後指出判斷關鍵。\n\n`;
+  t += `題目：${q.question}\n`;
+  q.options.forEach((opt, i) => {
+    t += `(${LETTERS[i]}) ${opt}\n`;
+  });
+  t += `\n正確答案：${correctLetter}\n`;
   return t;
 }
 
-// ===== Build review item HTML =====
-// mode: 'result' (with user answer), 'browse' (just show question+answer), 'wrong-pool' (show question+correct)
 function buildReviewItemHTML(q, opts) {
   const { idx, userAns, mode } = opts;
   const isResult = mode === 'result';
@@ -81,26 +85,33 @@ function buildReviewItemHTML(q, opts) {
   let cls = 'ri-neutral';
   let badgeCls = 'badge-neutral';
   let badgeText = '';
+
   if (isResult) {
     cls = isWrong ? 'ri-wrong' : 'ri-correct';
     badgeCls = isWrong ? 'badge-wrong' : 'badge-correct';
-    badgeText = isSkipped ? '?芯?蝑? : (isCorrect ? '甇?Ⅱ' : '?航炊');
+    badgeText = isSkipped ? '未作答' : (isCorrect ? '答對' : '答錯');
   }
 
   const optsHtml = q.options.map((opt, oi) => {
     let c = '';
     let suffix = '';
-    if (oi === q.answer) { c = 'opt-correct'; suffix = ' ??; }
-    if (isResult && userAns === oi && !isCorrect) { c = 'opt-wrong'; suffix = ' ??雿??豢?嚗?; }
+    if (oi === q.answer) {
+      c = 'opt-correct';
+      suffix = ' 正確答案';
+    }
+    if (isResult && userAns === oi && !isCorrect) {
+      c = 'opt-wrong';
+      suffix = ' 你的答案';
+    }
     return `<div class="${c}">(${LETTERS[oi]}) ${esc(opt)}${suffix}</div>`;
   }).join('');
 
   const copyFn = isResult ? `copyReview(${idx})` : `copyBrowse(${idx})`;
-  const copyLabel = '?? 銴ˊ甇日?嚗?內閰?';
+  const copyLabel = '複製解析提示';
 
   return `<div class="review-item ${cls}">
     <div class="ri-header">
-      <span style="font-weight:700;color:var(--text-dim)">蝚?${idx + 1} 憿?/span>
+      <span style="font-weight:700;color:var(--text-dim)">第 ${idx + 1} 題</span>
       ${badgeText ? `<span class="ri-badge ${badgeCls}">${badgeText}</span>` : ''}
     </div>
     <div class="ri-q">${esc(q.question)}</div>
@@ -109,13 +120,10 @@ function buildReviewItemHTML(q, opts) {
   </div>`;
 }
 
-// ===== Navigation =====
 function navigateTo(page) {
   window.location.href = page;
 }
 
-
-// ===== LocalStorage Data Access (Static Site replacement for /api/...) =====
 const DB_KEY = 'quiz_history';
 
 function toAssetUrl(path) {
@@ -135,7 +143,7 @@ function loadLocalHistory() {
     const raw = localStorage.getItem(DB_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    console.error("Failed to load history from localStorage", e);
+    console.error('Failed to load history from localStorage', e);
     return [];
   }
 }
@@ -146,8 +154,7 @@ function saveLocalHistory(record) {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(history));
   } catch (e) {
-    console.error("Failed to save history to localStorage", e);
-    // If quota exceeded, we might want to prune old records
+    console.error('Failed to save history to localStorage', e);
   }
 }
 
@@ -166,42 +173,39 @@ function clearLocalHistory() {
 function getWrongPool() {
   const history = loadLocalHistory();
   const today = new Date().toISOString().split('T')[0];
-  const last_result = {};
-  const ever_wrong = new Set();
-  const today_wrong = new Set();
-  
+  const lastResult = {};
+  const everWrong = new Set();
+  const todayWrong = new Set();
+
   for (const session of history) {
-    const sess_bank = session.bank || "questions/questions.json";
+    const sessionBank = session.bank || 'questions/questions.json';
     for (const item of session.answers || []) {
       const qid = item.qid;
-      const b = item.bank || sess_bank;
-      const key = `${b}|${qid}`;
+      const bank = item.bank || sessionBank;
+      const key = `${bank}|${qid}`;
       const ok = item.correct;
-      last_result[key] = ok;
+      lastResult[key] = ok;
       if (!ok) {
-        ever_wrong.add(key);
+        everWrong.add(key);
         if (session.date_iso && session.date_iso.split('T')[0] === today) {
-          today_wrong.add(key);
+          todayWrong.add(key);
         }
       }
     }
   }
-  
-  const still_wrong = Object.keys(last_result).filter(k => !last_result[k]);
-  const past_wrong = [...ever_wrong].filter(k => !today_wrong.has(k));
-  
-  const to_list = (keys) => keys.map(k => {
-    const parts = k.split('|');
-    const bank = parts[0];
-    const qid = parts[1];
-    return { bank, qid: parseInt(qid) };
+
+  const stillWrong = Object.keys(lastResult).filter((key) => !lastResult[key]);
+  const pastWrong = [...everWrong].filter((key) => !todayWrong.has(key));
+
+  const toList = (keys) => keys.map((key) => {
+    const [bank, qid] = key.split('|');
+    return { bank, qid: parseInt(qid, 10) };
   }).sort((a, b) => a.bank.localeCompare(b.bank) || a.qid - b.qid);
-  
+
   return {
-    ever_wrong: to_list([...ever_wrong]),
-    still_wrong: to_list(still_wrong),
-    today_wrong: to_list([...today_wrong]),
-    past_wrong: to_list(past_wrong),
+    ever_wrong: toList([...everWrong]),
+    still_wrong: toList(stillWrong),
+    today_wrong: toList([...todayWrong]),
+    past_wrong: toList(pastWrong),
   };
 }
-
