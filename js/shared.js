@@ -48,13 +48,74 @@ async function copyText(text, btnEl) {
   showToast('文字已複製到剪貼簿');
 }
 
+function normalizeMaterials(materials) {
+  return Array.isArray(materials) ? materials.filter(Boolean) : [];
+}
+
+function buildMaterialText(materials) {
+  return normalizeMaterials(materials).map((material) => {
+    const title = material.title ? `${material.title}\n` : '';
+    if (material.type === 'table') {
+      const headers = Array.isArray(material.headers) ? material.headers : [];
+      const rows = Array.isArray(material.rows) ? material.rows : [];
+      const tableRows = [];
+
+      if (headers.length) {
+        tableRows.push(`| ${headers.join(' | ')} |`);
+        tableRows.push(`| ${headers.map(() => '---').join(' | ')} |`);
+      }
+
+      rows.forEach((row) => {
+        const cells = Array.isArray(row) ? row : Object.values(row || {});
+        tableRows.push(`| ${cells.join(' | ')} |`);
+      });
+
+      const notes = material.notes ? `\n${material.notes}` : '';
+      return `${title}${tableRows.join('\n')}${notes}`.trim();
+    }
+
+    const body = material.content || material.markdown || '';
+    return `${title}${body}`.trim();
+  }).filter(Boolean).join('\n\n');
+}
+
+function renderMaterialsHTML(materials) {
+  const html = normalizeMaterials(materials).map((material) => {
+    const title = material.title ? `<div class="material-title">${esc(material.title)}</div>` : '';
+
+    if (material.type === 'table') {
+      const headers = Array.isArray(material.headers) ? material.headers : [];
+      const rows = Array.isArray(material.rows) ? material.rows : [];
+      const headerHtml = headers.length
+        ? `<thead><tr>${headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>`
+        : '';
+      const bodyHtml = rows.map((row) => {
+        const cells = Array.isArray(row) ? row : Object.values(row || {});
+        return `<tr>${cells.map((cell) => `<td>${esc(cell)}</td>`).join('')}</tr>`;
+      }).join('');
+      const notes = material.notes ? `<div class="material-notes">${esc(material.notes)}</div>` : '';
+
+      return `<div class="material-block">${title}<div class="material-table-wrap"><table class="material-table">${headerHtml}<tbody>${bodyHtml}</tbody></table></div>${notes}</div>`;
+    }
+
+    const body = material.content || material.markdown || '';
+    return `<div class="material-block">${title}<div class="material-text">${esc(body)}</div></div>`;
+  }).join('');
+
+  return html ? `<div class="q-materials">${html}</div>` : '';
+}
+
 function buildPrompt(q, userAns) {
   const userLetter = userAns !== undefined && userAns !== null ? LETTERS[userAns] : '未作答';
   const correctLetter = LETTERS[q.answer];
+  const materialsText = buildMaterialText(q.materials);
   let t = '';
   t += `請說明這題為什麼正確答案是 ${correctLetter}，並分析我選的答案 ${userLetter}。\n`;
   t += `請用簡潔、易懂的方式說明，先講解題意，再比較各選項，最後指出判斷關鍵。\n\n`;
   t += `題目：${q.question}\n`;
+  if (materialsText) {
+    t += `\n附表/資料：\n${materialsText}\n`;
+  }
   q.options.forEach((opt, i) => {
     t += `(${LETTERS[i]}) ${opt}\n`;
   });
@@ -64,10 +125,14 @@ function buildPrompt(q, userAns) {
 
 function buildBrowsePrompt(q) {
   const correctLetter = LETTERS[q.answer];
+  const materialsText = buildMaterialText(q.materials);
   let t = '';
   t += `請說明這題為什麼正確答案是 ${correctLetter}。\n`;
   t += `請用簡潔、易懂的方式說明，先講解題意，再比較各選項，最後指出判斷關鍵。\n\n`;
   t += `題目：${q.question}\n`;
+  if (materialsText) {
+    t += `\n附表/資料：\n${materialsText}\n`;
+  }
   q.options.forEach((opt, i) => {
     t += `(${LETTERS[i]}) ${opt}\n`;
   });
@@ -115,6 +180,7 @@ function buildReviewItemHTML(q, opts) {
       ${badgeText ? `<span class="ri-badge ${badgeCls}">${badgeText}</span>` : ''}
     </div>
     <div class="ri-q">${esc(q.question)}</div>
+    ${renderMaterialsHTML(q.materials)}
     <div class="ri-opts">${optsHtml}</div>
     <button class="copy-btn" id="cpbtn-${idx}" onclick="${copyFn}">${copyLabel}</button>
   </div>`;

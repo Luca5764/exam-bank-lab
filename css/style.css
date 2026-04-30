@@ -190,6 +190,60 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 .ri-opts .opt-correct { color: var(--correct); font-weight: 700; }
 .ri-opts .opt-wrong { color: var(--wrong); font-weight: 700; text-decoration: line-through; }
 
+/* ===== Question materials ===== */
+.q-materials {
+  margin: 0 0 18px;
+}
+.material-block {
+  background: #fbfbf7;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.material-title {
+  color: var(--accent-dark);
+  font-size: 0.95rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.material-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.material-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+.material-table th,
+.material-table td {
+  border: 1px solid var(--border);
+  padding: 9px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.material-table th {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-weight: 900;
+}
+.material-table td {
+  background: white;
+}
+.material-text,
+.material-notes {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+.material-notes {
+  margin-top: 8px;
+}
+
 /* ===== Toast ===== */
 .toast {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);

@@ -212,6 +212,7 @@
       document.getElementById('qCard').innerHTML = `
         <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px;margin-bottom:16px">第 ${cur + 1} 題</span>
         <div class="q-text">${esc(q.question)}</div>
+        ${renderMaterialsHTML(q.materials)}
         <div style="display:flex;flex-direction:column;gap:10px">
           ${q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i})"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('')}
         </div>`;
@@ -252,7 +253,7 @@
 
       const record = {
         date: dateStr, date_iso: now.toISOString(), total: quizQ.length, correct, wrong, skip, score: pct, elapsed, answers,
-        questions: quizQ.map(q => ({ id: q.id, question: q.question, options: q.options, answer: q.answer, _bank: q._bank }))
+        questions: quizQ.map(q => ({ id: q.id, question: q.question, materials: q.materials || [], options: q.options, answer: q.answer, _bank: q._bank }))
       };
 
       saveLocalHistory(record);
