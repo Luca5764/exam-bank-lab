@@ -5,6 +5,8 @@ from pathlib import Path
 SPECIAL_NAMES = {
 }
 
+TRAILING_COPY_RE = re.compile(r"\s*\(\d+\)$")
+
 
 def build_pdf_year_map(pdf_root: Path) -> dict[str, str]:
     year_map = {}
@@ -22,7 +24,7 @@ def format_bank_name(stem: str, year_map: dict[str, str]) -> str:
         return SPECIAL_NAMES[stem]
 
     name = stem.strip()
-    name = re.sub(r"\s*\(\d+\)$", "", name)
+    name = TRAILING_COPY_RE.sub("", name)
     name = name.replace("_", " ")
     name = re.sub(r"\s*-\s*", " - ", name)
     name = re.sub(r"\s+", " ", name).strip()
@@ -30,7 +32,19 @@ def format_bank_name(stem: str, year_map: dict[str, str]) -> str:
     if year and not re.match(rf"^{re.escape(year)}(?:\b|(?=\S))", name):
         name = f"{year} {name}"
     name = re.sub(r"^(\d{3})(?=\S)", r"\1 ", name)
-    return name
+
+    match = re.match(r"^(\d{3})\s+(.+)$", name)
+    if not match:
+        return name
+
+    year_text, rest = match.groups()
+    parts = [p.strip() for p in rest.split(" - ") if p.strip()]
+    if len(parts) <= 1:
+        return name
+
+    subject = parts[-1]
+    context = " / ".join(parts[:-1])
+    return f"{year_text} {subject}（{context}）"
 
 
 def extract_year(stem: str, year_map: dict[str, str]) -> int:
@@ -85,6 +99,7 @@ def build_index():
     output_path = data_dir / "banks.json"
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(banks, f, ensure_ascii=False, indent=2)
+        f.write("\n")
     
     print(f"\nStatic index created at: {output_path.resolve()}")
     print(f"Total banks indexed: {len(banks)}")
