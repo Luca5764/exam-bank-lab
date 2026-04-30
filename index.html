@@ -123,9 +123,15 @@
     async function loadBank(bank) {
       if (!bank) return;
       currentBank = bank;
-      const res = await fetch(bank);
-      allQuestions = await res.json();
-      document.getElementById('totalCount').textContent = allQuestions.length;
+      try {
+        allQuestions = await fetchJson(bank);
+        document.getElementById('totalCount').textContent = allQuestions.length;
+      } catch (e) {
+        console.error('Failed to load question bank', bank, e);
+        allQuestions = [];
+        document.getElementById('totalCount').textContent = '0';
+        showToast('題庫讀取失敗，請重新整理後再試');
+      }
     }
 
     function onBankChange() {
@@ -136,8 +142,7 @@
 
     async function loadBanks() {
       try {
-        const res = await fetch('data/banks.json');
-        const banks = await res.json();
+        const banks = await fetchJson('data/banks.json');
         if (banks && banks.length > 0) {
           const sel = document.getElementById('questionBank');
           let html = '';
@@ -154,7 +159,7 @@
         }
       } catch (e) { 
         console.error("Failed to load banks", e);
-        showToast('無法讀取題庫索引');
+        showToast('題庫索引讀取失敗，請確認 GitHub Pages 已部署完整');
       }
       return '';
     }
