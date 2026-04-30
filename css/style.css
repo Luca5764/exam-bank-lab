@@ -233,6 +233,17 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 .material-table td {
   background: white;
 }
+.material-image-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.material-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 8px;
+}
 .material-text,
 .material-notes {
   color: var(--text-dim);

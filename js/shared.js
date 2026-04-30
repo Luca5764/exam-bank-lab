@@ -74,6 +74,13 @@ function buildMaterialText(materials) {
       return `${title}${tableRows.join('\n')}${notes}`.trim();
     }
 
+    if (material.type === 'image') {
+      const src = material.src ? `圖片路徑：${material.src}` : '圖片材料';
+      const alt = material.alt ? `\n圖片說明：${material.alt}` : '';
+      const notes = material.notes ? `\n${material.notes}` : '';
+      return `${title}${src}${alt}${notes}`.trim();
+    }
+
     const body = material.content || material.markdown || '';
     return `${title}${body}`.trim();
   }).filter(Boolean).join('\n\n');
@@ -96,6 +103,16 @@ function renderMaterialsHTML(materials) {
       const notes = material.notes ? `<div class="material-notes">${esc(material.notes)}</div>` : '';
 
       return `<div class="material-block">${title}<div class="material-table-wrap"><table class="material-table">${headerHtml}<tbody>${bodyHtml}</tbody></table></div>${notes}</div>`;
+    }
+
+    if (material.type === 'image') {
+      const src = material.src ? toAssetUrl(material.src) : '';
+      const alt = material.alt || material.title || '題目附圖';
+      const notes = material.notes ? `<div class="material-notes">${esc(material.notes)}</div>` : '';
+      const imageHtml = src
+        ? `<img class="material-image" src="${esc(src)}" alt="${esc(alt)}" loading="lazy">`
+        : `<div class="material-text">${esc(alt)}</div>`;
+      return `<div class="material-block">${title}<div class="material-image-wrap">${imageHtml}</div>${notes}</div>`;
     }
 
     const body = material.content || material.markdown || '';
