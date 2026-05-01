@@ -136,9 +136,7 @@ OPTION_OVERRIDES: dict[str, dict[int, list[str]]] = {
         ],
     },
 }
-EXCLUDED_QUESTION_IDS: dict[str, set[int]] = {
-    "110": {25},
-}
+EXCLUDED_QUESTION_IDS: dict[str, set[int]] = {}
 READING_TITLE_OVERRIDES: dict[str, dict[int, str]] = {
     "110": {
         24: "閱讀資料（第 24 題）",
@@ -235,8 +233,14 @@ def apply_text_overrides(year: str, item: dict[str, Any]) -> None:
         item["options"] = options
 
 
-def apply_postprocess_overrides(year: str, questions: list[dict[str, Any]], report: list[dict[str, Any]]) -> None:
-    excluded = EXCLUDED_QUESTION_IDS.get(year, set())
+def apply_postprocess_overrides(
+    year: str,
+    questions: list[dict[str, Any]],
+    report: list[dict[str, Any]],
+    answers: dict[int, int | None],
+) -> None:
+    excluded = set(EXCLUDED_QUESTION_IDS.get(year, set()))
+    excluded.update(qid for qid, answer in answers.items() if answer is None)
     if excluded:
         questions[:] = [q for q in questions if q["id"] not in excluded]
         report[:] = [row for row in report if row["id"] not in excluded]
@@ -375,7 +379,7 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
         })
 
     apply_reading_passages(questions, report)
-    apply_postprocess_overrides(year, questions, report)
+    apply_postprocess_overrides(year, questions, report, answers)
     for row, item in zip(report, questions):
         row["has_material"] = bool(item.get("materials"))
 
