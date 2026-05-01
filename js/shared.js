@@ -208,7 +208,12 @@ function navigateTo(page) {
 const DB_KEY = 'quiz_history';
 
 function toAssetUrl(path) {
-  return new URL(encodeURI(path), document.baseURI).toString();
+  const url = new URL(encodeURI(path), document.baseURI);
+  const version = new URLSearchParams(window.location.search).get('v');
+  if (version && !url.searchParams.has('v')) {
+    url.searchParams.set('v', version);
+  }
+  return url.toString();
 }
 
 async function fetchJson(path) {

@@ -45,7 +45,11 @@ MATERIAL_PATTERNS = [
 ]
 MATERIAL_TAIL_RE = re.compile(r"\s+[圖表]\s*[（(]\s*[一二三四五六七八九十\d]+\s*[)）].*$")
 READING_PASSAGE_RE = re.compile(
-    r"▲\s*閱讀下文\s*[，,]\s*回答第\s*(\d+)\s*[-－~～]\s*(\d+)\s*題\s*(.*)$"
+    r"▲\s*閱讀下文\s*[，,]\s*回答第\s*(\d+)\s*[-－–~～]\s*(\d+)\s*題\s*(.*)$"
+)
+PAGE_READING_PASSAGE_RE = re.compile(
+    r"▲\s*閱讀下文\s*[，,]\s*回答第\s*(\d+)\s*[-－–~～]\s*(\d+)\s*題\s*(.*?)(?=\n\s*\d+\.|\Z)",
+    re.S,
 )
 ANSWER_MAP = {"A": 0, "B": 1, "C": 2, "D": 3}
 MATERIAL_OVERRIDES: dict[str, dict[int, list[dict[str, Any]]]] = {
@@ -105,6 +109,68 @@ MATERIAL_OVERRIDES: dict[str, dict[int, list[dict[str, Any]]]] = {
             ],
         }],
     },
+    "111": {
+        28: [{
+            "type": "table",
+            "title": "表（一）原子筆數量與邊際效用",
+            "headers": ["X", "1", "2", "3", "4", "5"],
+            "rows": [["MU", "8", "6", "4", "2", "0"]],
+        }],
+        29: [{
+            "type": "table",
+            "title": "表（二）勞動量與總產量",
+            "headers": ["勞動量", "1", "2", "3", "4", "5", "6", "7", "8"],
+            "rows": [["總產量", "4", "12", "21", "28", "33", "36", "36", "32"]],
+        }],
+        35: [{
+            "type": "table",
+            "title": "表（三）員工人數與總產量",
+            "headers": ["員工人數", "0", "1", "2", "3"],
+            "rows": [["總產量", "0", "10", "18", "24"]],
+        }],
+        36: [{
+            "type": "table",
+            "title": "表（四）人口、就業與失業資料",
+            "headers": ["年度", "15歲以上民間人口", "失業人口", "就業人口", "勞動力", "勞動參與率", "失業率"],
+            "rows": [
+                ["2019", "150,000", "4,500", "①", "90,000", "②", "③"],
+                ["2020", "160,000", "8,000", "92,000", "④", "⑤", "⑥"],
+                ["2021", "165,000", "⑦", "105,000", "115,500", "⑧", "⑨"],
+            ],
+        }],
+        41: [{
+            "type": "table",
+            "title": "表（五）方案E與方案F投資資料",
+            "headers": ["項目", "方案E", "方案F"],
+            "rows": [
+                ["購買成本", "50萬", "100萬"],
+                ["預期收益", "55萬", "112萬"],
+            ],
+        }],
+        46: [{
+            "type": "table",
+            "title": "表（六）甲國與乙國生產數量",
+            "headers": ["產品", "甲國", "乙國"],
+            "rows": [
+                ["晶片", "400", "200"],
+                ["遊艇", "150", "100"],
+            ],
+        }],
+    },
+    "112": {
+        35: [{
+            "type": "table",
+            "title": "表（一）甲、乙兩國所得分配",
+            "headers": ["戶數五等分組", "甲國所得分配(%)", "乙國所得分配(%)"],
+            "rows": [
+                ["最低所得20%", "12", "8"],
+                ["次低所得20%", "18", "12"],
+                ["中等所得20%", "22", "20"],
+                ["次高所得20%", "25", "25"],
+                ["最高所得20%", "23", "35"],
+            ],
+        }],
+    },
 }
 QUESTION_OVERRIDES: dict[str, dict[int, str]] = {
     "110": {
@@ -113,6 +179,19 @@ QUESTION_OVERRIDES: dict[str, dict[int, str]] = {
         26: "設甲國僅生產 X、Y 兩財貨，X、Y 的生產可能曲線為 PPC 如圖（一）。已知 A 點生產財貨 X 之機會成本為 2，在技術與資源不變下，則下列敘述何者正確？",
         31: "某廠商的邊際產量（MP）、平均產量（AP）兩曲線如圖（二）所示，圖中 MP 最高點為 A 點，AP 最高點為 B 點，L 為勞動投入量，且 TP 表總產量。下列敘述何者正確？",
         32: "表（四）為某廠商短期下之各種產量的要素投入數量及成本之變動關係。表中 Q 為產量，L 為勞動投入量，TFC 為總固定成本，TVC 為總變動成本，TC 為總成本，AC 為平均（總）成本，AVC 為平均變動成本，MC 為邊際成本。若變動生產要素只有勞動且其他條件不變下，下列敘述何者錯誤？",
+    },
+    "111": {
+        28: "假設原子筆的數量（X）與邊際效用（MU）關係如表（一），已知消費者均衡時原子筆價格為 20 元、便條紙價格為 10 元、便條紙邊際效用為 2 單位，下列敘述何者正確？",
+        29: "表（二）為某廠商所投入之勞動量與總產量兩者間之對應表，下列有關此表之敘述何者正確？",
+        35: "若有一完全競爭市場中的廠商，其產品價格為 30 元，而每位員工的工資為 100 元，該產品的勞動投入和總產量之關係如表（三）。假設此廠商之變動成本除勞動之工資外，並無其他變動成本，則下列何者正確？",
+        36: "假設某國在三個年度中的人口、勞動力和失業率的數值如表（四），下列何者正確？",
+        41: "假設某公司有兩項投資方案正在進行評估，此兩方案皆只有一年的收益，兩方案之購買成本與預期收益如表（五），則下列有關此兩項投資之敘述，何者正確？",
+        46: "假設投入相同單位的生產要素，甲國和乙國生產晶片和遊艇的數量分別如表（六），下列敘述何者正確？",
+    },
+    "112": {
+        41: "假設消費函數為 C = a + bYd，其中 C 為消費支出，a 為自發性消費，b 為邊際消費傾向（MPC），Yd 為可支配所得，APC 為平均消費傾向，下列敘述何者正確？",
+        42: "假設 Y = C + I + G，C = a + bYd，Yd = Y - T，I = I₀，G = G₀，T = T₀，其中，Y 為國民所得，C 為消費，I 為投資，G 為政府支出，a 為自發性消費，b 為邊際消費傾向，Yd 為可支配所得，投資為固定常數 I₀，政府支出為固定常數 G₀，租稅為固定常數 T₀，則下列敘述何者正確？",
+        35: "甲、乙兩國之所得分配如表（一）所示，下列敘述何者正確？",
     },
 }
 OPTION_OVERRIDES: dict[str, dict[int, list[str]]] = {
@@ -136,6 +215,14 @@ OPTION_OVERRIDES: dict[str, dict[int, list[str]]] = {
             "MC 最低點的產量為 580",
         ],
     },
+    "112": {
+        41: [
+            "邊際消費傾向 MPC = a / Yd + APC",
+            "邊際儲蓄傾向 MPS = -a + (1 - b)",
+            "平均儲蓄傾向 APS = -a / Yd + (1 - b)",
+            "APC > MPC，且 APS > MPS",
+        ],
+    },
 }
 EXCLUDED_QUESTION_IDS: dict[str, set[int]] = {}
 READING_TITLE_OVERRIDES: dict[str, dict[int, str]] = {
@@ -146,6 +233,7 @@ READING_TITLE_OVERRIDES: dict[str, dict[int, str]] = {
 VISUAL_MATERIAL_IDS: dict[str, set[int]] = {
     "109": {31},
     "110": {26, 31},
+    "112": {31},
 }
 
 
@@ -185,7 +273,20 @@ def clean_text(text: str) -> str:
     text = text.replace("不", "不").replace("列", "列").replace("金", "金")
     text = text.replace("ˉ", " ")
     text = re.sub(r"\s+", " ", text).strip()
+    text = normalize_formula_spacing(text)
     text = re.sub(r"【以下空白】.*$", "", text).strip()
+    return text
+
+
+def normalize_formula_spacing(text: str) -> str:
+    for base, repl in {"I": "I₀", "G": "G₀", "T": "T₀"}.items():
+        text = re.sub(rf"\b{base}\s+0\b", repl, text)
+
+    text = re.sub(r"\b([XY])\s+(\d)\s+年", r"\1\2 年", text)
+    text = re.sub(r"\bY\s+d\b", "Yd", text)
+    text = re.sub(r"\bQ\s+d\b", "Qd", text)
+    text = re.sub(r"\bQ\s+s\b", "Qs", text)
+    text = re.sub(r"(?<![A-Za-z0-9_])(MU|MP|P)\s+([ABXY])(?=$|[\s，、,。)）＝=]|[\u4e00-\u9fff])", r"\1_\2", text)
     return text
 
 
@@ -307,6 +408,66 @@ def apply_reading_passages(questions: list[dict[str, Any]], report: list[dict[st
             )
 
 
+def extract_page_reading_passages(pdf_path: Path) -> list[dict[str, Any]]:
+    fitz = load_fitz()
+    passages: list[dict[str, Any]] = []
+    with fitz.open(str(pdf_path)) as doc:
+        for page_num, page in enumerate(doc, 1):
+            text = page.get_text("text") or ""
+            for match in PAGE_READING_PASSAGE_RE.finditer(text):
+                start_id = int(match.group(1))
+                end_id = int(match.group(2))
+                content = clean_text(match.group(3))
+                if not content:
+                    continue
+                passages.append({
+                    "page": page_num,
+                    "start_id": start_id,
+                    "end_id": end_id,
+                    "content": content,
+                })
+    return passages
+
+
+def apply_page_reading_passages(
+    questions: list[dict[str, Any]],
+    report: list[dict[str, Any]],
+    passages: list[dict[str, Any]],
+    question_pages: dict[int, int],
+) -> None:
+    if not passages:
+        return
+
+    by_id = {q["id"]: q for q in questions}
+    report_by_id = {row["id"]: row for row in report}
+
+    for passage in passages:
+        start_id = passage["start_id"]
+        end_id = passage["end_id"]
+        page = passage["page"]
+        content = passage["content"]
+        group_id = f"reading-{start_id}-{end_id}"
+        title = f"閱讀資料（第 {start_id}-{end_id} 題）"
+
+        for target_id in range(start_id, end_id + 1):
+            target = by_id.get(target_id)
+            if not target:
+                continue
+            if question_pages.get(target_id) != page:
+                continue
+
+            target["group"] = group_id
+            materials = target.setdefault("materials", [])
+            if not any(
+                m.get("type") == "text" and m.get("title") == title and m.get("content") == content
+                for m in materials
+            ):
+                materials.insert(0, {"type": "text", "title": title, "content": content})
+                report_by_id.get(target_id, {}).setdefault("warnings", []).append(
+                    f"attached shared reading passage from page marker Q{start_id}-{end_id}"
+                )
+
+
 def read_clip_text(pdf_path: Path, crop: dict[str, Any]) -> str:
     fitz = load_fitz()
     with fitz.open(str(pdf_path)) as doc:
@@ -342,6 +503,8 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
             text_distance=28,
         )
     } if VISUAL_MATERIAL_IDS.get(year) else {}
+    page_passages = extract_page_reading_passages(question_pdf)
+    question_pages = {crop.id: crop.page for crop in crops}
 
     questions: list[dict[str, Any]] = []
     report: list[dict[str, Any]] = []
@@ -401,6 +564,7 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
         })
 
     apply_reading_passages(questions, report)
+    apply_page_reading_passages(questions, report, page_passages, question_pages)
     apply_postprocess_overrides(year, questions, report, answers)
     for row, item in zip(report, questions):
         row["has_material"] = bool(item.get("materials"))
