@@ -72,7 +72,7 @@
     </div>
   </div>
 
-  <script src="js/shared.js"></script>
+  <script src="js/shared.js?v=110-free-score"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'random';
@@ -101,7 +101,8 @@
       if (q.noShuffle) return { ...q };
       const idx = q.options.map((_, i) => i);
       const sh = shuffle(idx);
-      return { ...q, options: sh.map(i => q.options[i]), answer: sh.indexOf(q.answer) };
+      const answer = Number.isInteger(q.answer) ? sh.indexOf(q.answer) : q.answer;
+      return { ...q, options: sh.map(i => q.options[i]), answer };
     }
 
     function getQuestionGroupKey(q) {
@@ -372,8 +373,8 @@
       let correct = 0, wrong = 0, skip = 0;
       const answers = quizQ.map((q, i) => {
         const ua = userAns[i];
-        const ok = ua === q.answer;
         const skipped = ua === undefined;
+        const ok = q.freeScore ? !skipped : ua === q.answer;
         if (skipped) skip++; else if (ok) correct++; else wrong++;
         return { qid: q.id, bank: q._bank || bank, userAnswer: ua !== undefined ? ua : null, correct: ok && !skipped };
       });
@@ -384,7 +385,7 @@
 
       const record = {
         date: dateStr, date_iso: now.toISOString(), total: quizQ.length, correct, wrong, skip, score: pct, elapsed, answers,
-        questions: quizQ.map(q => ({ id: q.id, question: q.question, materials: q.materials || [], options: q.options, answer: q.answer, _bank: q._bank }))
+        questions: quizQ.map(q => ({ id: q.id, question: q.question, materials: q.materials || [], options: q.options, answer: q.answer, freeScore: !!q.freeScore, _bank: q._bank }))
       };
 
       saveLocalHistory(record);

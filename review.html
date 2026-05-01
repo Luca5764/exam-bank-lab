@@ -12,7 +12,7 @@
     <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
     <div id="content"><p class="text-dim text-center mt-24">讀取中...</p></div>
   </div>
-  <script src="js/shared.js"></script>
+  <script src="js/shared.js?v=110-free-score"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const histIdx = parseInt(params.get('historyIdx'));
@@ -50,7 +50,8 @@
       const wrongIds = [];
       reviewQuestions.forEach((q, i) => {
         const ua = reviewAnswers[i];
-        const ok = ua !== null && ua !== undefined && ua === q.answer;
+        const answered = ua !== null && ua !== undefined;
+        const ok = answered && (q.freeScore || ua === q.answer);
         const html = buildReviewItemHTML(q, { idx: i, userAns: ua, mode: 'result' });
         if (ok) correctHtml += html; else { wrongHtml += html; wrongIds.push(q.id); }
       });
@@ -80,7 +81,8 @@
       let texts = [];
       reviewQuestions.forEach((q, i) => {
         const ua = reviewAnswers[i];
-        if (ua === null || ua === undefined || ua !== q.answer) texts.push(buildPrompt(q, ua));
+        const answered = ua !== null && ua !== undefined;
+        if (!answered || (!q.freeScore && ua !== q.answer)) texts.push(buildPrompt(q, ua));
       });
       const header = `以下為 ${texts.length} 題我答錯的農田水利相關考古題：\n請詳細為我解析正確答案與錯誤原因。\n`;
       copyText(header + '\n' + texts.join('\n' + '='.repeat(50) + '\n'), event.target);
@@ -89,7 +91,8 @@
     function retryWrong() {
       const wrongQ = reviewQuestions.filter((q, i) => {
         const ua = reviewAnswers[i];
-        return ua === null || ua === undefined || ua !== q.answer;
+        const answered = ua !== null && ua !== undefined;
+        return !answered || (!q.freeScore && ua !== q.answer);
       });
       if (!wrongQ.length) return;
       sessionStorage.setItem('retry_questions', JSON.stringify(wrongQ));
