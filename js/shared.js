@@ -124,7 +124,7 @@ function renderMaterialsHTML(materials) {
 
 function buildPrompt(q, userAns) {
   const userLetter = userAns !== undefined && userAns !== null ? LETTERS[userAns] : '未作答';
-  const correctLetter = LETTERS[q.answer];
+  const correctLetter = q.freeScore ? '送分' : (LETTERS[q.answer] || '未設定');
   const materialsText = buildMaterialText(q.materials);
   let t = '';
   t += `請說明這題為什麼正確答案是 ${correctLetter}，並分析我選的答案 ${userLetter}。\n`;
@@ -141,7 +141,7 @@ function buildPrompt(q, userAns) {
 }
 
 function buildBrowsePrompt(q) {
-  const correctLetter = LETTERS[q.answer];
+  const correctLetter = q.freeScore ? '送分' : (LETTERS[q.answer] || '未設定');
   const materialsText = buildMaterialText(q.materials);
   let t = '';
   t += `請說明這題為什麼正確答案是 ${correctLetter}。\n`;
@@ -160,23 +160,24 @@ function buildBrowsePrompt(q) {
 function buildReviewItemHTML(q, opts) {
   const { idx, userAns, mode } = opts;
   const isResult = mode === 'result';
-  const isCorrect = isResult && userAns === q.answer;
+  const isFreeScore = !!q.freeScore;
   const isSkipped = isResult && (userAns === undefined || userAns === null);
+  const isCorrect = isResult && (isFreeScore ? !isSkipped : userAns === q.answer);
   const isWrong = isResult && !isCorrect;
 
   let cls = 'ri-neutral';
   let badgeCls = 'badge-neutral';
-  let badgeText = '';
+  let badgeText = isFreeScore ? '送分' : '';
 
   if (isResult) {
     cls = isWrong ? 'ri-wrong' : 'ri-correct';
     badgeCls = isWrong ? 'badge-wrong' : 'badge-correct';
-    badgeText = isSkipped ? '未作答' : (isCorrect ? '答對' : '答錯');
+    badgeText = isSkipped ? '未作答' : (isFreeScore ? '送分' : (isCorrect ? '答對' : '答錯'));
   }
 
   const optsHtml = q.options.map((opt, oi) => {
     let c = '';
-    if (oi === q.answer) {
+    if (!isFreeScore && oi === q.answer) {
       c = 'opt-correct';
     }
     if (isResult && userAns === oi && !isCorrect) {
