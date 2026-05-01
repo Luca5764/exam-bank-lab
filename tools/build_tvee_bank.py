@@ -30,6 +30,7 @@ from crop_tvee_questions import (
     find_question_pdf,
     load_fitz,
 )
+from crop_tvee_materials import crop_materials
 
 
 ANSWER_PDF_SUFFIX = "\u7b54.pdf"
@@ -141,6 +142,9 @@ READING_TITLE_OVERRIDES: dict[str, dict[int, str]] = {
     "110": {
         24: "閱讀資料（第 24 題）",
     },
+}
+VISUAL_MATERIAL_IDS: dict[str, set[int]] = {
+    "110": {26, 31},
 }
 
 
@@ -325,6 +329,18 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
 
     asset_dir = asset_root / "tvee" / year
     asset_dir.mkdir(parents=True, exist_ok=True)
+    material_crop_dir = crop_out / "material_crops"
+    material_crops = {
+        crop.id: crop
+        for crop in crop_materials(
+            pdf_path=question_pdf,
+            out_dir=material_crop_dir,
+            qids=VISUAL_MATERIAL_IDS.get(year, set()),
+            dpi=220,
+            margin=8,
+            text_distance=28,
+        )
+    } if VISUAL_MATERIAL_IDS.get(year) else {}
 
     questions: list[dict[str, Any]] = []
     report: list[dict[str, Any]] = []
@@ -360,7 +376,12 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
         add_image = include_all_images or (not material_override and needs_image_material(item["question"]))
         if add_image and crop.image:
             asset_path = asset_dir / f"q{crop.id:02d}.png"
-            shutil.copyfile(crop_out / crop.image, asset_path)
+            source_image = (
+                material_crop_dir / material_crops[crop.id].image
+                if crop.id in material_crops and material_crops[crop.id].image
+                else crop_out / crop.image
+            )
+            shutil.copyfile(source_image, asset_path)
             item.setdefault("materials", []).append({
                 "type": "image",
                 "title": f"第 {crop.id} 題附圖",
