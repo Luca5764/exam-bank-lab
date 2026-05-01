@@ -136,6 +136,14 @@ OPTION_OVERRIDES: dict[str, dict[int, list[str]]] = {
         ],
     },
 }
+EXCLUDED_QUESTION_IDS: dict[str, set[int]] = {
+    "110": {25},
+}
+READING_TITLE_OVERRIDES: dict[str, dict[int, str]] = {
+    "110": {
+        24: "閱讀資料（第 24 題）",
+    },
+}
 
 
 def find_answer_pdf(source_dir: Path, year: str) -> Path:
@@ -225,6 +233,30 @@ def apply_text_overrides(year: str, item: dict[str, Any]) -> None:
         item["question"] = question
     if options:
         item["options"] = options
+
+
+def apply_postprocess_overrides(year: str, questions: list[dict[str, Any]], report: list[dict[str, Any]]) -> None:
+    excluded = EXCLUDED_QUESTION_IDS.get(year, set())
+    if excluded:
+        questions[:] = [q for q in questions if q["id"] not in excluded]
+        report[:] = [row for row in report if row["id"] not in excluded]
+
+    title_overrides = READING_TITLE_OVERRIDES.get(year, {})
+    for q in questions:
+        if q["id"] in title_overrides:
+            for material in q.get("materials", []):
+                if material.get("type") == "text" and str(material.get("title", "")).startswith("閱讀資料"):
+                    material["title"] = title_overrides[q["id"]]
+
+    group_counts: dict[str, int] = {}
+    for q in questions:
+        group = q.get("group")
+        if group:
+            group_counts[group] = group_counts.get(group, 0) + 1
+    for q in questions:
+        group = q.get("group")
+        if group and group_counts.get(group, 0) <= 1:
+            q.pop("group", None)
 
 
 def apply_reading_passages(questions: list[dict[str, Any]], report: list[dict[str, Any]]) -> None:
@@ -343,6 +375,7 @@ def build_bank(year: str, source_dir: Path, asset_root: Path, crop_out: Path, in
         })
 
     apply_reading_passages(questions, report)
+    apply_postprocess_overrides(year, questions, report)
     for row, item in zip(report, questions):
         row["has_material"] = bool(item.get("materials"))
 
