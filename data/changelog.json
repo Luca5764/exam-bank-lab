@@ -1,0 +1,112 @@
+[
+    {
+        "date":  "2026-05-01",
+        "items":  [
+                      {
+                          "time":  "22:35",
+                          "message":  "Add changelog and update TVE parsing"
+                      },
+                      {
+                          "time":  "19:44",
+                          "message":  "Apply visual material crop to 109 TVE chart"
+                      },
+                      {
+                          "time":  "19:34",
+                          "message":  "Prototype TVE visual material cropping"
+                      },
+                      {
+                          "time":  "09:30",
+                          "message":  "Exclude free-score TVE questions by default"
+                      },
+                      {
+                          "time":  "09:28",
+                          "message":  "Remove 110 TVE free-score question"
+                      },
+                      {
+                          "time":  "08:37",
+                          "message":  "Add 110 TVE accounting economics bank"
+                      },
+                      {
+                          "time":  "08:25",
+                          "message":  "Remove answer labels from option text"
+                      },
+                      {
+                          "time":  "07:44",
+                          "message":  "Convert 109 TVE cost table to structured material"
+                      },
+                      {
+                          "time":  "07:19",
+                          "message":  "Keep random quizzes at requested count"
+                      },
+                      {
+                          "time":  "07:16",
+                          "message":  "Keep grouped questions together in quizzes"
+                      },
+                      {
+                          "time":  "07:09",
+                          "message":  "Fix TVE shared reading passage parsing"
+                      }
+                  ]
+    },
+    {
+        "date":  "2026-04-30",
+        "items":  [
+                      {
+                          "time":  "22:58",
+                          "message":  "Add 109 TVE accounting economics bank"
+                      },
+                      {
+                          "time":  "22:48",
+                          "message":  "Add TVE question crop preview tool"
+                      },
+                      {
+                          "time":  "22:38",
+                          "message":  "Support image materials in questions"
+                      },
+                      {
+                          "time":  "22:33",
+                          "message":  "Improve question bank display names"
+                      },
+                      {
+                          "time":  "22:17",
+                          "message":  "Prevent mobile option hover confusion"
+                      },
+                      {
+                          "time":  "22:07",
+                          "message":  "Add vision extraction for question materials"
+                      },
+                      {
+                          "time":  "21:47",
+                          "message":  "Support table materials in questions"
+                      },
+                      {
+                          "time":  "21:32",
+                          "message":  "Normalize question bank text to traditional Chinese"
+                      },
+                      {
+                          "time":  "20:31",
+                          "message":  "Update README and remove obsolete files"
+                      },
+                      {
+                          "time":  "20:25",
+                          "message":  "Organize question banks by year"
+                      },
+                      {
+                          "time":  "20:22",
+                          "message":  "Normalize question bank display names"
+                      },
+                      {
+                          "time":  "20:14",
+                          "message":  "Fix broken shared script strings"
+                      },
+                      {
+                          "time":  "20:10",
+                          "message":  "Fix GitHub Pages question loading"
+                      },
+                      {
+                          "time":  "07:56",
+                          "message":  "Initial commit: Static Quiz App for GitHub Pages"
+                      }
+                  ]
+    }
+]

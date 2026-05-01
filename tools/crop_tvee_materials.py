@@ -102,6 +102,19 @@ def drawing_rects_for_question(page: Any, question_clip: Any) -> list[Any]:
     return rects
 
 
+def image_rects_for_question(fitz: Any, page: Any, question_clip: Any) -> list[Any]:
+    rects = []
+    for block in page.get_text("dict").get("blocks", []):
+        if block.get("type") != 1:
+            continue
+        rect = fitz.Rect(block.get("bbox", []))
+        if rect.is_empty or rect.is_infinite:
+            continue
+        if intersects(rect, question_clip):
+            rects.append(rect)
+    return rects
+
+
 def is_material_label(text: str) -> bool:
     cleaned = text.strip()
     if not cleaned:
@@ -166,8 +179,12 @@ def crop_materials(
 
             page = doc[question_crop.page - 1]
             question_clip = fitz.Rect(question_crop.clip)
-            drawings = drawing_rects_for_question(page, question_clip)
-            visual_rect = largest_drawing_cluster(fitz, drawings)
+            image_rects = image_rects_for_question(fitz, page, question_clip)
+            visual_rect = max(image_rects, key=lambda rect: rect.width * rect.height, default=None)
+            visual_from_image = visual_rect is not None
+            if visual_rect is None:
+                drawings = drawing_rects_for_question(page, question_clip)
+                visual_rect = largest_drawing_cluster(fitz, drawings)
             warnings: list[str] = []
             if visual_rect is None:
                 crops.append(MaterialCrop(
@@ -180,9 +197,9 @@ def crop_materials(
                 ))
                 continue
 
-            words = nearby_word_rects(page, fitz, visual_rect, question_clip, text_distance)
+            words = [] if visual_from_image else nearby_word_rects(page, fitz, visual_rect, question_clip, text_distance)
             material_rect = union_rect(fitz, [visual_rect, *words]) or visual_rect
-            material_rect = expand_material_rect(fitz, material_rect, page.rect, margin)
+            material_rect = expand_material_rect(fitz, material_rect, page.rect, min(margin, 1) if visual_from_image else margin)
             material_rect &= question_clip
 
             if material_rect.width < 24 or material_rect.height < 24:

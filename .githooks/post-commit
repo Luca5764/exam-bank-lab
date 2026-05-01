@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+if [ "$SKIP_CHANGELOG" = "1" ]; then
+  exit 0
+fi
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/update_changelog.ps1
+
+if ! git diff --quiet -- data/changelog.json; then
+  git add data/changelog.json
+  SKIP_CHANGELOG=1 git commit --amend --no-edit --no-verify
+fi

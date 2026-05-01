@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>更新日誌 | 題庫練習</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="container fade-in">
+    <div class="back-link" onclick="navigateTo('index.html')">← 回首頁</div>
+
+    <div class="page-header page-header-compact">
+      <h1>更新日誌</h1>
+      <p class="subtitle">依日期整理最近部署與題庫修正內容。</p>
+    </div>
+
+    <div id="changelogList" class="changelog-list">
+      <div class="card text-dim">更新日誌載入中...</div>
+    </div>
+  </div>
+
+  <script src="js/shared.js?v=changelog"></script>
+  <script>
+    function formatDate(date) {
+      try {
+        return new Intl.DateTimeFormat('zh-TW', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'short',
+        }).format(new Date(`${date}T00:00:00+08:00`));
+      } catch {
+        return date;
+      }
+    }
+
+    async function initChangelog() {
+      const list = document.getElementById('changelogList');
+      try {
+        const days = await fetchJson('data/changelog.json');
+        if (!Array.isArray(days) || days.length === 0) {
+          list.innerHTML = '<div class="card text-dim">目前還沒有更新紀錄。</div>';
+          return;
+        }
+
+        list.innerHTML = days.map((day) => {
+          const items = Array.isArray(day.items) ? day.items : [];
+          const rows = items.map((item) => `
+            <li class="changelog-item">
+              <span class="changelog-time">${esc(item.time || '')}</span>
+              <span class="changelog-message">${esc(item.message || '')}</span>
+              ${item.hash ? `<span class="changelog-hash">${esc(item.hash)}</span>` : ''}
+            </li>
+          `).join('');
+
+          return `
+            <section class="card changelog-day">
+              <h2>${esc(formatDate(day.date || ''))}</h2>
+              <ul>${rows}</ul>
+            </section>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Failed to load changelog', e);
+        list.innerHTML = '<div class="card text-red">更新日誌載入失敗，請稍後再試。</div>';
+      }
+    }
+
+    initChangelog();
+  </script>
+</body>
+
+</html>
