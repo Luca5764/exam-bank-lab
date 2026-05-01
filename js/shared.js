@@ -176,16 +176,13 @@ function buildReviewItemHTML(q, opts) {
 
   const optsHtml = q.options.map((opt, oi) => {
     let c = '';
-    let suffix = '';
     if (oi === q.answer) {
       c = 'opt-correct';
-      suffix = ' 正確答案';
     }
     if (isResult && userAns === oi && !isCorrect) {
       c = 'opt-wrong';
-      suffix = ' 你的答案';
     }
-    return `<div class="${c}">(${LETTERS[oi]}) ${esc(opt)}${suffix}</div>`;
+    return `<div class="${c}">(${LETTERS[oi]}) ${esc(opt)}</div>`;
   }).join('');
 
   const copyFn = isResult ? `copyReview(${idx})` : `copyBrowse(${idx})`;
