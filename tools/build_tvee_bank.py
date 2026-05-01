@@ -144,6 +144,7 @@ READING_TITLE_OVERRIDES: dict[str, dict[int, str]] = {
     },
 }
 VISUAL_MATERIAL_IDS: dict[str, set[int]] = {
+    "109": {31},
     "110": {26, 31},
 }
 

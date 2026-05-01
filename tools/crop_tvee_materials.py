@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -75,6 +76,16 @@ def expand_rect(fitz: Any, rect: Any, page_rect: Any, margin: float) -> Any:
     )
 
 
+def expand_material_rect(fitz: Any, rect: Any, page_rect: Any, margin: float) -> Any:
+    top_margin = min(margin, 1)
+    return fitz.Rect(
+        max(page_rect.x0, rect.x0 - margin),
+        max(page_rect.y0, rect.y0 - top_margin),
+        min(page_rect.x1, rect.x1 + margin),
+        min(page_rect.y1, rect.y1 + margin),
+    )
+
+
 def drawing_rects_for_question(page: Any, question_clip: Any) -> list[Any]:
     rects = []
     for drawing in page.get_drawings():
@@ -95,14 +106,20 @@ def is_material_label(text: str) -> bool:
     cleaned = text.strip()
     if not cleaned:
         return False
-    return len(cleaned) <= 8
+    if len(cleaned) > 8:
+        return False
+    if any(ch in cleaned for ch in "，。！？；：、"):
+        return False
+    if re.search(r"[\u4e00-\u9fff]", cleaned) and len(cleaned) > 4:
+        return False
+    return True
 
 
 def nearby_word_rects(page: Any, fitz: Any, visual_rect: Any, question_clip: Any, distance: float) -> list[Any]:
     x_distance = max(distance, 50)
     search_rect = fitz.Rect(
         max(question_clip.x0, visual_rect.x0 - x_distance),
-        max(question_clip.y0, visual_rect.y0 - distance),
+        max(question_clip.y0, visual_rect.y0 - min(distance, 18)),
         min(question_clip.x1, visual_rect.x1 + x_distance),
         min(question_clip.y1, visual_rect.y1 + min(distance, 16)),
     )
@@ -165,7 +182,7 @@ def crop_materials(
 
             words = nearby_word_rects(page, fitz, visual_rect, question_clip, text_distance)
             material_rect = union_rect(fitz, [visual_rect, *words]) or visual_rect
-            material_rect = expand_rect(fitz, material_rect, page.rect, margin)
+            material_rect = expand_material_rect(fitz, material_rect, page.rect, margin)
             material_rect &= question_clip
 
             if material_rect.width < 24 or material_rect.height < 24:
