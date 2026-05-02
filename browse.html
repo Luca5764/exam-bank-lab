@@ -1,84 +1,250 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
-    <link rel="icon" href="data:,">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>題庫瀏覽 | 農田水利考古題</title>
-<link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>題庫瀏覽 | 考古題練習室</title>
+  <link rel="stylesheet" href="css/style.css?v=library-ui2">
 </head>
+
 <body>
-<div class="container fade-in">
+  <div class="container fade-in">
+    <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
 
-  <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
-  <h2 style="margin-bottom:4px">📖 題庫內容瀏覽</h2>
-  <div class="mb-12">
-    <select id="bankSelect" onchange="loadBank()">
-      <option value="">載入中...</option>
-    </select>
+    <div class="page-header page-header-compact">
+      <h1>題庫內容瀏覽</h1>
+      <p class="subtitle">先從題庫書架挑一份，再檢查題目、答案與解析。</p>
+    </div>
+
+    <div class="card browse-library mb-16">
+      <div class="settings-head">
+        <div>
+          <div class="section-kicker">Library</div>
+          <label>題庫書架</label>
+          <div class="settings-hint">可依題庫系列、科目或關鍵字快速找到要檢查的題庫。</div>
+        </div>
+        <div class="selected-pill" id="browseSummary">載入中...</div>
+      </div>
+
+      <input id="browseSearch" class="bank-search" type="search" placeholder="搜尋年份、科目、來源，例如 112、會計、統測..." oninput="renderBrowseBankBrowser()">
+      <div class="filter-label">題庫系列</div>
+      <div class="collection-grid" id="browseSourceFilters"></div>
+      <div class="filter-label">科目</div>
+      <div class="filter-row" id="browseSubjectFilters"></div>
+      <div id="browseBankList" class="bank-list browse-bank-list">
+        <div class="text-dim">題庫載入中...</div>
+      </div>
+    </div>
+
+    <div class="card browse-current mb-16" id="browseCurrent">
+      <div class="settings-head">
+        <div>
+          <div class="section-kicker">Preview</div>
+          <h2 id="currentBankTitle">尚未選擇題庫</h2>
+          <p class="text-dim">目前共 <strong id="count">0</strong> 題，顯示正確答案與說明。</p>
+        </div>
+        <button id="copyAllBtn" class="btn btn-secondary" onclick="copyAllBrowse(this)" disabled>📋 複製此題庫文字</button>
+      </div>
+    </div>
+
+    <div id="list">
+      <div class="empty-state">請先從上方題庫書架選擇一份題庫。</div>
+    </div>
   </div>
-  <p class="text-dim mb-16">共 <strong id="count">...</strong> 題，顯示正確答案與說明</p>
 
-  <div class="text-center mb-16">
-    <button class="btn btn-secondary" onclick="copyAllBrowse()">📋 複製此題庫文字 (供 AI 閱讀)</button>
-  </div>
+  <script src="js/shared.js?v=110-free-score"></script>
+  <script>
+    let browseQ = [];
+    let browseBanks = [];
+    let browseVisibleBanks = [];
+    let currentBankFile = '';
+    let activeSource = '全部';
+    let activeSubject = '全部';
 
-  <div id="list"></div>
-</div>
+    const COLLECTIONS = [
+      { id: '全部', title: '全部題庫', desc: '跨系列搜尋與檢查' },
+      { id: 'irrigation', title: '農田水利招考', desc: '水利會、農田水利署與共同/專業科目' },
+      { id: 'tve-business', title: '統測商管群', desc: '專二：會計學與經濟學' },
+    ];
 
-<script src="js/shared.js?v=110-free-score"></script>
-<script>
-let browseQ = [];
-
-function copyBrowse(idx) {
-  const q = browseQ[idx];
-  const text = buildBrowsePrompt(q);
-  copyText(text, document.getElementById(`cpbtn-${idx}`));
-}
-
-async function loadBank() {
-  const bank = document.getElementById('bankSelect').value;
-  if (!bank) return;
-  try {
-    browseQ = await fetchJson(bank);
-    document.getElementById('count').textContent = browseQ.length;
-    document.getElementById('list').innerHTML = browseQ.map((q, i) =>
-      buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })
-    ).join('');
-  } catch(e) {
-    console.error(e);
-    showToast('無法讀取題庫內容');
-  }
-}
-
-async function loadBanks() {
-  try {
-    const banks = await fetchJson('data/banks.json');
-    const sel = document.getElementById('bankSelect');
-    sel.innerHTML = banks.map(b => `<option value="${b.file}">${b.name}</option>`).join('');
-
-    const bankParam = new URLSearchParams(location.search).get('bank');
-    if (bankParam && banks.some(b => b.file === bankParam)) {
-      sel.value = bankParam;
+    function jsArg(value) {
+      return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     }
-  } catch(e) {
-    console.error(e);
-  }
-}
 
-async function init() {
-  await loadBanks(); 
-  await loadBank();
-}
+    function bankCollection(bank) {
+      return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
+    }
 
-function copyAllBrowse() {
-  const header = `以下為 ${browseQ.length} 題農田水利相關法規題目內容：\n請根據這些內容回答問題，若有正確答案與說明請依照對應格式呈現。\n`;
-  const texts = browseQ.map(q => buildBrowsePrompt(q));
-  const full = header + '\n' + texts.join('\n' + '='.repeat(50) + '\n');
-  copyText(full, event.target);
-}
+    function collectionLabel(id) {
+      return COLLECTIONS.find(item => item.id === id)?.title || id;
+    }
 
-init();
-</script>
+    function bankDisplayName(bank) {
+      return bank.displayName || bank.name || bank.file;
+    }
+
+    function bankMeta(bank) {
+      return [bank.source, bank.category, bank.originalSubject && bank.originalSubject !== bank.subject ? bank.originalSubject : '']
+        .filter(Boolean)
+        .join(' / ');
+    }
+
+    function copyBrowse(idx) {
+      const q = browseQ[idx];
+      const text = buildBrowsePrompt(q);
+      copyText(text, document.getElementById(`cpbtn-${idx}`));
+    }
+
+    function renderFilterButtons(containerId, items, active, handlerName) {
+      document.getElementById(containerId).innerHTML = items.map(item =>
+        `<button class="filter-chip ${item === active ? 'active' : ''}" onclick="${handlerName}(${jsArg(item)})">${esc(item)}</button>`
+      ).join('');
+    }
+
+    function renderCollectionCards() {
+      document.getElementById('browseSourceFilters').innerHTML = COLLECTIONS.map(item => {
+        const banks = item.id === '全部'
+          ? browseBanks
+          : browseBanks.filter(bank => bankCollection(bank) === item.id);
+        const questionCount = banks.reduce((sum, bank) => sum + (bank.count || 0), 0);
+        return `<button class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setBrowseSourceFilter(${jsArg(item.id)})">
+          <span class="collection-title">${esc(item.title)}</span>
+          <span class="collection-desc">${esc(item.desc)}</span>
+          <span class="collection-count">${banks.length} 份 / ${questionCount} 題</span>
+        </button>`;
+      }).join('');
+    }
+
+    function setBrowseSourceFilter(source) {
+      activeSource = source;
+      activeSubject = '全部';
+      renderBrowseBankBrowser();
+    }
+
+    function setBrowseSubjectFilter(subject) {
+      activeSubject = subject;
+      renderBrowseBankBrowser();
+    }
+
+    function bankMatchesSearch(bank, query) {
+      if (!query) return true;
+      const haystack = [
+        bank.year,
+        bank.subject,
+        bank.originalSubject,
+        bank.source,
+        collectionLabel(bankCollection(bank)),
+        bank.category,
+        bank.name,
+        bank.displayName,
+        bank.file,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(query.toLowerCase());
+    }
+
+    function getFilteredBanks() {
+      const query = document.getElementById('browseSearch')?.value.trim() || '';
+      return browseBanks.filter(bank =>
+        (activeSource === '全部' || bankCollection(bank) === activeSource) &&
+        (activeSubject === '全部' || bank.subject === activeSubject) &&
+        bankMatchesSearch(bank, query)
+      );
+    }
+
+    function renderBrowseBankBrowser() {
+      renderCollectionCards();
+      const scopedBanks = browseBanks.filter(bank => activeSource === '全部' || bankCollection(bank) === activeSource);
+      const subjects = ['全部', ...new Set(scopedBanks.map(bank => bank.subject).filter(Boolean))];
+      if (!subjects.includes(activeSubject)) activeSubject = '全部';
+      renderFilterButtons('browseSubjectFilters', subjects, activeSubject, 'setBrowseSubjectFilter');
+
+      browseVisibleBanks = getFilteredBanks();
+      document.getElementById('browseSummary').textContent =
+        `共 ${browseVisibleBanks.length} 份 / ${browseVisibleBanks.reduce((sum, bank) => sum + (bank.count || 0), 0)} 題`;
+
+      const list = document.getElementById('browseBankList');
+      if (!browseVisibleBanks.length) {
+        list.innerHTML = '<div class="empty-state">找不到符合條件的題庫。</div>';
+        return;
+      }
+
+      list.innerHTML = browseVisibleBanks.map(bank => {
+        const selected = bank.file === currentBankFile;
+        return `<button class="bank-card ${selected ? 'selected' : ''}" onclick="selectBrowseBank(${jsArg(bank.file)})">
+          <span class="bank-check">${selected ? '✓' : ''}</span>
+          <span class="bank-main">
+            <span class="bank-title">${esc(bankDisplayName(bank))}</span>
+            <span class="bank-meta">${esc(bankMeta(bank))}</span>
+          </span>
+          <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
+          <span class="bank-count">${bank.count} 題</span>
+        </button>`;
+      }).join('');
+    }
+
+    async function selectBrowseBank(file) {
+      await loadBank(file);
+    }
+
+    async function loadBank(file) {
+      if (!file) return;
+      const selectedBank = browseBanks.find(bank => bank.file === file);
+      if (!selectedBank) return;
+      currentBankFile = file;
+      renderBrowseBankBrowser();
+      try {
+        browseQ = await fetchJson(file);
+        document.getElementById('count').textContent = browseQ.length;
+        document.getElementById('currentBankTitle').textContent = bankDisplayName(selectedBank);
+        document.getElementById('copyAllBtn').disabled = false;
+        document.getElementById('list').innerHTML = browseQ.map((q, i) =>
+          buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })
+        ).join('');
+      } catch (e) {
+        console.error(e);
+        showToast('無法讀取題庫內容');
+      }
+    }
+
+    async function loadBanks() {
+      try {
+        const banks = await fetchJson('data/banks.json');
+        browseBanks = (banks || []).map(b => ({
+          ...b,
+          source: b.source || '農田水利',
+          subject: b.subject || b.name,
+        }));
+        const bankParam = new URLSearchParams(location.search).get('bank');
+        const selectedBank = browseBanks.find(bank => bank.file === bankParam);
+        if (selectedBank) {
+          activeSource = bankCollection(selectedBank);
+          activeSubject = selectedBank.subject || '全部';
+        }
+        renderBrowseBankBrowser();
+        if (selectedBank) await loadBank(selectedBank.file);
+      } catch (e) {
+        console.error(e);
+        showToast('題庫索引讀取失敗');
+      }
+    }
+
+    function copyAllBrowse(btn) {
+      if (!browseQ.length || !currentBankFile) {
+        showToast('請先選擇一份題庫');
+        return;
+      }
+      const selectedBank = browseBanks.find(bank => bank.file === currentBankFile);
+      const bankName = selectedBank ? bankDisplayName(selectedBank) : '目前題庫';
+      const header = `以下為「${bankName}」共 ${browseQ.length} 題題目內容：\n請根據這些內容回答問題，若有正確答案與說明請依照對應格式呈現。\n`;
+      const texts = browseQ.map(q => buildBrowsePrompt(q));
+      const full = header + '\n' + texts.join('\n' + '='.repeat(50) + '\n');
+      copyText(full, btn);
+    }
+
+    loadBanks();
+  </script>
 </body>
+
 </html>
