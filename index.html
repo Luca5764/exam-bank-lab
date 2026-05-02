@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>考古題練習室 | 靜態版</title>
-  <link rel="stylesheet" href="css/style.css?v=library-ui2">
+  <link rel="stylesheet" href="css/style.css?v=theme1">
 </head>
 
 <body>
@@ -14,7 +14,7 @@
 
     <section class="hero-panel">
       <div class="page-header">
-        <div class="eyebrow">115 年 1 月版</div>
+        <div class="eyebrow">題庫持續更新</div>
         <h1>考古題練習室</h1>
         <p class="subtitle">農田水利、統測專二與更多題庫，都用同一套流程練習。</p>
       </div>
@@ -90,7 +90,7 @@
       <button id="startBtn" class="btn btn-primary btn-block" onclick="doStart()">🚀 開始測驗練習</button>
     </div>
 
-    <div id="resumeCard" class="card mb-16" style="display:none;border-color:#ffb300;background:#fffdf5">
+    <div id="resumeCard" class="card mb-16" style="display:none;border-color:var(--gold);background:var(--paper)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
           <strong style="font-size:1.1rem">👋 您有上次未完成的測驗</strong>
@@ -118,7 +118,7 @@
 
   </div>
 
-  <script src="js/shared.js?v=110-free-score"></script>
+  <script src="js/shared.js?v=theme1"></script>
   <script>
     let allQuestions = [];
     let currentBank = '';
