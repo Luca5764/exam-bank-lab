@@ -18,6 +18,7 @@
     "source": "農田水利",
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "會計學概要",
+    "originalSubject": "會計學概要",
     "count": 40
   },
   {
@@ -39,6 +40,7 @@
     "source": "農田水利",
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "經濟學概要",
+    "originalSubject": "經濟學概要",
     "count": 40
   },
   {
@@ -49,6 +51,7 @@
     "source": "農田水利",
     "category": "不分職等 / 共同科目",
     "subject": "公文與法學緒論",
+    "originalSubject": "公文與法學緒論",
     "count": 35
   },
   {
@@ -59,6 +62,7 @@
     "source": "農田水利",
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "會計學概要",
+    "originalSubject": "會計學概要",
     "count": 40
   },
   {
@@ -69,6 +73,7 @@
     "source": "農田水利",
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "經濟學概要",
+    "originalSubject": "經濟學概要",
     "count": 40
   },
   {
@@ -79,6 +84,7 @@
     "source": "農田水利",
     "category": "不分職等 / 共同科目",
     "subject": "農田水利概論與相關法規",
+    "originalSubject": "農田水利概論與相關法規",
     "count": 50
   },
   {
@@ -100,6 +106,7 @@
     "source": "農田水利",
     "category": "專業科目一",
     "subject": "會計學概要",
+    "originalSubject": "會計學概要",
     "count": 40
   },
   {
@@ -110,6 +117,7 @@
     "source": "農田水利",
     "category": "專業科目二",
     "subject": "經濟學概要",
+    "originalSubject": "經濟學概要",
     "count": 40
   },
   {
@@ -120,6 +128,7 @@
     "source": "農田水利",
     "category": "共同科目二",
     "subject": "農田水利概論與相關法規",
+    "originalSubject": "農田水利概論與相關法規",
     "count": 50
   },
   {
@@ -130,6 +139,7 @@
     "source": "農田水利署",
     "category": "共同科目",
     "subject": "公文與法學緒論",
+    "originalSubject": "公文與法學緒論",
     "count": 33
   },
   {
@@ -140,6 +150,7 @@
     "source": "農田水利署",
     "category": "專業科目",
     "subject": "會計學概要",
+    "originalSubject": "會計學概要",
     "count": 32
   },
   {
@@ -150,6 +161,7 @@
     "source": "農田水利署",
     "category": "專業科目",
     "subject": "經濟學概要",
+    "originalSubject": "經濟學概要",
     "count": 33
   },
   {
@@ -160,6 +172,7 @@
     "source": "農田水利署",
     "category": "專業科目",
     "subject": "農田水利概論與相關法規",
+    "originalSubject": "農田水利概論與相關法規",
     "count": 27
   },
   {
@@ -170,6 +183,7 @@
     "source": "統測專二",
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
+    "originalSubject": "會計學與經濟學",
     "count": 50
   },
   {
@@ -180,6 +194,7 @@
     "source": "統測專二",
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
+    "originalSubject": "會計學與經濟學",
     "count": 49
   },
   {
@@ -190,6 +205,7 @@
     "source": "統測專二",
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
+    "originalSubject": "會計學與經濟學",
     "count": 50
   },
   {
@@ -200,6 +216,7 @@
     "source": "統測專二",
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
+    "originalSubject": "會計學與經濟學",
     "count": 50
   }
 ]

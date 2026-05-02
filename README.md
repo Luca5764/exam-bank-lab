@@ -1,22 +1,35 @@
-# 農田水利考古題測驗
+# 考古題練習室
 
-這是一個部署在 GitHub Pages 上的純前端測驗網站，提供農田水利相關考古題練習、交卷檢視、錯題複習與題庫瀏覽功能。
+這是一個部署在 GitHub Pages 上的純前端考古題練習網站。網站目前收錄農田水利招考與統測商管群題庫，支援題庫瀏覽、隨機測驗、指定題數、交卷檢視、錯題複習與作答續作。
 
-網站網址：
-[https://luca5764.github.io/Irrigation_Quiz/](https://luca5764.github.io/Irrigation_Quiz/)
+目前網站：
+[https://luca5764.github.io/exam-bank-lab/](https://luca5764.github.io/exam-bank-lab/)
 
-## 專案特性
+## 專案定位
+
+首頁以「題庫系列」整理不同考試來源，避免不同考科混在同一層級造成混亂。
+
+目前題庫系列：
+
+- `農田水利招考`：水利會、農田水利署共同科目與專業科目。
+- `統測商管群`：統測專二會計學與經濟學。
+
+未來如果加入更多題庫，建議優先新增題庫系列與科目 metadata，而不是單純把所有題庫塞進同一排篩選按鈕。
+
+## 功能
 
 - 純靜態網站，沒有後端服務。
 - 可直接部署到 GitHub Pages。
 - 題庫由 `questions/*.json` 提供。
-- 題庫清單由 `tools/build_index.py` 自動產生 `data/banks.json`。
-- 題庫名稱依原始 PDF 年份整理，目前依 `105 / 109 / 111 / 113` 排序顯示。
-- 支援測驗作答、交卷、歷史紀錄、錯題整理、續作與題庫瀏覽。
+- 題庫索引由 `tools/build_index.py` 產生 `data/banks.json`。
+- 題庫可依系列、科目、年份與關鍵字瀏覽。
+- 測驗題數可由使用者輸入，並保留 `10 題快測` 與 `全部題目`。
+- 支援隨機抽題、照順序練習、錯題複習、歷史紀錄與未完成測驗續作。
+- 題組題會盡量保持同組一起出現，避免「承上題」被拆散。
 
 ## 資料保存方式
 
-本網站的測驗資料是保存在使用者自己的瀏覽器 `localStorage`，不是存在伺服器上。
+本網站的測驗資料保存在使用者自己的瀏覽器 `localStorage`，不是存在伺服器上。
 
 這代表：
 
@@ -28,17 +41,21 @@
 ## 目錄說明
 
 ```text
-index.html            首頁與題庫選擇
+index.html            首頁、題庫系列選擇與測驗設定
 quiz.html             測驗頁
 review.html           交卷後檢視
-browse.html           題庫瀏覽
+browse.html           題庫內容瀏覽
 wrong.html            錯題複習
+changelog.html        更新日誌
 css/style.css         樣式
 js/shared.js          共用前端邏輯
 questions/            題庫 JSON
-data/banks.json       題庫索引
+data/banks.json       題庫索引與顯示 metadata
+data/changelog.json   commit 產生的更新日誌
 tools/build_index.py  重建題庫索引
-農田水利/             原始 PDF 題目來源
+tools/                題庫轉換、OCR、裁圖與維護工具
+農田水利/             農田水利原始 PDF 題目來源
+統測專二/             統測專二原始 PDF 題目來源
 ```
 
 ## 本機使用
@@ -48,13 +65,13 @@ tools/build_index.py  重建題庫索引
 例如：
 
 ```bash
-python -m http.server 8080
+python -m http.server 8765
 ```
 
 然後開啟：
 
 ```text
-http://localhost:8080/
+http://127.0.0.1:8765/
 ```
 
 ## GitHub Pages 部署
@@ -73,9 +90,19 @@ http://localhost:8080/
 
 ## 題庫整理規則
 
-- 顯示名稱由 `tools/build_index.py` 自動整理。
-- 題庫會依原始 PDF 所在資料夾年份排序。
-- `questions/questions.json` 已視為舊版綜合題庫，不再顯示在前台題庫清單中。
+`data/banks.json` 內每份題庫會包含：
+
+- `file`：題庫 JSON 路徑。
+- `name`：較完整的顯示名稱。
+- `displayName`：首頁卡片使用的短名稱。
+- `year`：年度。
+- `source`：原始來源，例如農田水利、農田水利署、統測專二。
+- `category`：職等、群別或科目類別。
+- `subject`：統一後的科目名稱。
+- `originalSubject`：原始檔名或 PDF 中的科目名稱。
+- `count`：題數。
+
+常見科目會做名稱統一，例如 `法學緒論`、`公文及法學緒論`、`公文與農田水利相關法規` 會歸到 `公文與法學緒論`。
 
 ## 注意事項
 
