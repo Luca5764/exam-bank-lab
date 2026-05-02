@@ -5,64 +5,89 @@
   <link rel="icon" href="data:,">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>農田水利法規測驗 | 靜態版</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>考古題練習室 | 靜態版</title>
+  <link rel="stylesheet" href="css/style.css?v=library-ui2">
 </head>
 
 <body>
   <div class="container fade-in">
 
-    <div class="page-header">
-      <h1>📚 農田水利考古題測驗</h1>
-      <p class="subtitle">115年 1月版 ‧ 題庫模擬練習</p>
-    </div>
+    <section class="hero-panel">
+      <div class="page-header">
+        <div class="eyebrow">115 年 1 月版</div>
+        <h1>考古題練習室</h1>
+        <p class="subtitle">農田水利、統測專二與更多題庫，都用同一套流程練習。</p>
+      </div>
 
-    <div class="stat-row mb-24" id="statRow">
-      <div class="stat-box" onclick="navigateToBrowse()">
-        <div class="num" id="totalCount">...</div>
-        <div class="lbl">題庫總題數 ‧ 點此瀏覽</div>
+      <div class="stat-row" id="statRow">
+        <div class="stat-box" onclick="navigateToBrowse()">
+          <div class="num" id="totalCount">...</div>
+          <div class="lbl">題庫總覽</div>
+          <div class="stat-note">查看全部題庫</div>
+        </div>
+        <div class="stat-box" onclick="navigateTo('wrong.html?scope=today')">
+          <div class="num red" id="todayWrongCount">0</div>
+          <div class="lbl">今日錯題</div>
+          <div class="stat-note">立即複習</div>
+        </div>
+        <div class="stat-box" onclick="navigateTo('wrong.html?scope=past')">
+          <div class="num red" id="pastWrongCount">0</div>
+          <div class="lbl">往日錯題</div>
+          <div class="stat-note">回頭補洞</div>
+        </div>
       </div>
-      <div class="stat-box" onclick="navigateTo('wrong.html?scope=today')">
-        <div class="num red" id="todayWrongCount">0</div>
-        <div class="lbl">今日錯題 ‧ 複習</div>
-      </div>
-      <div class="stat-box" onclick="navigateTo('wrong.html?scope=past')">
-        <div class="num red" id="pastWrongCount">0</div>
-        <div class="lbl">往日錯題 ‧ 複習</div>
-      </div>
-    </div>
+    </section>
 
     <!-- Settings -->
-    <div class="card mb-16">
-      <label class="mb-8">📁 題庫選擇</label>
-      <select id="questionBank" class="mb-16" onchange="onBankChange()">
-        <option value="questions/questions.json">載入中...</option>
-      </select>
+    <div class="card quiz-dashboard mb-16">
+      <div class="settings-section">
+        <div class="settings-head">
+          <div>
+            <div class="section-kicker">Step 1</div>
+            <label>挑選題庫</label>
+            <div class="settings-hint">先選題庫系列，再挑該系列底下的科目與年份；也可以一次勾多份混合練習。</div>
+          </div>
+          <div class="selected-pill" id="selectedSummary">載入中...</div>
+        </div>
 
-      <div id="customPanel" class="mb-16" style="display:none">
-        <div style="font-size:0.9rem;color:var(--text-dim);margin-bottom:8px">選擇要併入的題庫：</div>
-        <div id="customBankList" style="display:flex;flex-direction:column;gap:6px"></div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
-          <button class="btn btn-secondary btn-sm" onclick="selectAllBanks(true)">全選</button>
-          <button class="btn btn-secondary btn-sm" onclick="selectAllBanks(false)">全不選</button>
-          <span class="text-dim" style="font-size:0.9rem">已選：<strong id="customCount">0</strong> 題</span>
+        <input id="bankSearch" class="bank-search" type="search" placeholder="搜尋年份、科目、來源，例如 112、會計、統測..." oninput="renderBankBrowser()">
+        <div class="filter-label">題庫系列</div>
+        <div class="collection-grid" id="sourceFilters"></div>
+        <div class="filter-label">科目</div>
+        <div class="filter-row" id="subjectFilters"></div>
+        <div class="bank-toolbar">
+          <button class="btn btn-secondary btn-sm" onclick="selectVisibleBanks()">選取目前篩選</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearSelectedBanks()">清空選取</button>
+        </div>
+        <div id="bankList" class="bank-list">
+          <div class="text-dim">題庫載入中...</div>
         </div>
       </div>
 
-      <label class="mb-8">🎯 測驗模式</label>
-      <select id="quizMode" class="mb-16">
-        <option value="random">隨機挑選</option>
-        <option value="wrong">曾錯過的題 (隨機 50 題)</option>
-        <option value="still-wrong">至今仍錯的題 (隨機 50 題)</option>
-        <option value="all">全題庫 (依順序)</option>
-      </select>
-      <label class="mb-8">📝 測驗題數</label>
-      <select id="numQuestions">
-        <option value="10">10 題 (快速練習)</option>
-        <option value="25">25 題</option>
-        <option value="50" selected>50 題 (標準模擬)</option>
-        <option value="0">全題庫</option>
-      </select>
+      <div class="settings-section">
+        <div class="section-kicker">Step 2</div>
+        <label class="mb-8">測驗模式</label>
+        <select id="quizMode" class="mb-16" onchange="updateModeHelp()">
+          <option value="random">隨機抽題</option>
+          <option value="wrong">曾錯過的題</option>
+          <option value="still-wrong">至今仍錯的題</option>
+          <option value="all">全部練習（照順序）</option>
+        </select>
+        <div class="settings-hint" id="modeHelp">會從已選題庫中依題數抽題，題組會一起保留。</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-kicker">Step 3</div>
+        <label class="mb-8">測驗題數</label>
+        <div class="quiz-count-row">
+          <input id="numQuestions" class="number-input" type="number" min="1" step="1" value="50" inputmode="numeric" oninput="syncCountFromInput()">
+          <button class="btn btn-secondary btn-sm" onclick="setQuestionCount(10)">10 題快測</button>
+          <button class="btn btn-secondary btn-sm" onclick="setQuestionCount(0)">全部題目</button>
+        </div>
+        <div class="settings-hint" id="countHelp">輸入 1 以上的題數；選「全部題目」會使用目前題庫可用的全部題數。</div>
+      </div>
+
+      <button id="startBtn" class="btn btn-primary btn-block" onclick="doStart()">🚀 開始測驗練習</button>
     </div>
 
     <div id="resumeCard" class="card mb-16" style="display:none;border-color:#ffb300;background:#fffdf5">
@@ -77,8 +102,6 @@
         </div>
       </div>
     </div>
-
-    <button class="btn btn-primary btn-block mb-16" onclick="doStart()">🚀 開始測驗練習</button>
 
     <!-- History -->
     <div class="card" id="historyCard" style="display:none">
@@ -100,66 +123,199 @@
     let allQuestions = [];
     let currentBank = '';
     let BANK_INFO = [];
+    let selectedBanks = new Set();
+    let activeSource = '全部';
+    let activeSubject = '全部';
+    let visibleBanks = [];
+    let useAllQuestions = false;
 
-    function initCustomBankPanel() {
-      document.getElementById('customBankList').innerHTML = BANK_INFO.map(b =>
-        `<label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-      <input type="checkbox" value="${b.file}" onchange="updateCustomCount()"
-        style="width:16px;height:16px;cursor:pointer">
-      <span>${b.label} (${b.count} 題)</span>
-    </label>`
+    const COLLECTIONS = [
+      { id: '全部', title: '全部題庫', desc: '跨系列搜尋與混合練習' },
+      { id: 'irrigation', title: '農田水利招考', desc: '水利會、農田水利署與共同/專業科目' },
+      { id: 'tve-business', title: '統測商管群', desc: '專二：會計學與經濟學' },
+    ];
+
+    function bankCollection(bank) {
+      return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
+    }
+
+    function collectionLabel(id) {
+      return COLLECTIONS.find(item => item.id === id)?.title || id;
+    }
+
+    function bankTitle(bank) {
+      return bank.displayName || `${bank.year || ''} ${bank.subject || bank.name || ''}`.trim();
+    }
+
+    function bankMeta(bank) {
+      return [bank.source, bank.category, bank.originalSubject && bank.originalSubject !== bank.subject ? bank.originalSubject : '']
+        .filter(Boolean)
+        .join(' / ');
+    }
+
+    function jsArg(value) {
+      return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    function getSelectedBankList() {
+      return BANK_INFO.filter(bank => selectedBanks.has(bank.file));
+    }
+
+    function selectedTotalCount() {
+      return getSelectedBankList().reduce((sum, bank) => sum + (bank.count || 0), 0);
+    }
+
+    function updateSelectedSummary() {
+      const selected = getSelectedBankList();
+      const total = selectedTotalCount();
+      document.getElementById('selectedSummary').textContent = selected.length
+        ? `已選 ${selected.length} 份 / ${total} 題`
+        : '請選擇題庫';
+      currentBank = selected[0]?.file || '';
+      syncCountFromInput();
+      updateStartState();
+    }
+
+    function updateStartState() {
+      const btn = document.getElementById('startBtn');
+      if (!btn) return;
+      const mode = document.getElementById('quizMode')?.value || 'random';
+      const needsBank = mode !== 'wrong' && mode !== 'still-wrong';
+      const ready = !needsBank || selectedBanks.size > 0;
+      btn.disabled = !ready;
+      btn.textContent = ready ? '🚀 開始測驗練習' : '請先選擇題庫';
+    }
+
+    function renderFilterButtons(containerId, items, active, handlerName) {
+      document.getElementById(containerId).innerHTML = items.map(item =>
+        `<button class="filter-chip ${item === active ? 'active' : ''}" onclick="${handlerName}(${jsArg(item)})">${esc(item)}</button>`
       ).join('');
     }
 
-    function selectAllBanks(checked) {
-      document.querySelectorAll('#customBankList input[type="checkbox"]')
-        .forEach(cb => cb.checked = checked);
-      updateCustomCount();
+    function renderCollectionCards() {
+      document.getElementById('sourceFilters').innerHTML = COLLECTIONS.map(item => {
+        const banks = item.id === '全部'
+          ? BANK_INFO
+          : BANK_INFO.filter(bank => bankCollection(bank) === item.id);
+        const questionCount = banks.reduce((sum, bank) => sum + (bank.count || 0), 0);
+        return `<button class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setSourceFilter(${jsArg(item.id)})">
+          <span class="collection-title">${esc(item.title)}</span>
+          <span class="collection-desc">${esc(item.desc)}</span>
+          <span class="collection-count">${banks.length} 份 / ${questionCount} 題</span>
+        </button>`;
+      }).join('');
     }
 
-    function updateCustomCount() {
-      let total = 0;
-      document.querySelectorAll('#customBankList input[type="checkbox"]:checked')
-        .forEach(cb => { const b = BANK_INFO.find(x => x.file === cb.value); if (b) total += b.count; });
-      document.getElementById('customCount').textContent = total;
+    function setSourceFilter(source) {
+      activeSource = source;
+      activeSubject = '全部';
+      renderBankBrowser();
+    }
+
+    function setSubjectFilter(subject) {
+      activeSubject = subject;
+      renderBankBrowser();
+    }
+
+    function bankMatchesSearch(bank, query) {
+      if (!query) return true;
+      const haystack = [
+        bank.year,
+        bank.subject,
+        bank.originalSubject,
+        bank.source,
+        collectionLabel(bankCollection(bank)),
+        bank.category,
+        bank.name,
+        bank.file,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(query.toLowerCase());
+    }
+
+    function getFilteredBanks() {
+      const query = document.getElementById('bankSearch')?.value.trim() || '';
+      return BANK_INFO.filter(bank =>
+        (activeSource === '全部' || bankCollection(bank) === activeSource) &&
+        (activeSubject === '全部' || bank.subject === activeSubject) &&
+        bankMatchesSearch(bank, query)
+      );
+    }
+
+    function renderBankBrowser() {
+      renderCollectionCards();
+      const scopedBanks = BANK_INFO.filter(bank => activeSource === '全部' || bankCollection(bank) === activeSource);
+      const subjects = ['全部', ...new Set(scopedBanks.map(bank => bank.subject).filter(Boolean))];
+      if (!subjects.includes(activeSubject)) activeSubject = '全部';
+      renderFilterButtons('subjectFilters', subjects, activeSubject, 'setSubjectFilter');
+
+      visibleBanks = getFilteredBanks();
+      const list = document.getElementById('bankList');
+      if (!visibleBanks.length) {
+        list.innerHTML = '<div class="empty-state">找不到符合條件的題庫。</div>';
+        updateSelectedSummary();
+        return;
+      }
+
+      list.innerHTML = visibleBanks.map(bank => {
+        const selected = selectedBanks.has(bank.file);
+        return `<button class="bank-card ${selected ? 'selected' : ''}" onclick="toggleBank(${jsArg(bank.file)})">
+          <span class="bank-check">${selected ? '✓' : ''}</span>
+          <span class="bank-main">
+            <span class="bank-title">${esc(bankTitle(bank))}</span>
+            <span class="bank-meta">${esc(bankMeta(bank))}</span>
+          </span>
+          <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
+          <span class="bank-count">${bank.count} 題</span>
+        </button>`;
+      }).join('');
+      updateSelectedSummary();
+    }
+
+    function toggleBank(file) {
+      if (selectedBanks.has(file)) selectedBanks.delete(file);
+      else selectedBanks.add(file);
+      renderBankBrowser();
+    }
+
+    function selectVisibleBanks() {
+      visibleBanks.forEach(bank => selectedBanks.add(bank.file));
+      renderBankBrowser();
+    }
+
+    function clearSelectedBanks() {
+      selectedBanks.clear();
+      renderBankBrowser();
     }
 
     async function loadBank(bank) {
-      if (!bank) return;
+      if (!bank) {
+        allQuestions = [];
+        return;
+      }
       currentBank = bank;
       try {
         allQuestions = await fetchJson(bank);
-        document.getElementById('totalCount').textContent = allQuestions.length;
       } catch (e) {
         console.error('Failed to load question bank', bank, e);
         allQuestions = [];
-        document.getElementById('totalCount').textContent = '0';
         showToast('題庫讀取失敗，請重新整理後再試');
       }
-    }
-
-    function onBankChange() {
-      const val = document.getElementById('questionBank').value;
-      document.getElementById('customPanel').style.display = val === '__custom__' ? 'block' : 'none';
-      if (val !== '__custom__') loadBank(val);
     }
 
     async function loadBanks() {
       try {
         const banks = await fetchJson('data/banks.json');
         if (banks && banks.length > 0) {
-          const sel = document.getElementById('questionBank');
-          let html = '';
-          banks.forEach(b => {
-            html += `<option value="${b.file}">${b.name} (${b.count} 題)</option>`;
-          });
-          html += '<option disabled>─── 以上為自動偵測題庫 ───</option>';
-          html += '<option value="__custom__">🎲 自訂 / 複選題庫...</option>';
-          sel.innerHTML = html;
-
-          BANK_INFO = banks.map(b => ({ file: b.file, label: b.name, count: b.count }));
-          initCustomBankPanel();
-          return banks[0].file;
+          BANK_INFO = banks.map(b => ({
+            ...b,
+            source: b.source || '農田水利',
+            subject: b.subject || b.name,
+          }));
+          selectedBanks = new Set();
+          document.getElementById('totalCount').textContent =
+            BANK_INFO.reduce((sum, bank) => sum + (bank.count || 0), 0);
+          renderBankBrowser();
+          return '';
         }
       } catch (e) { 
         console.error("Failed to load banks", e);
@@ -199,9 +355,10 @@
         modeEl.querySelector('[value="wrong"]').disabled = true;
         modeEl.querySelector('[value="still-wrong"]').disabled = true;
       } else {
-        modeEl.querySelector('[value="wrong"]').textContent = `曾錯過的題 (共 ${wp.ever_wrong.length} 題)`;
-        modeEl.querySelector('[value="still-wrong"]').textContent = `至今仍錯的題 (剩 ${wp.still_wrong.length} 題)`;
+        modeEl.querySelector('[value="wrong"]').textContent = `曾錯過的題（共 ${wp.ever_wrong.length} 題）`;
+        modeEl.querySelector('[value="still-wrong"]').textContent = `至今仍錯的題（剩 ${wp.still_wrong.length} 題）`;
       }
+      updateModeHelp();
 
       // 4. Load history from LocalStorage
       const history = loadLocalHistory();
@@ -229,28 +386,72 @@
     function doStart() {
       try { localStorage.removeItem('quiz_session'); } catch { }
       const mode = document.getElementById('quizMode').value;
-      const num = document.getElementById('numQuestions').value;
-      const bankVal = document.getElementById('questionBank').value;
+      const num = getQuestionCount();
 
       if (mode === 'wrong' || mode === 'still-wrong') {
         window.location.href = `quiz.html?mode=${mode}&num=${num}`;
         return;
       }
 
-      if (bankVal === '__custom__') {
-        const selected = [...document.querySelectorAll('#customBankList input[type="checkbox"]:checked')]
-          .map(cb => cb.value);
-        if (selected.length === 0) { alert('請至少選擇一個題庫！'); return; }
+      const selected = getSelectedBankList().map(bank => bank.file);
+      if (selected.length === 0) { alert('請至少選擇一個題庫！'); return; }
+
+      if (selected.length > 1) {
         window.location.href = `quiz.html?mode=${mode}&num=${num}&banks=${selected.map(encodeURIComponent).join(',')}`;
       } else {
-        window.location.href = `quiz.html?mode=${mode}&num=${num}&bank=${encodeURIComponent(bankVal)}`;
+        window.location.href = `quiz.html?mode=${mode}&num=${num}&bank=${encodeURIComponent(selected[0])}`;
       }
     }
 
     function navigateToBrowse() {
-      const val = document.getElementById('questionBank').value;
-      const b = (val && val !== '__custom__') ? val : currentBank;
-      window.location.href = `browse.html?bank=${encodeURIComponent(b)}`;
+      window.location.href = 'browse.html';
+    }
+
+    function getQuestionCount() {
+      if (useAllQuestions) return '0';
+      const raw = parseInt(document.getElementById('numQuestions').value, 10);
+      return String(Number.isFinite(raw) && raw > 0 ? raw : 10);
+    }
+
+    function setQuestionCount(num) {
+      useAllQuestions = num === 0;
+      const input = document.getElementById('numQuestions');
+      if (useAllQuestions) {
+        input.value = '';
+        input.placeholder = '全部';
+      } else {
+        input.value = num;
+        input.placeholder = '';
+      }
+      syncCountFromInput();
+    }
+
+    function syncCountFromInput() {
+      const input = document.getElementById('numQuestions');
+      if (input.value) useAllQuestions = false;
+      const total = selectedTotalCount();
+      const countHelp = document.getElementById('countHelp');
+      const requested = getQuestionCount();
+      if (requested === '0') {
+        countHelp.textContent = total ? `將使用目前選取題庫的全部 ${total} 題。` : '請先選擇題庫。';
+      } else if (total && Number(requested) > total) {
+        countHelp.textContent = `目前選取題庫共有 ${total} 題，實際會以可用題數為上限。`;
+      } else {
+        countHelp.textContent = `將出 ${requested} 題；題組題會一起保留。`;
+      }
+    }
+
+    function updateModeHelp() {
+      const mode = document.getElementById('quizMode').value;
+      const help = document.getElementById('modeHelp');
+      const text = {
+        random: '會從已選題庫中依題數隨機抽題，題組會一起保留。',
+        wrong: '會從曾答錯過的題目中依題數抽題，不受目前題庫篩選限制。',
+        'still-wrong': '會從目前仍未答對的錯題中依題數抽題。',
+        all: '會依題庫原順序練習；如果有設定題數，只取前段題目。',
+      };
+      help.textContent = text[mode] || text.random;
+      updateStartState();
     }
 
     function doResume() {
