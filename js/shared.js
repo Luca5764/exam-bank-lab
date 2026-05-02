@@ -7,6 +7,62 @@ function esc(s) {
     .replace(/>/g, '&gt;');
 }
 
+const THEME_KEY = 'exam_bank_theme';
+
+function getStoredTheme() {
+  try {
+    const theme = localStorage.getItem(THEME_KEY);
+    return theme === 'dark' || theme === 'light' ? theme : '';
+  } catch {
+    return '';
+  }
+}
+
+function getPreferredTheme() {
+  const stored = getStoredTheme();
+  if (stored) return stored;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function updateThemeToggle(theme) {
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  const isDark = theme === 'dark';
+  btn.textContent = isDark ? '☀️ 淺色' : '🌙 深色';
+  btn.setAttribute('aria-label', isDark ? '切換成淺色模式' : '切換成深色模式');
+}
+
+function applyTheme(theme) {
+  const next = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = next;
+  updateThemeToggle(next);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem(THEME_KEY, next); } catch { }
+  applyTheme(next);
+}
+
+function installThemeToggle() {
+  if (document.getElementById('themeToggle')) return;
+  const btn = document.createElement('button');
+  btn.id = 'themeToggle';
+  btn.type = 'button';
+  btn.className = 'theme-toggle';
+  btn.onclick = toggleTheme;
+  document.body.appendChild(btn);
+  updateThemeToggle(document.documentElement.dataset.theme || getPreferredTheme());
+}
+
+applyTheme(getPreferredTheme());
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', installThemeToggle);
+} else {
+  installThemeToggle();
+}
+
 let _toastEl = null;
 let _toastTimer = null;
 
