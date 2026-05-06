@@ -73,7 +73,7 @@
           <option value="still-wrong">至今仍錯的題</option>
           <option value="all">全部練習（照順序）</option>
         </select>
-        <div class="settings-hint" id="modeHelp">會從已選題庫中依題數抽題，題組會一起保留。</div>
+        <div class="settings-hint" id="modeHelp">會從已選題庫中依題數抽題，已做過的題會降低出現機率，題組會一起保留。</div>
       </div>
 
       <div class="settings-section">
@@ -445,7 +445,7 @@
       const mode = document.getElementById('quizMode').value;
       const help = document.getElementById('modeHelp');
       const text = {
-        random: '會從已選題庫中依題數隨機抽題，題組會一起保留。',
+        random: '會從已選題庫中依題數隨機抽題，已做過的題會降低出現機率，題組會一起保留。',
         wrong: '會從曾答錯過的題目中依題數抽題，不受目前題庫篩選限制。',
         'still-wrong': '會從目前仍未答對的錯題中依題數抽題。',
         all: '會依題庫原順序練習；如果有設定題數，只取前段題目。',
