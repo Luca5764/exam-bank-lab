@@ -189,9 +189,49 @@
       return selectedBlocks.flat();
     }
 
+    function getQuestionHistoryKey(q) {
+      return `${q._bank || bank}|${q.id}`;
+    }
+
+    function getQuestionAttemptCounts() {
+      const counts = new Map();
+      const history = loadLocalHistory();
+
+      history.forEach((session) => {
+        const sessionBank = session.bank || 'questions/questions.json';
+        (session.answers || []).forEach((item) => {
+          const key = `${item.bank || sessionBank}|${item.qid}`;
+          counts.set(key, (counts.get(key) || 0) + 1);
+        });
+      });
+
+      return counts;
+    }
+
+    function getBlockAttemptScore(block, attemptCounts) {
+      return block.reduce((max, q) => Math.max(max, attemptCounts.get(getQuestionHistoryKey(q)) || 0), 0);
+    }
+
+    function weightedShuffleQuestionBlocks(blocks) {
+      const attemptCounts = getQuestionAttemptCounts();
+      if (!attemptCounts.size) return shuffle(blocks);
+
+      return blocks
+        .map((block, index) => {
+          const attempts = getBlockAttemptScore(block, attemptCounts);
+          const weight = 1 / Math.pow(1 + attempts, 2);
+          const priority = -Math.log(Math.max(Math.random(), Number.EPSILON)) / weight;
+          return { block, priority, index };
+        })
+        .sort((a, b) => a.priority - b.priority || a.index - b.index)
+        .map((item) => item.block);
+    }
+
     function selectQuestionPool(pool, mode, desiredCount) {
       const blocks = buildQuestionBlocks(pool);
-      const orderedBlocks = mode === 'all' ? blocks : shuffle(blocks);
+      const orderedBlocks = mode === 'all'
+        ? blocks
+        : (mode === 'random' ? weightedShuffleQuestionBlocks(blocks) : shuffle(blocks));
       return takeQuestionBlocks(orderedBlocks, desiredCount, mode !== 'all');
     }
 

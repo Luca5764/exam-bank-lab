@@ -1,5 +1,14 @@
 [
     {
+        "date":  "2026-05-06",
+        "items":  [
+                      {
+                          "time":  "20:10",
+                          "message":  "Reduce repeats in random quizzes"
+                      }
+                  ]
+    },
+    {
         "date":  "2026-05-03",
         "items":  [
                       {
