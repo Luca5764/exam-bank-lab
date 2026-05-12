@@ -803,6 +803,26 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   margin-top: 4px;
 }
 
+.law-embla {
+  min-width: 0;
+}
+
+.law-embla-viewport {
+  border-radius: 30px;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.law-embla-container {
+  display: flex;
+  touch-action: pan-y pinch-zoom;
+}
+
+.law-embla-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
 .law-card {
   min-height: 62vh;
   background:
@@ -812,24 +832,6 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   border-radius: 30px;
   padding: 34px;
   box-shadow: var(--shadow-soft);
-  touch-action: pan-y;
-  will-change: opacity, transform;
-}
-
-.law-card.slide-out-left {
-  animation: lawCardOutLeft 0.18s ease forwards;
-}
-
-.law-card.slide-out-right {
-  animation: lawCardOutRight 0.18s ease forwards;
-}
-
-.law-card.slide-in-left {
-  animation: lawCardInLeft 0.24s cubic-bezier(0.2, 0.75, 0.2, 1) both;
-}
-
-.law-card.slide-in-right {
-  animation: lawCardInRight 0.24s cubic-bezier(0.2, 0.75, 0.2, 1) both;
 }
 
 :root[data-theme="dark"] .law-card {
@@ -1026,32 +1028,9 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 }
 .fade-in { animation: fadeIn 0.3s ease; }
 
-@keyframes lawCardOutLeft {
-  from { opacity: 1; transform: translateX(0) scale(1); }
-  to { opacity: 0; transform: translateX(-36px) scale(0.985); }
-}
-
-@keyframes lawCardOutRight {
-  from { opacity: 1; transform: translateX(0) scale(1); }
-  to { opacity: 0; transform: translateX(36px) scale(0.985); }
-}
-
-@keyframes lawCardInLeft {
-  from { opacity: 0; transform: translateX(-42px) scale(0.99); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
-}
-
-@keyframes lawCardInRight {
-  from { opacity: 0; transform: translateX(42px) scale(0.99); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .law-card.slide-out-left,
-  .law-card.slide-out-right,
-  .law-card.slide-in-left,
-  .law-card.slide-in-right {
-    animation: none;
+  .law-embla-viewport {
+    transition: none;
   }
 }
 
@@ -1124,9 +1103,12 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
     max-width: none;
     margin-top: 10px;
   }
+  .law-embla-viewport,
+  .law-card {
+    border-radius: 24px;
+  }
   .law-card {
     min-height: 60vh;
-    border-radius: 24px;
     padding: 24px 18px;
   }
   .law-card h2 {
