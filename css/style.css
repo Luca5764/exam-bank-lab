@@ -813,6 +813,23 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   padding: 34px;
   box-shadow: var(--shadow-soft);
   touch-action: pan-y;
+  will-change: opacity, transform;
+}
+
+.law-card.slide-out-left {
+  animation: lawCardOutLeft 0.18s ease forwards;
+}
+
+.law-card.slide-out-right {
+  animation: lawCardOutRight 0.18s ease forwards;
+}
+
+.law-card.slide-in-left {
+  animation: lawCardInLeft 0.24s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+
+.law-card.slide-in-right {
+  animation: lawCardInRight 0.24s cubic-bezier(0.2, 0.75, 0.2, 1) both;
 }
 
 :root[data-theme="dark"] .law-card {
@@ -1008,6 +1025,35 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-in { animation: fadeIn 0.3s ease; }
+
+@keyframes lawCardOutLeft {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(-36px) scale(0.985); }
+}
+
+@keyframes lawCardOutRight {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(36px) scale(0.985); }
+}
+
+@keyframes lawCardInLeft {
+  from { opacity: 0; transform: translateX(-42px) scale(0.99); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes lawCardInRight {
+  from { opacity: 0; transform: translateX(42px) scale(0.99); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .law-card.slide-out-left,
+  .law-card.slide-out-right,
+  .law-card.slide-in-left,
+  .law-card.slide-in-right {
+    animation: none;
+  }
+}
 
 @media (max-width: 600px) {
   html { font-size: 17px; }
