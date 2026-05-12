@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>法條字卡 | 考古題練習室</title>
+  <link rel="stylesheet" href="css/style.css?v=laws1">
+</head>
+
+<body>
+  <div class="container fade-in">
+    <div class="back-link" onclick="navigateTo('index.html')">回首頁</div>
+
+    <div class="page-header page-header-compact">
+      <h1>法條字卡</h1>
+      <p class="subtitle">左右滑讀法條、解釋與自己的備註。備註會存在目前瀏覽器。</p>
+    </div>
+
+    <section class="card law-browser">
+      <div class="law-filter-grid">
+        <label>
+          法規
+          <select id="lawSelect" onchange="onLawFilterChange()">
+            <option value="all">全部法規</option>
+          </select>
+        </label>
+        <label>
+          章節
+          <select id="chapterSelect" onchange="rebuildDeck()">
+            <option value="all">全部章節</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="law-actions">
+        <button class="btn btn-secondary btn-sm" onclick="exportLawNotes()">匯出備註</button>
+        <label class="btn btn-secondary btn-sm law-import-btn">
+          匯入備註
+          <input id="noteImport" type="file" accept="application/json" onchange="importLawNotes(event)">
+        </label>
+      </div>
+      <div class="settings-hint mt-16">備註會存在目前瀏覽器，和測驗成績一樣；換手機、清除瀏覽器資料或使用無痕模式可能會消失。</div>
+    </section>
+
+    <section class="law-reader">
+      <div class="law-progress-row">
+        <div>
+          <div class="section-kicker" id="lawScope">載入中</div>
+          <strong id="lawProgress">0 / 0</strong>
+          <div class="settings-hint law-swipe-hint">手機可在卡片上左右滑切換，不必點按鈕。</div>
+        </div>
+        <select id="cardJump" class="law-jump" onchange="jumpToCard(this.value)">
+          <option value="0">載入中</option>
+        </select>
+      </div>
+
+      <article class="law-card" id="lawCard">
+        <div class="text-dim">法條資料載入中...</div>
+      </article>
+
+      <div class="law-nav">
+        <button class="btn btn-secondary" id="prevLawCard" onclick="moveCard(-1)">上一張</button>
+        <button class="btn btn-primary" id="nextLawCard" onclick="moveCard(1)">下一張</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/shared.js?v=theme1"></script>
+  <script>
+    const LAW_NOTE_PREFIX = 'law_notes:v1';
+    let laws = [];
+    let deck = [];
+    let currentIndex = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let ignoreSwipe = false;
+
+    function noteKey(card) {
+      return `${LAW_NOTE_PREFIX}:${card.law.id}:${card.article.id}`;
+    }
+
+    function loadNote(card) {
+      if (card.type !== 'article') return '';
+      try { return localStorage.getItem(noteKey(card)) || ''; } catch { return ''; }
+    }
+
+    function saveCurrentNote(value) {
+      const card = deck[currentIndex];
+      if (!card || card.type !== 'article') return;
+      try {
+        if (value.trim()) localStorage.setItem(noteKey(card), value);
+        else localStorage.removeItem(noteKey(card));
+      } catch (e) {
+        console.error('Failed to save law note', e);
+      }
+    }
+
+    function getSelectedLaw() {
+      const id = document.getElementById('lawSelect').value;
+      return id === 'all' ? null : laws.find((law) => law.id === id);
+    }
+
+    function populateLawSelect() {
+      const select = document.getElementById('lawSelect');
+      select.innerHTML = '<option value="all">全部法規</option>' + laws.map((law) =>
+        `<option value="${esc(law.id)}">${esc(law.title)}（${law.articleCount} 條）</option>`
+      ).join('');
+    }
+
+    function populateChapterSelect() {
+      const chapterSelect = document.getElementById('chapterSelect');
+      const selectedLaw = getSelectedLaw();
+
+      if (!selectedLaw) {
+        chapterSelect.innerHTML = '<option value="all">全部章節</option>';
+        chapterSelect.disabled = true;
+        return;
+      }
+
+      chapterSelect.disabled = false;
+      chapterSelect.innerHTML = '<option value="all">全部章節</option>' + selectedLaw.chapters.map((chapter) =>
+        `<option value="${esc(chapter.id)}">${esc(chapter.title)}（${chapter.articles.length}）</option>`
+      ).join('');
+    }
+
+    function onLawFilterChange() {
+      populateChapterSelect();
+      rebuildDeck();
+    }
+
+    function buildCardsForLaw(law, chapterId) {
+      const cards = [{
+        type: 'summary',
+        law,
+        label: '本法重點整理',
+        title: `${law.title}重點整理`,
+      }];
+
+      law.chapters
+        .filter((chapter) => chapterId === 'all' || chapter.id === chapterId)
+        .forEach((chapter) => {
+          chapter.articles.forEach((article) => {
+            cards.push({
+              type: 'article',
+              law,
+              chapter,
+              article,
+              label: `${chapter.title} / ${article.title}`,
+              title: article.title
+            });
+          });
+        });
+
+      return cards;
+    }
+
+    function rebuildDeck() {
+      const selectedLaw = getSelectedLaw();
+      const chapterId = document.getElementById('chapterSelect').value || 'all';
+      const selectedLaws = selectedLaw ? [selectedLaw] : laws;
+
+      deck = selectedLaws.flatMap((law) => buildCardsForLaw(law, selectedLaw ? chapterId : 'all'));
+      currentIndex = 0;
+      renderJump();
+      renderCard();
+    }
+
+    function renderJump() {
+      const jump = document.getElementById('cardJump');
+      jump.innerHTML = deck.map((card, index) =>
+        `<option value="${index}">${index + 1}. ${esc(card.label)}</option>`
+      ).join('');
+    }
+
+    function renderSummary(card) {
+      const chapterNames = card.law.chapters.map((chapter) => chapter.title).join('、');
+      const points = (card.law.summary || []).map((item) => `<li>${esc(item)}</li>`).join('');
+
+      return `
+        <div class="law-card-kicker">${esc(card.law.title)}</div>
+        <h2>${esc(card.title)}</h2>
+        <ul class="law-summary-list">${points}</ul>
+        <div class="law-meta-box">
+          <strong>收錄範圍</strong>
+          <p>${card.law.chapterCount} 章、${card.law.articleCount} 條</p>
+          <p>${esc(chapterNames)}</p>
+        </div>
+      `;
+    }
+
+    function renderArticle(card) {
+      const note = loadNote(card);
+      return `
+        <div class="law-card-kicker">${esc(card.law.title)} / ${esc(card.chapter.title)}</div>
+        <h2>${esc(card.article.title)}</h2>
+        <section class="law-section">
+          <h3>法條</h3>
+          <p>${esc(card.article.text)}</p>
+        </section>
+        <section class="law-section">
+          <h3>解釋</h3>
+          <p>${esc(card.article.explanation || '尚未提供解釋。')}</p>
+        </section>
+        <section class="law-section law-note-section">
+          <div class="law-note-head">
+            <h3>我的備註</h3>
+            <button class="btn btn-secondary btn-sm" onclick="clearCurrentNote()">清除</button>
+          </div>
+          <textarea id="lawNote" class="law-note" placeholder="查完資料後，可以把自己的整理貼在這裡。"
+            oninput="saveCurrentNote(this.value)">${esc(note)}</textarea>
+        </section>
+      `;
+    }
+
+    function renderCard() {
+      const card = deck[currentIndex];
+      const cardEl = document.getElementById('lawCard');
+
+      if (!card) {
+        cardEl.innerHTML = '<div class="text-dim">沒有符合條件的法條。</div>';
+        document.getElementById('lawProgress').textContent = '0 / 0';
+        return;
+      }
+
+      document.getElementById('lawScope').textContent = card.type === 'summary' ? card.law.title : card.chapter.title;
+      document.getElementById('lawProgress').textContent = `${currentIndex + 1} / ${deck.length}`;
+      document.getElementById('cardJump').value = String(currentIndex);
+      document.getElementById('prevLawCard').disabled = currentIndex === 0;
+      document.getElementById('nextLawCard').disabled = currentIndex >= deck.length - 1;
+      cardEl.innerHTML = card.type === 'summary' ? renderSummary(card) : renderArticle(card);
+    }
+
+    function moveCard(delta) {
+      const next = Math.max(0, Math.min(deck.length - 1, currentIndex + delta));
+      if (next === currentIndex) return;
+      currentIndex = next;
+      renderCard();
+      document.getElementById('lawCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function jumpToCard(value) {
+      const next = parseInt(value, 10);
+      if (Number.isNaN(next)) return;
+      currentIndex = Math.max(0, Math.min(deck.length - 1, next));
+      renderCard();
+    }
+
+    function clearCurrentNote() {
+      const note = document.getElementById('lawNote');
+      if (!note) return;
+      note.value = '';
+      saveCurrentNote('');
+    }
+
+    function collectLawNotes() {
+      const notes = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`${LAW_NOTE_PREFIX}:`)) {
+          notes[key] = localStorage.getItem(key);
+        }
+      }
+      return notes;
+    }
+
+    function exportLawNotes() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        notes: collectLawNotes()
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'law-notes.json';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    async function importLawNotes(event) {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+
+      try {
+        const payload = JSON.parse(await file.text());
+        const notes = payload.notes || payload;
+        let count = 0;
+        Object.entries(notes).forEach(([key, value]) => {
+          if (!key.startsWith(`${LAW_NOTE_PREFIX}:`)) return;
+          localStorage.setItem(key, String(value || ''));
+          count++;
+        });
+        showToast(`已匯入 ${count} 則備註`);
+        renderCard();
+      } catch (e) {
+        console.error('Failed to import law notes', e);
+        alert('匯入失敗，請確認檔案是備註 JSON。');
+      }
+    }
+
+    function installSwipe() {
+      const card = document.getElementById('lawCard');
+      card.addEventListener('touchstart', (event) => {
+        ignoreSwipe = !!event.target.closest('textarea,input,select,button,label');
+        if (ignoreSwipe) return;
+        const touch = event.changedTouches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      }, { passive: true });
+
+      card.addEventListener('touchend', (event) => {
+        if (ignoreSwipe) {
+          ignoreSwipe = false;
+          return;
+        }
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        moveCard(dx < 0 ? 1 : -1);
+      }, { passive: true });
+    }
+
+    async function initLaws() {
+      try {
+        laws = await fetchJson('data/laws.json');
+        populateLawSelect();
+        populateChapterSelect();
+        rebuildDeck();
+        installSwipe();
+      } catch (e) {
+        console.error('Failed to load law data', e);
+        document.getElementById('lawCard').innerHTML = '<div class="text-red">法條資料載入失敗。</div>';
+      }
+    }
+
+    initLaws();
+  </script>
+</body>
+
+</html>
