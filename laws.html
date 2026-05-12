@@ -56,9 +56,15 @@
         </select>
       </div>
 
-      <article class="law-card" id="lawCard">
-        <div class="text-dim">法條資料載入中...</div>
-      </article>
+      <div class="law-embla" id="lawEmbla">
+        <div class="law-embla-viewport" id="lawEmblaViewport">
+          <div class="law-embla-container" id="lawSlides">
+            <article class="law-card law-embla-slide">
+              <div class="text-dim">法條資料載入中...</div>
+            </article>
+          </div>
+        </div>
+      </div>
 
       <div class="law-nav">
         <button class="btn btn-secondary" id="prevLawCard" onclick="moveCard(-1)">上一張</button>
@@ -68,15 +74,13 @@
   </div>
 
   <script src="js/shared.js?v=theme1"></script>
+  <script src="assets/vendor/embla/embla-carousel.umd.js?v=8.6.0"></script>
   <script>
     const LAW_NOTE_PREFIX = 'law_notes:v1';
     let laws = [];
     let deck = [];
     let currentIndex = 0;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let ignoreSwipe = false;
-    let isAnimatingCard = false;
+    let emblaApi = null;
 
     function noteKey(card) {
       return `${LAW_NOTE_PREFIX}:${card.law.id}:${card.article.id}`;
@@ -87,8 +91,8 @@
       try { return localStorage.getItem(noteKey(card)) || ''; } catch { return ''; }
     }
 
-    function saveCurrentNote(value) {
-      const card = deck[currentIndex];
+    function saveNoteAt(index, value) {
+      const card = deck[index];
       if (!card || card.type !== 'article') return;
       try {
         if (value.trim()) localStorage.setItem(noteKey(card), value);
@@ -96,6 +100,10 @@
       } catch (e) {
         console.error('Failed to save law note', e);
       }
+    }
+
+    function saveCurrentNote(value) {
+      saveNoteAt(currentIndex, value);
     }
 
     function getSelectedLaw() {
@@ -165,7 +173,8 @@
       deck = selectedLaws.flatMap((law) => buildCardsForLaw(law, selectedLaw ? chapterId : 'all'));
       currentIndex = 0;
       renderJump();
-      renderCard();
+      renderSlides();
+      initOrRefreshEmbla();
     }
 
     function renderJump() {
@@ -191,7 +200,7 @@
       `;
     }
 
-    function renderArticle(card) {
+    function renderArticle(card, index) {
       const note = loadNote(card);
       return `
         <div class="law-card-kicker">${esc(card.law.title)} / ${esc(card.chapter.title)}</div>
@@ -209,72 +218,103 @@
             <h3>我的備註</h3>
             <button class="btn btn-secondary btn-sm" onclick="clearCurrentNote()">清除</button>
           </div>
-          <textarea id="lawNote" class="law-note" placeholder="查完資料後，可以把自己的整理貼在這裡。"
-            oninput="saveCurrentNote(this.value)">${esc(note)}</textarea>
+          <textarea class="law-note" data-note-index="${index}" placeholder="查完資料後，可以把自己的整理貼在這裡。"
+            oninput="saveNoteAt(${index}, this.value); updateEmblaHeight()">${esc(note)}</textarea>
         </section>
       `;
     }
 
-    function renderCard() {
+    function renderSlides() {
+      const slides = document.getElementById('lawSlides');
+
+      if (!deck.length) {
+        slides.innerHTML = '<article class="law-card law-embla-slide"><div class="text-dim">沒有符合條件的法條。</div></article>';
+        syncEmblaState();
+        return;
+      }
+
+      slides.innerHTML = deck.map((card, index) => `
+        <article class="law-card law-embla-slide" data-slide-index="${index}">
+          ${card.type === 'summary' ? renderSummary(card) : renderArticle(card, index)}
+        </article>
+      `).join('');
+    }
+
+    function syncEmblaState() {
+      if (emblaApi) currentIndex = emblaApi.selectedScrollSnap();
       const card = deck[currentIndex];
-      const cardEl = document.getElementById('lawCard');
 
       if (!card) {
-        cardEl.innerHTML = '<div class="text-dim">沒有符合條件的法條。</div>';
+        document.getElementById('lawScope').textContent = '沒有資料';
         document.getElementById('lawProgress').textContent = '0 / 0';
+        document.getElementById('prevLawCard').disabled = true;
+        document.getElementById('nextLawCard').disabled = true;
+        updateEmblaHeight();
         return;
       }
 
       document.getElementById('lawScope').textContent = card.type === 'summary' ? card.law.title : card.chapter.title;
       document.getElementById('lawProgress').textContent = `${currentIndex + 1} / ${deck.length}`;
       document.getElementById('cardJump').value = String(currentIndex);
-      document.getElementById('prevLawCard').disabled = currentIndex === 0;
-      document.getElementById('nextLawCard').disabled = currentIndex >= deck.length - 1;
-      cardEl.innerHTML = card.type === 'summary' ? renderSummary(card) : renderArticle(card);
+      document.getElementById('prevLawCard').disabled = emblaApi ? !emblaApi.canScrollPrev() : currentIndex === 0;
+      document.getElementById('nextLawCard').disabled = emblaApi ? !emblaApi.canScrollNext() : currentIndex >= deck.length - 1;
+      updateEmblaHeight();
     }
 
-    function animateCardChange(nextIndex, direction = 0, shouldScroll = false) {
-      if (isAnimatingCard || nextIndex === currentIndex) return;
-      const cardEl = document.getElementById('lawCard');
-      const outClass = direction < 0 ? 'slide-out-right' : 'slide-out-left';
-      const inClass = direction < 0 ? 'slide-in-left' : 'slide-in-right';
-      isAnimatingCard = true;
-      cardEl.classList.remove('slide-in-left', 'slide-in-right', 'slide-out-left', 'slide-out-right');
-      cardEl.classList.add(outClass);
+    function updateEmblaHeight() {
+      const viewport = document.getElementById('lawEmblaViewport');
+      const slide = document.querySelector(`[data-slide-index="${currentIndex}"]`);
+      requestAnimationFrame(() => {
+        viewport.style.height = slide ? `${slide.offsetHeight}px` : '';
+      });
+    }
 
-      setTimeout(() => {
-        currentIndex = nextIndex;
-        renderCard();
-        cardEl.classList.remove(outClass);
-        cardEl.classList.add(inClass);
-        if (shouldScroll) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    function initOrRefreshEmbla() {
+      const viewport = document.getElementById('lawEmblaViewport');
+      if (!window.EmblaCarousel) {
+        console.error('EmblaCarousel is not loaded');
+        syncEmblaState();
+        return;
+      }
 
-        setTimeout(() => {
-          cardEl.classList.remove(inClass);
-          isAnimatingCard = false;
-        }, 220);
-      }, 170);
+      if (!emblaApi) {
+        emblaApi = EmblaCarousel(viewport, {
+          align: 'center',
+          containScroll: 'trimSnaps',
+          dragFree: false,
+          duration: 28,
+          skipSnaps: false
+        });
+        emblaApi.on('select', syncEmblaState);
+        emblaApi.on('reInit', syncEmblaState);
+        emblaApi.on('settle', updateEmblaHeight);
+      } else {
+        emblaApi.reInit();
+      }
+
+      emblaApi.scrollTo(0, true);
+      syncEmblaState();
     }
 
     function moveCard(delta) {
-      const next = Math.max(0, Math.min(deck.length - 1, currentIndex + delta));
-      if (next === currentIndex) return;
-      animateCardChange(next, delta, true);
+      if (!emblaApi) return;
+      if (delta > 0) emblaApi.scrollNext();
+      else emblaApi.scrollPrev();
     }
 
     function jumpToCard(value) {
       const next = parseInt(value, 10);
       if (Number.isNaN(next)) return;
       const boundedNext = Math.max(0, Math.min(deck.length - 1, next));
-      if (boundedNext === currentIndex) return;
-      animateCardChange(boundedNext, boundedNext > currentIndex ? 1 : -1, false);
+      if (emblaApi) emblaApi.scrollTo(boundedNext);
     }
 
     function clearCurrentNote() {
-      const note = document.getElementById('lawNote');
+      const note = document.querySelector(`[data-note-index="${currentIndex}"]`);
       if (!note) return;
       note.value = '';
-      saveCurrentNote('');
+      saveNoteAt(currentIndex, '');
+      updateEmblaHeight();
     }
 
     function collectLawNotes() {
@@ -317,34 +357,12 @@
           count++;
         });
         showToast(`已匯入 ${count} 則備註`);
-        renderCard();
+        renderSlides();
+        initOrRefreshEmbla();
       } catch (e) {
         console.error('Failed to import law notes', e);
         alert('匯入失敗，請確認檔案是備註 JSON。');
       }
-    }
-
-    function installSwipe() {
-      const card = document.getElementById('lawCard');
-      card.addEventListener('touchstart', (event) => {
-        ignoreSwipe = !!event.target.closest('textarea,input,select,button,label');
-        if (ignoreSwipe) return;
-        const touch = event.changedTouches[0];
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-      }, { passive: true });
-
-      card.addEventListener('touchend', (event) => {
-        if (ignoreSwipe) {
-          ignoreSwipe = false;
-          return;
-        }
-        const touch = event.changedTouches[0];
-        const dx = touch.clientX - touchStartX;
-        const dy = touch.clientY - touchStartY;
-        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
-        moveCard(dx < 0 ? 1 : -1);
-      }, { passive: true });
     }
 
     async function initLaws() {
@@ -353,10 +371,9 @@
         populateLawSelect();
         populateChapterSelect();
         rebuildDeck();
-        installSwipe();
       } catch (e) {
         console.error('Failed to load law data', e);
-        document.getElementById('lawCard').innerHTML = '<div class="text-red">法條資料載入失敗。</div>';
+        document.getElementById('lawSlides').innerHTML = '<article class="law-card law-embla-slide"><div class="text-red">法條資料載入失敗。</div></article>';
       }
     }
 

@@ -3,6 +3,10 @@
         "date":  "2026-05-12",
         "items":  [
                       {
+                          "time":  "21:10",
+                          "message":  "Use Embla for law flashcard swiping"
+                      },
+                      {
                           "time":  "20:46",
                           "message":  "Animate law card transitions"
                       },
