@@ -76,6 +76,7 @@
     let touchStartX = 0;
     let touchStartY = 0;
     let ignoreSwipe = false;
+    let isAnimatingCard = false;
 
     function noteKey(card) {
       return `${LAW_NOTE_PREFIX}:${card.law.id}:${card.article.id}`;
@@ -232,19 +233,41 @@
       cardEl.innerHTML = card.type === 'summary' ? renderSummary(card) : renderArticle(card);
     }
 
+    function animateCardChange(nextIndex, direction = 0, shouldScroll = false) {
+      if (isAnimatingCard || nextIndex === currentIndex) return;
+      const cardEl = document.getElementById('lawCard');
+      const outClass = direction < 0 ? 'slide-out-right' : 'slide-out-left';
+      const inClass = direction < 0 ? 'slide-in-left' : 'slide-in-right';
+      isAnimatingCard = true;
+      cardEl.classList.remove('slide-in-left', 'slide-in-right', 'slide-out-left', 'slide-out-right');
+      cardEl.classList.add(outClass);
+
+      setTimeout(() => {
+        currentIndex = nextIndex;
+        renderCard();
+        cardEl.classList.remove(outClass);
+        cardEl.classList.add(inClass);
+        if (shouldScroll) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        setTimeout(() => {
+          cardEl.classList.remove(inClass);
+          isAnimatingCard = false;
+        }, 220);
+      }, 170);
+    }
+
     function moveCard(delta) {
       const next = Math.max(0, Math.min(deck.length - 1, currentIndex + delta));
       if (next === currentIndex) return;
-      currentIndex = next;
-      renderCard();
-      document.getElementById('lawCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      animateCardChange(next, delta, true);
     }
 
     function jumpToCard(value) {
       const next = parseInt(value, 10);
       if (Number.isNaN(next)) return;
-      currentIndex = Math.max(0, Math.min(deck.length - 1, next));
-      renderCard();
+      const boundedNext = Math.max(0, Math.min(deck.length - 1, next));
+      if (boundedNext === currentIndex) return;
+      animateCardChange(boundedNext, boundedNext > currentIndex ? 1 : -1, false);
     }
 
     function clearCurrentNote() {
