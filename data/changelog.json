@@ -3,6 +3,10 @@
         "date":  "2026-05-12",
         "items":  [
                       {
+                          "time":  "22:53",
+                          "message":  "Replace law cards with complete law text"
+                      },
+                      {
                           "time":  "21:10",
                           "message":  "Use Embla for law flashcard swiping"
                       },
