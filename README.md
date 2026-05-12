@@ -1,6 +1,6 @@
 # 考古題練習室
 
-這是一個部署在 GitHub Pages 上的純前端考古題練習網站。網站目前收錄農田水利招考與統測商管群題庫，支援題庫瀏覽、隨機測驗、指定題數、交卷檢視、錯題複習與作答續作。
+這是一個部署在 GitHub Pages 上的純前端考古題練習網站。網站目前收錄農田水利招考與統測商管群題庫，支援題庫瀏覽、隨機測驗、指定題數、交卷檢視、錯題複習、作答續作與法條字卡。
 
 目前網站：
 [https://luca5764.github.io/exam-bank-lab/](https://luca5764.github.io/exam-bank-lab/)
@@ -26,10 +26,11 @@
 - 測驗題數可由使用者輸入，並保留 `10 題快測` 與 `全部題目`。
 - 支援隨機抽題、照順序練習、錯題複習、歷史紀錄與未完成測驗續作。
 - 題組題會盡量保持同組一起出現，避免「承上題」被拆散。
+- 法條字卡可依法律與章節閱讀，支援手機左右滑與個人備註。
 
 ## 資料保存方式
 
-本網站的測驗資料保存在使用者自己的瀏覽器 `localStorage`，不是存在伺服器上。
+本網站的測驗資料與法條備註保存在使用者自己的瀏覽器 `localStorage`，不是存在伺服器上。
 
 這代表：
 
@@ -47,13 +48,17 @@ review.html           交卷後檢視
 browse.html           題庫內容瀏覽
 wrong.html            錯題複習
 changelog.html        更新日誌
+laws.html             法條字卡
 css/style.css         樣式
 js/shared.js          共用前端邏輯
 questions/            題庫 JSON
 data/banks.json       題庫索引與顯示 metadata
 data/changelog.json   commit 產生的更新日誌
+data/laws.json        法條字卡資料
 tools/build_index.py  重建題庫索引
+tools/build_laws.js   從法條 txt 重建法條字卡資料
 tools/                題庫轉換、OCR、裁圖與維護工具
+法條/                 法條 txt 來源
 農田水利/             農田水利原始 PDF 題目來源
 統測專二/             統測專二原始 PDF 題目來源
 ```
