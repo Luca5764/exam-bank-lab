@@ -37,7 +37,8 @@ DEFAULT_SOURCE_DIR = ROOT / "法條" / "完整版"
 DEFAULT_OUT_DIR = ROOT / "法條" / "AI解釋"
 DEFAULT_JSON_OUT = ROOT / "data" / "laws.generated.json"
 DEFAULT_CACHE = ROOT / ".tmp" / "law_explanations_gemini" / "cache.json"
-DEFAULT_MODEL = "gemini-3.1-flash-lite"
+DEFAULT_MODEL = "gemini-2.5-flash-lite"
+PROMPT_VERSION = "gemini-v7-simplified-system-lenient-validation"
 API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 LAW_ORDER = ["水利法.txt", "水利法施行細則.txt", "水污染防治法.txt"]
@@ -176,11 +177,15 @@ def looks_like_chapter(line: str) -> bool:
     return bool(re.match(r"^第\s*[一二三四五六七八九十百零0-9]+\s*章", line.strip()))
 
 
+def looks_like_article(line: str) -> bool:
+    return bool(re.match(r"^第\s*[一二三四五六七八九十百零0-9\-－—]+\s*條\s*(?:（刪除）|\(刪除\))?\s*$", line.strip()))
+
+
 def parse_law_file(path: Path, source_root: Path) -> Law:
     source = path.read_text(encoding="utf-8").replace("\r\n", "\n")
     lines = source.split("\n")
     first_non_empty = next((line.strip() for line in lines if line.strip()), "")
-    has_title = bool(first_non_empty) and not looks_like_chapter(first_non_empty)
+    has_title = bool(first_non_empty) and not looks_like_chapter(first_non_empty) and not looks_like_article(first_non_empty)
     title = first_non_empty if has_title else path.stem
     body_lines = lines[1:] if has_title else lines
 
@@ -232,7 +237,7 @@ def parse_law_file(path: Path, source_root: Path) -> Law:
             law.chapters.append(current_chapter)
             continue
 
-        article_match = re.match(r"^第\s*([一二三四五六七八九十百零0-9\-－—]+)\s*條", line)
+        article_match = re.match(r"^第\s*([一二三四五六七八九十百零0-9\-－—]+)\s*條\s*(?:（刪除）|\(刪除\))?\s*$", line)
         if article_match:
             push_article()
             no = normalize_article_no(article_match.group(1))
@@ -324,6 +329,7 @@ def write_law_txt(law: Law, out_path: Path) -> None:
 def cache_key(law: Law, chapter: Chapter, article: Article, model: str) -> str:
     payload = json.dumps(
         {
+            "promptVersion": PROMPT_VERSION,
             "model": model,
             "law": law.title,
             "chapter": chapter.title,
@@ -364,62 +370,54 @@ def estimate_tokens(text: str) -> int:
     return max(1, len(text) // 2)
 
 
+SYSTEM_PROMPT = """你是台灣法條白話解釋助手。請把法條改寫成一般人看得懂的繁體中文，輸出 2 到 3 句純文字。
+
+輸出風格：
+- 用一般人容易理解的說法，不要只是把原文換幾個字。
+- 可以把長句拆短、重組，但不能改變法律意思。
+- 保留必要的法律關鍵字，例如主管機關、核准、核定、公告、前條、罰金、罰鍰。
+- 如果是罰則條文，要保留刑罰名稱、金額、期限與後續處分，但用白話整理，不要整段照抄。
+
+硬性限制：
+- 只能根據本條原文解釋，不要補法條外的目的、效果、罰則、政策理由或例子。
+- 不要把法律強度改掉；原文是「得」就寫「可以」，原文是「應」才寫「必須」。
+- 不要把「罰金」和「罰鍰」互換。
+- 遇到「前條」時，不要自行展開前條內容；需要時只提醒前條內容要另外參照。
+- 只輸出解釋本身，不要 JSON、Markdown、標題或換行。
+
+句型範例：
+原文：水為天然資源，屬於國家所有，不因人民取得土地所有權而受影響。
+輸出：水是國家的天然資源，不是誰買了土地就能一起擁有。人民取得土地所有權，並不會影響水屬於國家所有這件事。
+
+原文：本法所稱主管機關：在中央為經濟部；在直轄市為直轄市政府；在縣（市）為縣（市）政府。
+輸出：這條是在說水利法由哪些機關負責管理。中央層級是經濟部，直轄市是直轄市政府，縣（市）則是縣（市）政府。
+
+原文：中央主管機關按全國水道之天然形勢，劃分水利區，報請行政院核定公告之。
+輸出：中央主管機關會依照全國水道的自然情況來劃分水利區。劃分後，還要報請行政院核定並公告。
+
+原文：水利區涉及二縣（市）以上或關係重大縣（市）難以興辦者，其水利事業，得由中央主管機關設置水利機關辦理之。
+輸出：如果某個水利區牽涉到兩個以上縣（市），或事情太重大，縣（市）政府自己很難推動，中央就可以出面處理。具體來說，中央主管機關可以設置水利機關來辦理這項水利事業。
+
+原文：直轄市或縣（市）政府辦理水利事業，其利害涉及二直轄市、縣（市）以上者，應經中央主管機關核准。
+輸出：地方政府辦理水利事業時，如果影響範圍牽涉到兩個以上直轄市或縣（市），就不能自己決定。直轄市或縣（市）政府必須先取得中央主管機關核准。
+
+原文：引用一水系之水，移注另一水系，以發展該另一水系之水利事業，適用前條之規定。
+輸出：如果要把一個水系的水引到另一個水系，用來發展另一水系的水利事業，就要適用前條規定。前條內容需要另外參照。
+
+原文：各級主管機關為辦理水利工程，得向受益人徵工；其辦法應報經上級主管機關核准，並報中央主管機關。
+輸出：各級主管機關為了辦理水利工程，可以要求受益人出工協助。徵工辦法必須報經上級主管機關核准，並報中央主管機關。
+
+原文：違反命令者，處一年以下有期徒刑、拘役或科或併科新臺幣十萬元以上五十萬元以下罰金。
+輸出：這條是在處罰不遵守命令的人。違反者可能會被判一年以下有期徒刑或拘役，也可能被科或併科新臺幣十萬元以上五十萬元以下罰金。
+"""
+
+
 def build_prompt(law: Law, chapter: Chapter, article: Article) -> str:
-    return f"""你是台灣法規白話解釋助手。請根據輸入的法規名稱、章節、條號與法條原文，產生適合一般民眾與考生閱讀的繁體中文白話解釋。
-
-請嚴格輸出 JSON：
-{{"explanation":"..."}}
-
-風格要求：
-1. explanation 使用繁體中文。
-2. 口語、直接、好懂，但不要玩笑化，也不要過度隨便。
-3. 用白話說明這條在管什麼、誰需要注意、實務上代表什麼。
-4. 若是考試常見重點，可以自然點出，但不要寫成條列。
-5. 不要改寫或重複輸出法條原文。
-6. 不要使用 Markdown，不要條列。
-7. 長度以 100 到 180 字為主；複雜條文可稍長。
-8. 不得編造法條沒有寫的罰鍰數字、期限、條件、例外或主管機關。
-
-以下是解釋風格範例，請學習口吻與密度：
-
-=== 範例 1 ===
-輸入：
-法規：水污染防治法
-章節：第 一 章 總則
-條號：第 1 條
-法條：
-為防治水污染，確保水資源之清潔，以維護生態體系，改善生活環境，增進國民健康，特制定本法。本法未規定者，適用其他法令之規定。
-
-輸出：
-{{"explanation":"本條是在說《水污染防治法》為什麼存在。重點就是避免水被污染，讓河川、湖泊、地下水等水資源維持乾淨，也同時保護生態、生活環境和人民健康。如果遇到本法沒有寫清楚的事情，就會再回去適用其他相關法律。"}}
-
-=== 範例 2 ===
-輸入：
-法規：水污染防治法
-章節：第 二 章 基本措施
-條號：第 7 條
-法條：
-事業、污水下水道系統或建築物污水處理設施，排放廢（污）水於地面水體者，應符合放流水標準。
-
-輸出：
-{{"explanation":"這條是水污染管制很核心的規定。工廠、事業單位、污水下水道系統或大樓污水處理設施，如果要把廢水排進河川、湖泊這類地面水體，排出去的水就必須達到政府訂的放流水標準。也就是說，不是不能排，而是不能把沒處理好、沒達標的水直接排出去。"}}
-
-=== 範例 3 ===
-輸入：
-法規：水污染防治法
-章節：第 四 章 罰則
-條號：第 34 條
-法條：
-違反第七條第一項或第八條規定者，處新臺幣六萬元以上二千萬元以下罰鍰，並通知限期改善，屆期仍未完成改善者，按次處罰；情節重大者，得令其停工或停業；必要時，並得廢止其水污染防治許可證（文件）或勒令歇業。
-
-輸出：
-{{"explanation":"這條是在說排放廢水沒有符合標準時，後果會很重。違規者不只會被罰錢，主管機關還會要求限期改善；如果期限到了還沒改善，可以一直按次處罰。情節嚴重時，甚至可能被要求停工、停業，或被廢止水污染防治相關許可，最後可能到勒令歇業的程度。"}}
-
-=== 任務 ===
-法規：{law.title}
-章節：{chapter.title}
+    return f"""現在請改寫以下法條：
+法律名稱：{law.title}
+章節名稱：{chapter.title}
 條號：{article.title}
-法條：
+法條原文：
 {article.text}
 """
 
@@ -434,6 +432,9 @@ def extract_response_text(data: dict[str, Any]) -> str:
 
 def parse_explanation(text: str) -> str:
     cleaned = text.strip()
+    if "<channel|>" in cleaned:
+        cleaned = cleaned.rsplit("<channel|>", 1)[-1].strip()
+    cleaned = re.sub(r"<\|channel\>thought.*?(?:<channel\|>|$)", "", cleaned, flags=re.DOTALL).strip()
     cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
     cleaned = re.sub(r"\s*```$", "", cleaned)
     try:
@@ -443,7 +444,77 @@ def parse_explanation(text: str) -> str:
             return explanation
     except json.JSONDecodeError:
         pass
-    return cleaned
+    for marker in ("改寫後：", "改寫後:", "輸出：", "輸出:"):
+        if marker in cleaned:
+            cleaned = cleaned.rsplit(marker, 1)[-1].strip()
+    cleaned = re.sub(r"^\s*(解釋|白話解釋)\s*[:：]\s*", "", cleaned).strip()
+    return re.sub(r"\s*\n+\s*", " ", cleaned).strip()
+
+
+def has_penalty_term(text: str, term: str) -> bool:
+    if term == "罰金":
+        # Avoid treating phrases like "裁罰金額" as the criminal penalty term "罰金".
+        return bool(re.search(r"(?<!裁)罰金(?!額)", text))
+    return term in text
+
+
+def missing_money_ranges(source: str, explanation: str) -> list[str]:
+    ranges = re.findall(r"新臺幣[^，。；、\s]+以上[^，。；、\s]+以下", source)
+    return [money for money in dict.fromkeys(ranges) if money not in explanation]
+
+
+def repair_explanation(article: Article, explanation: str) -> str:
+    source = article.text
+    repaired = explanation.strip()
+    additions: list[str] = []
+
+    source_has_fine = has_penalty_term(source, "罰金")
+    source_has_admin_fine = has_penalty_term(source, "罰鍰")
+
+    if "科或併科" in source and "科或併科" not in repaired:
+        additions.append("原文用語是「科或併科」，表示可以單獨科罰金，也可以和其他刑罰一起併科。")
+    if source_has_fine and not has_penalty_term(repaired, "罰金"):
+        additions.append("原文的處罰種類是罰金。")
+    if source_has_admin_fine and not has_penalty_term(repaired, "罰鍰"):
+        additions.append("原文的處罰種類是罰鍰。")
+
+    money = missing_money_ranges(source, repaired)
+    if money:
+        additions.append(f"原文金額區間為：{'、'.join(money)}。")
+
+    if additions:
+        repaired = f"{repaired} {' '.join(additions)}".strip()
+    return repaired
+
+
+def validate_explanation(article: Article, explanation: str, strict: bool = False) -> list[str]:
+    source = article.text
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    source_has_fine = has_penalty_term(source, "罰金")
+    source_has_admin_fine = has_penalty_term(source, "罰鍰")
+    explanation_has_fine = has_penalty_term(explanation, "罰金")
+    explanation_has_admin_fine = has_penalty_term(explanation, "罰鍰")
+
+    if source_has_fine and not source_has_admin_fine and explanation_has_admin_fine and not explanation_has_fine:
+        errors.append("source uses 罰金 but explanation appears to use 罰鍰 instead")
+    if source_has_admin_fine and not source_has_fine and explanation_has_fine and not explanation_has_admin_fine:
+        errors.append("source uses 罰鍰 but explanation appears to use 罰金 instead")
+
+    checks = [
+        ("科或併科", "科或併科" in source, "科或併科" in explanation),
+        ("有期徒刑", "有期徒刑" in source, "有期徒刑" in explanation),
+        ("拘役", "拘役" in source, "拘役" in explanation),
+        ("罰金", source_has_fine, explanation_has_fine),
+        ("罰鍰", source_has_admin_fine, explanation_has_admin_fine),
+    ]
+    warnings += [f"missing protected term: {term}" for term, in_source, in_explanation in checks if in_source and not in_explanation]
+    warnings += [f"missing exact money range: {money}" for money in missing_money_ranges(source, explanation)]
+
+    if errors or (strict and warnings):
+        raise ValueError("; ".join(errors + warnings))
+    return warnings
 
 
 def call_gemini(
@@ -451,19 +522,27 @@ def call_gemini(
     api_key: str,
     model: str,
     prompt: str,
+    article: Article,
     max_output_tokens: int,
     temperature: float,
+    thinking_level: str,
+    strict_validation: bool,
     timeout: int,
-) -> tuple[str, dict[str, Any]]:
+) -> tuple[str, dict[str, Any], list[str]]:
     model_path = model if model.startswith("models/") else f"models/{model}"
     endpoint = f"{API_BASE}/{model_path}:generateContent?{urllib.parse.urlencode({'key': api_key})}"
+    generation_config: dict[str, Any] = {
+        "temperature": temperature,
+        "maxOutputTokens": max_output_tokens,
+    }
+    if thinking_level != "none":
+        generation_config["thinkingConfig"] = {"thinkingLevel": thinking_level}
     body = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": temperature,
-            "maxOutputTokens": max_output_tokens,
-            "responseMimeType": "application/json",
+        "systemInstruction": {
+            "parts": [{"text": SYSTEM_PROMPT}]
         },
+        "generationConfig": generation_config,
     }
     request = urllib.request.Request(
         endpoint,
@@ -474,7 +553,9 @@ def call_gemini(
     with urllib.request.urlopen(request, timeout=timeout) as response:
         data = json.loads(response.read().decode("utf-8"))
     text = extract_response_text(data)
-    return parse_explanation(text), data.get("usageMetadata", {})
+    explanation = repair_explanation(article, parse_explanation(text))
+    warnings = validate_explanation(article, explanation, strict=strict_validation)
+    return explanation, data.get("usageMetadata", {}), warnings
 
 
 def should_retry(status: int | None) -> bool:
@@ -486,13 +567,16 @@ def generate_with_retry(
     api_key: str,
     model: str,
     prompt: str,
+    article: Article,
     limiter: RateLimiter,
     max_retries: int,
     max_output_tokens: int,
     temperature: float,
+    thinking_level: str,
+    strict_validation: bool,
     timeout: int,
-) -> tuple[str, dict[str, Any]]:
-    estimated_tokens = estimate_tokens(prompt) + max_output_tokens
+) -> tuple[str, dict[str, Any], list[str]]:
+    estimated_tokens = estimate_tokens(SYSTEM_PROMPT) + estimate_tokens(prompt) + max_output_tokens
     last_error: Exception | None = None
 
     for attempt in range(max_retries + 1):
@@ -504,8 +588,11 @@ def generate_with_retry(
                 api_key=api_key,
                 model=model,
                 prompt=prompt,
+                article=article,
                 max_output_tokens=max_output_tokens,
                 temperature=temperature,
+                thinking_level=thinking_level,
+                strict_validation=strict_validation,
                 timeout=timeout,
             )
         except urllib.error.HTTPError as exc:
@@ -516,6 +603,12 @@ def generate_with_retry(
             retry_after = exc.headers.get("Retry-After")
             delay = float(retry_after) if retry_after and retry_after.isdigit() else 2 ** attempt
             print(f"  HTTP {exc.code}; waiting {delay:.1f}s", flush=True)
+        except ValueError as exc:
+            last_error = exc
+            if attempt >= max_retries:
+                raise RuntimeError(f"Gemini validation failed: {exc}") from exc
+            delay = 1 + attempt
+            print(f"  validation failed: {exc}; retrying after {delay:.1f}s", flush=True)
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             last_error = exc
             if attempt >= max_retries:
@@ -570,9 +663,20 @@ def main() -> None:
     parser.add_argument("--rpm", type=int, default=4000)
     parser.add_argument("--tpm", type=int, default=4_000_000)
     parser.add_argument("--max-retries", type=int, default=5)
-    parser.add_argument("--max-output-tokens", type=int, default=512)
-    parser.add_argument("--temperature", type=float, default=0.2)
-    parser.add_argument("--timeout", type=int, default=20)
+    parser.add_argument("--max-output-tokens", type=int, default=1024)
+    parser.add_argument("--temperature", type=float, default=0.15)
+    parser.add_argument(
+        "--thinking-level",
+        choices=["none", "minimal", "low", "medium", "high"],
+        default="minimal",
+        help="Gemini 3 thinking level. Use none to omit thinkingConfig.",
+    )
+    parser.add_argument("--timeout", type=int, default=60)
+    parser.add_argument(
+        "--strict-validation",
+        action="store_true",
+        help="Retry when protected legal terms or exact money ranges are omitted.",
+    )
     parser.add_argument("--limit", type=int, default=0, help="Only process N missing explanations.")
     parser.add_argument("--dry-run", action="store_true", help="Parse and report without calling the API.")
     parser.add_argument("--skip-model-check", action="store_true", help="Skip the model metadata check.")
@@ -599,6 +703,7 @@ def main() -> None:
 
     print(f"Model: {args.model}")
     print(f"Rate limit: RPM={args.rpm}, TPM={args.tpm}")
+    print(f"Thinking level: {args.thinking_level}")
     print(f"Timeout: {args.timeout}s")
     print(
         f"Parsed laws: {len(laws)}, articles: {total_articles}, "
@@ -631,21 +736,26 @@ def main() -> None:
 
                 key = cache_key(law, chapter, article, args.model)
                 if key in cache and cache[key].get("explanation"):
-                    article.explanation = cache[key]["explanation"]
+                    article.explanation = repair_explanation(article, parse_explanation(cache[key]["explanation"]))
+                    if article.explanation != cache[key]["explanation"]:
+                        cache[key]["explanation"] = article.explanation
                     print(f"[cache] {law.title} {article.title}")
                     continue
 
                 prompt = build_prompt(law, chapter, article)
                 print(f"[api] {law.title} {article.title}", flush=True)
                 try:
-                    explanation, usage = generate_with_retry(
+                    explanation, usage, validation_warnings = generate_with_retry(
                         api_key=api_key,
                         model=args.model,
                         prompt=prompt,
+                        article=article,
                         limiter=limiter,
                         max_retries=args.max_retries,
                         max_output_tokens=args.max_output_tokens,
                         temperature=args.temperature,
+                        thinking_level=args.thinking_level,
+                        strict_validation=args.strict_validation,
                         timeout=args.timeout,
                     )
                 except KeyboardInterrupt:
@@ -658,6 +768,9 @@ def main() -> None:
                     "chapter": chapter.title,
                     "article": article.title,
                     "model": args.model,
+                    "promptVersion": PROMPT_VERSION,
+                    "thinkingLevel": args.thinking_level,
+                    "validationWarnings": validation_warnings,
                     "explanation": explanation,
                     "usage": usage,
                     "updatedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
