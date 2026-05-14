@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>法條字卡 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=laws1">
+  <link rel="stylesheet" href="css/style.css?v=laws3">
 </head>
 
 <body>
@@ -19,20 +19,17 @@
     </div>
 
     <section class="card law-browser">
-      <div class="law-filter-grid">
-        <label>
-          法規
-          <select id="lawSelect" onchange="onLawFilterChange()">
-            <option value="all">全部法規</option>
-          </select>
-        </label>
-        <label>
-          章節
-          <select id="chapterSelect" onchange="rebuildDeck()">
-            <option value="all">全部章節</option>
-          </select>
-        </label>
+      <div class="law-browser-head">
+        <div>
+          <div class="section-kicker">選擇法規</div>
+          <h2>依法規層級閱讀</h2>
+          <p class="settings-hint">排序由母法到施行細則、辦法；選定單一法規後可再切換章節。</p>
+        </div>
       </div>
+      <div id="lawChooser" class="law-choice-grid" aria-label="選擇法規">
+        <div class="text-dim">法規載入中...</div>
+      </div>
+      <div id="chapterFilter" class="law-chip-row" aria-label="選擇章節"></div>
 
       <div class="law-actions">
         <button class="btn btn-secondary btn-sm" onclick="exportLawNotes()">匯出備註</button>
@@ -50,10 +47,13 @@
           <div class="section-kicker" id="lawScope">載入中</div>
           <strong id="lawProgress">0 / 0</strong>
           <div class="settings-hint law-swipe-hint">手機可在卡片上左右滑切換，不必點按鈕。</div>
+          <button class="law-back-ref" id="lawBackRef" onclick="returnFromLawRef()" hidden>返回原法條</button>
         </div>
-        <select id="cardJump" class="law-jump" onchange="jumpToCard(this.value)">
-          <option value="0">載入中</option>
-        </select>
+        <div class="law-card-jump">
+          <label for="cardSlider">快速定位</label>
+          <input id="cardSlider" type="range" min="1" max="1" value="1" oninput="jumpToCard(Number(this.value) - 1)">
+          <div id="cardJumpLabel" class="settings-hint">載入中</div>
+        </div>
       </div>
 
       <div class="law-embla" id="lawEmbla">
@@ -78,12 +78,37 @@
   <script>
     const LAW_NOTE_PREFIX = 'law_notes:v1';
     let laws = [];
+    let lawLinksBySource = {};
     let deck = [];
     let currentIndex = 0;
     let emblaApi = null;
+    let selectedLawId = 'all';
+    let selectedChapterId = 'all';
+    let lawRefHistory = [];
 
     function noteKey(card) {
       return `${LAW_NOTE_PREFIX}:${card.law.id}:${card.article.id}`;
+    }
+
+    function lawSourceKey(lawId, articleId) {
+      return `${lawId}::${articleId}`;
+    }
+
+    function escAttr(value) {
+      return esc(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function prepareLawLinks(rawLinks) {
+      lawLinksBySource = {};
+      (rawLinks || []).forEach((item) => {
+        const grouped = {};
+        (item.refs || []).forEach((ref) => {
+          if (!ref.field || !ref.text || !ref.targetLawId || !ref.targetArticleId) return;
+          grouped[ref.field] = grouped[ref.field] || [];
+          grouped[ref.field].push(ref);
+        });
+        lawLinksBySource[item.source] = grouped;
+      });
     }
 
     function loadNote(card) {
@@ -106,36 +131,87 @@
       saveNoteAt(currentIndex, value);
     }
 
+    function currentReturnState() {
+      return lawRefHistory.length ? lawRefHistory[lawRefHistory.length - 1] : null;
+    }
+
+    function returnLabel(state) {
+      if (!state) return '返回原法條';
+      return `返回 ${state.lawTitle} ${state.articleTitle}`;
+    }
+
     function getSelectedLaw() {
-      const id = document.getElementById('lawSelect').value;
-      return id === 'all' ? null : laws.find((law) => law.id === id);
+      return selectedLawId === 'all' ? null : laws.find((law) => law.id === selectedLawId);
     }
 
-    function populateLawSelect() {
-      const select = document.getElementById('lawSelect');
-      select.innerHTML = '<option value="all">全部法規</option>' + laws.map((law) =>
-        `<option value="${esc(law.id)}">${esc(law.title)}（${law.articleCount} 條）</option>`
-      ).join('');
+    function lawLevel(law) {
+      if (law.title.includes('施行細則')) return '施行細則';
+      if (law.title.includes('辦法')) return '辦法';
+      return '母法';
     }
 
-    function populateChapterSelect() {
-      const chapterSelect = document.getElementById('chapterSelect');
+    function renderLawChooser() {
+      const chooser = document.getElementById('lawChooser');
+      const allCount = laws.reduce((sum, law) => sum + law.articleCount, 0);
+      const cards = [{
+        id: 'all',
+        title: '全部法規',
+        level: '總覽',
+        meta: `${laws.length} 部法規 / ${allCount} 條`,
+        summary: '依目前排序連續閱讀全部法條與各法規重點。',
+      }].concat(laws.map((law) => ({
+        id: law.id,
+        title: law.title,
+        level: lawLevel(law),
+        meta: `${law.chapterCount} 章 / ${law.articleCount} 條`,
+        summary: (law.summary || [])[0] || '尚未提供重點整理。',
+      })));
+
+      chooser.innerHTML = cards.map((card) => `
+        <button class="law-choice ${selectedLawId === card.id ? 'is-active' : ''}" onclick="selectLaw('${esc(card.id)}')">
+          <span class="law-choice-level">${esc(card.level)}</span>
+          <strong>${esc(card.title)}</strong>
+          <span>${esc(card.meta)}</span>
+          <small>${esc(card.summary)}</small>
+        </button>
+      `).join('');
+    }
+
+    function renderChapterFilter() {
+      const filter = document.getElementById('chapterFilter');
       const selectedLaw = getSelectedLaw();
 
       if (!selectedLaw) {
-        chapterSelect.innerHTML = '<option value="all">全部章節</option>';
-        chapterSelect.disabled = true;
+        filter.innerHTML = '<span class="settings-hint">選擇單一法規後，可依章節篩選。</span>';
         return;
       }
 
-      chapterSelect.disabled = false;
-      chapterSelect.innerHTML = '<option value="all">全部章節</option>' + selectedLaw.chapters.map((chapter) =>
-        `<option value="${esc(chapter.id)}">${esc(chapter.title)}（${chapter.articles.length}）</option>`
-      ).join('');
+      const chips = [{
+        id: 'all',
+        label: `全部章節（${selectedLaw.articleCount}）`
+      }].concat(selectedLaw.chapters.map((chapter) => ({
+        id: chapter.id,
+        label: `${chapter.title}（${chapter.articles.length}）`
+      })));
+
+      filter.innerHTML = chips.map((chip) => `
+        <button class="law-chip ${selectedChapterId === chip.id ? 'is-active' : ''}" onclick="selectChapter('${esc(chip.id)}')">
+          ${esc(chip.label)}
+        </button>
+      `).join('');
     }
 
-    function onLawFilterChange() {
-      populateChapterSelect();
+    function selectLaw(id) {
+      selectedLawId = id;
+      selectedChapterId = 'all';
+      renderLawChooser();
+      renderChapterFilter();
+      rebuildDeck();
+    }
+
+    function selectChapter(id) {
+      selectedChapterId = id;
+      renderChapterFilter();
       rebuildDeck();
     }
 
@@ -167,10 +243,9 @@
 
     function rebuildDeck() {
       const selectedLaw = getSelectedLaw();
-      const chapterId = document.getElementById('chapterSelect').value || 'all';
       const selectedLaws = selectedLaw ? [selectedLaw] : laws;
 
-      deck = selectedLaws.flatMap((law) => buildCardsForLaw(law, selectedLaw ? chapterId : 'all'));
+      deck = selectedLaws.flatMap((law) => buildCardsForLaw(law, selectedLaw ? selectedChapterId : 'all'));
       currentIndex = 0;
       renderJump();
       renderSlides();
@@ -178,10 +253,13 @@
     }
 
     function renderJump() {
-      const jump = document.getElementById('cardJump');
-      jump.innerHTML = deck.map((card, index) =>
-        `<option value="${index}">${index + 1}. ${esc(card.label)}</option>`
-      ).join('');
+      const slider = document.getElementById('cardSlider');
+      const label = document.getElementById('cardJumpLabel');
+      slider.min = '1';
+      slider.max = String(Math.max(1, deck.length));
+      slider.value = deck.length ? '1' : '1';
+      slider.disabled = deck.length <= 1;
+      label.textContent = deck.length ? `1. ${deck[0].label}` : '沒有資料';
     }
 
     function renderSummary(card) {
@@ -200,18 +278,58 @@
       `;
     }
 
+    function linkifyLawText(card, field, value) {
+      const source = lawSourceKey(card.law.id, card.article.id);
+      const refs = (lawLinksBySource[source] && lawLinksBySource[source][field]) || [];
+      if (!refs.length) return esc(value);
+
+      const matches = [];
+      refs
+        .slice()
+        .sort((a, b) => b.text.length - a.text.length)
+        .forEach((ref) => {
+          let start = 0;
+          while (start < value.length) {
+            const index = value.indexOf(ref.text, start);
+            if (index === -1) break;
+            matches.push({ start: index, end: index + ref.text.length, ref });
+            start = index + ref.text.length;
+          }
+        });
+
+      matches.sort((a, b) => a.start - b.start || b.end - a.end);
+      const chunks = [];
+      let cursor = 0;
+      matches.forEach((match) => {
+        if (match.start < cursor) return;
+        if (match.start > cursor) chunks.push(esc(value.slice(cursor, match.start)));
+        chunks.push(`<a class="law-ref-link" href="#" data-target-law="${escAttr(match.ref.targetLawId)}" data-target-article="${escAttr(match.ref.targetArticleId)}" title="跳到 ${escAttr(match.ref.targetLawTitle)} ${escAttr(match.ref.targetArticleTitle)}">${esc(value.slice(match.start, match.end))}</a>`);
+        cursor = match.end;
+      });
+      if (cursor < value.length) chunks.push(esc(value.slice(cursor)));
+      return chunks.join('');
+    }
+
     function renderArticle(card, index) {
       const note = loadNote(card);
+      const returnState = currentReturnState();
+      const refContext = returnState ? `
+        <div class="law-ref-context">
+          <span>從 ${esc(returnState.lawTitle)} ${esc(returnState.articleTitle)} 跳來</span>
+          <button type="button" onclick="returnFromLawRef()">${esc(returnLabel(returnState))}</button>
+        </div>
+      ` : '';
       return `
         <div class="law-card-kicker">${esc(card.law.title)} / ${esc(card.chapter.title)}</div>
+        ${refContext}
         <h2>${esc(card.article.title)}</h2>
         <section class="law-section">
           <h3>法條</h3>
-          <p>${esc(card.article.text)}</p>
+          <p>${linkifyLawText(card, 'text', card.article.text)}</p>
         </section>
         <section class="law-section">
           <h3>解釋</h3>
-          <p>${esc(card.article.explanation || '尚未提供解釋。')}</p>
+          <p>${linkifyLawText(card, 'explanation', card.article.explanation || '尚未提供解釋。')}</p>
         </section>
         <section class="law-section law-note-section">
           <div class="law-note-head">
@@ -255,9 +373,14 @@
 
       document.getElementById('lawScope').textContent = card.type === 'summary' ? card.law.title : card.chapter.title;
       document.getElementById('lawProgress').textContent = `${currentIndex + 1} / ${deck.length}`;
-      document.getElementById('cardJump').value = String(currentIndex);
+      document.getElementById('cardSlider').value = String(currentIndex + 1);
+      document.getElementById('cardJumpLabel').textContent = `${currentIndex + 1}. ${card.label}`;
       document.getElementById('prevLawCard').disabled = emblaApi ? !emblaApi.canScrollPrev() : currentIndex === 0;
       document.getElementById('nextLawCard').disabled = emblaApi ? !emblaApi.canScrollNext() : currentIndex >= deck.length - 1;
+      const backButton = document.getElementById('lawBackRef');
+      const returnState = currentReturnState();
+      backButton.hidden = !returnState;
+      backButton.textContent = returnLabel(returnState);
       updateEmblaHeight();
     }
 
@@ -308,6 +431,52 @@
       const boundedNext = Math.max(0, Math.min(deck.length - 1, next));
       if (emblaApi) emblaApi.scrollTo(boundedNext);
     }
+
+    function restoreLawPosition(state) {
+      selectedLawId = state.selectedLawId;
+      selectedChapterId = state.selectedChapterId;
+      renderLawChooser();
+      renderChapterFilter();
+      rebuildDeck();
+      if (emblaApi) emblaApi.scrollTo(Math.max(0, Math.min(deck.length - 1, state.index)));
+    }
+
+    function returnFromLawRef() {
+      const previous = lawRefHistory.pop();
+      if (!previous) return;
+      restoreLawPosition(previous);
+    }
+
+    function goToLawRef(lawId, articleId) {
+      const targetLaw = laws.find((law) => law.id === lawId);
+      if (!targetLaw) return;
+
+      lawRefHistory.push({
+        selectedLawId,
+        selectedChapterId,
+        index: currentIndex,
+        lawTitle: deck[currentIndex]?.law?.title || '原法規',
+        articleTitle: deck[currentIndex]?.article?.title || deck[currentIndex]?.title || '原位置'
+      });
+
+      selectedLawId = lawId;
+      selectedChapterId = 'all';
+      renderLawChooser();
+      renderChapterFilter();
+      rebuildDeck();
+
+      const targetIndex = deck.findIndex((card) =>
+        card.type === 'article' && card.law.id === lawId && card.article.id === articleId
+      );
+      if (targetIndex >= 0 && emblaApi) emblaApi.scrollTo(targetIndex);
+    }
+
+    document.addEventListener('click', (event) => {
+      const link = event.target.closest('.law-ref-link');
+      if (!link) return;
+      event.preventDefault();
+      goToLawRef(link.dataset.targetLaw, link.dataset.targetArticle);
+    });
 
     function clearCurrentNote() {
       const note = document.querySelector(`[data-note-index="${currentIndex}"]`);
@@ -367,9 +536,14 @@
 
     async function initLaws() {
       try {
-        laws = await fetchJson('data/laws.json');
-        populateLawSelect();
-        populateChapterSelect();
+        const [lawData, linkData] = await Promise.all([
+          fetchJson('data/laws.json'),
+          fetchJson('data/law-links.json').catch(() => [])
+        ]);
+        laws = lawData;
+        prepareLawLinks(linkData);
+        renderLawChooser();
+        renderChapterFilter();
         rebuildDeck();
       } catch (e) {
         console.error('Failed to load law data', e);
