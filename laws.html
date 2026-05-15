@@ -23,7 +23,7 @@
         <div>
           <div class="section-kicker">選擇法規</div>
           <h2>依法規層級閱讀</h2>
-          <p class="settings-hint">排序由母法到施行細則、辦法；選定單一法規後可再切換章節。</p>
+          <p class="settings-hint">排序由母法、施行細則到辦法；選定單一法規後可再切換章節。</p>
         </div>
       </div>
       <div id="lawChooser" class="law-choice-grid" aria-label="選擇法規">
@@ -46,7 +46,7 @@
         <div>
           <div class="section-kicker" id="lawScope">載入中</div>
           <strong id="lawProgress">0 / 0</strong>
-          <div class="settings-hint law-swipe-hint">手機可在卡片上左右滑切換，不必點按鈕。</div>
+          <div class="settings-hint law-swipe-hint">可在卡片上左右滑動切換，手機與電腦都能直接操作。</div>
           <button class="law-back-ref" id="lawBackRef" onclick="returnFromLawRef()" hidden>返回原法條</button>
         </div>
         <div class="law-card-jump">
@@ -79,12 +79,18 @@
     const LAW_NOTE_PREFIX = 'law_notes:v1';
     let laws = [];
     let lawLinksBySource = {};
+    let lawLayoutsBySource = {};
     let deck = [];
     let currentIndex = 0;
     let emblaApi = null;
     let selectedLawId = 'all';
     let selectedChapterId = 'all';
     let lawRefHistory = [];
+    const LAW_LEVEL_ORDER = {
+      '母法': 1,
+      '施行細則': 2,
+      '辦法': 3
+    };
 
     function noteKey(card) {
       return `${LAW_NOTE_PREFIX}:${card.law.id}:${card.article.id}`;
@@ -108,6 +114,14 @@
           grouped[ref.field].push(ref);
         });
         lawLinksBySource[item.source] = grouped;
+      });
+    }
+
+    function prepareLawLayouts(rawLayouts) {
+      lawLayoutsBySource = {};
+      (rawLayouts || []).forEach((item) => {
+        if (!item.source || !Array.isArray(item.blocks)) return;
+        lawLayoutsBySource[item.source] = item.blocks;
       });
     }
 
@@ -150,6 +164,17 @@
       return '母法';
     }
 
+    function orderedLaws() {
+      return laws
+        .map((law, index) => ({ law, index }))
+        .sort((a, b) => {
+          const levelDiff = LAW_LEVEL_ORDER[lawLevel(a.law)] - LAW_LEVEL_ORDER[lawLevel(b.law)];
+          if (levelDiff) return levelDiff;
+          return a.index - b.index;
+        })
+        .map((item) => item.law);
+    }
+
     function renderLawChooser() {
       const chooser = document.getElementById('lawChooser');
       const allCount = laws.reduce((sum, law) => sum + law.articleCount, 0);
@@ -159,7 +184,7 @@
         level: '總覽',
         meta: `${laws.length} 部法規 / ${allCount} 條`,
         summary: '依目前排序連續閱讀全部法條與各法規重點。',
-      }].concat(laws.map((law) => ({
+      }].concat(orderedLaws().map((law) => ({
         id: law.id,
         title: law.title,
         level: lawLevel(law),
@@ -243,7 +268,7 @@
 
     function rebuildDeck() {
       const selectedLaw = getSelectedLaw();
-      const selectedLaws = selectedLaw ? [selectedLaw] : laws;
+      const selectedLaws = selectedLaw ? [selectedLaw] : orderedLaws();
 
       deck = selectedLaws.flatMap((law) => buildCardsForLaw(law, selectedLaw ? selectedChapterId : 'all'));
       currentIndex = 0;
@@ -310,6 +335,89 @@
       return chunks.join('');
     }
 
+    function splitFallbackParagraphs(value) {
+      const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+      if (!normalized) return [];
+
+      const sentences = normalized.match(/[^。！？；;]+[。！？；;]?/g) || [normalized];
+      const paragraphs = [];
+      let buffer = '';
+
+      sentences.forEach((sentence) => {
+        const trimmed = sentence.trim();
+        if (!trimmed) return;
+        const next = buffer ? `${buffer}${trimmed}` : trimmed;
+        if (next.length >= 95 || /[；;]/.test(trimmed)) {
+          paragraphs.push(next);
+          buffer = '';
+        } else if (buffer) {
+          paragraphs.push(next);
+          buffer = '';
+        } else {
+          buffer = next;
+        }
+      });
+
+      if (buffer) paragraphs.push(buffer);
+      return paragraphs;
+    }
+
+    function renderLayoutText(card, value) {
+      return linkifyLawText(card, 'explanation', String(value || '').trim());
+    }
+
+    function renderExplanationBlock(card, block) {
+      if (!block || !block.type) return '';
+
+      if (block.type === 'paragraph') {
+        return `<p>${renderLayoutText(card, block.text)}</p>`;
+      }
+
+      if (block.type === 'definitionList' && Array.isArray(block.items)) {
+        return `
+          <dl class="law-definition-list">
+            ${block.items.map((item) => `
+              <div>
+                <dt>${renderLayoutText(card, item.term)}</dt>
+                <dd>${renderLayoutText(card, item.text)}</dd>
+              </div>
+            `).join('')}
+          </dl>
+        `;
+      }
+
+      if ((block.type === 'bulletList' || block.type === 'steps') && Array.isArray(block.items)) {
+        const tag = block.type === 'steps' ? 'ol' : 'ul';
+        return `
+          <${tag} class="law-layout-list">
+            ${block.items.map((item) => `<li>${renderLayoutText(card, item)}</li>`).join('')}
+          </${tag}>
+        `;
+      }
+
+      return '';
+    }
+
+    function renderReadableExplanation(card) {
+      const explanation = card.article.explanation || '尚未提供解釋。';
+      const source = lawSourceKey(card.law.id, card.article.id);
+      const layoutBlocks = lawLayoutsBySource[source];
+
+      if (layoutBlocks && layoutBlocks.length) {
+        return `
+          <div class="law-readable">
+            ${layoutBlocks.map((block) => renderExplanationBlock(card, block)).join('')}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="law-readable">
+          ${splitFallbackParagraphs(explanation).map((paragraph) => `<p>${linkifyLawText(card, 'explanation', paragraph)}</p>`).join('')}
+        </div>
+      `;
+    }
+
     function renderArticle(card, index) {
       const note = loadNote(card);
       const returnState = currentReturnState();
@@ -329,7 +437,7 @@
         </section>
         <section class="law-section">
           <h3>解釋</h3>
-          <p>${linkifyLawText(card, 'explanation', card.article.explanation || '尚未提供解釋。')}</p>
+          ${renderReadableExplanation(card)}
         </section>
         <section class="law-section law-note-section">
           <div class="law-note-head">
@@ -536,12 +644,14 @@
 
     async function initLaws() {
       try {
-        const [lawData, linkData] = await Promise.all([
+        const [lawData, linkData, layoutData] = await Promise.all([
           fetchJson('data/laws.json'),
-          fetchJson('data/law-links.json').catch(() => [])
+          fetchJson('data/law-links.json').catch(() => []),
+          fetchJson('data/law-explanation-layouts.json').catch(() => [])
         ]);
         laws = lawData;
         prepareLawLinks(linkData);
+        prepareLawLayouts(layoutData);
         renderLawChooser();
         renderChapterFilter();
         rebuildDeck();
