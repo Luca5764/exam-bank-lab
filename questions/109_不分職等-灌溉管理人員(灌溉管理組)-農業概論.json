@@ -1,0 +1,167 @@
+[
+  {
+    "id": 1,
+    "question": "促進果實後熟(Fruit ripening)的植物荷爾蒙(Plant hormone)為下列何者？",
+    "options": [
+      "細胞分裂素",
+      "生長素",
+      "乙烯",
+      "激勃素"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 2,
+    "question": "臺灣在公元 1997 年爆發下列何種動物口蹄疫，而重創該產業的發展？",
+    "options": [
+      "牛",
+      "羊",
+      "豬",
+      "馬"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 3,
+    "question": "植物進行光合作用(Photosynthesis)的主要產物，除了糖(Sugar)，還有下列哪一種物質？",
+    "options": [
+      "水",
+      "氧氣",
+      "二氧化碳",
+      "過氧化氫"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 4,
+    "question": "在農地面積的度量中，1 公頃(hectare)為多少平方公尺？",
+    "options": [
+      "1,000 平方公尺",
+      "10,000 平方公尺",
+      "100,000 平方公尺",
+      "1,000,000 平方公尺"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 5,
+    "question": "我國最新制定的農業法律為下列何者？",
+    "options": [
+      "農會法",
+      "農產品市場交易法",
+      "獸醫師法",
+      "農田水利法"
+    ],
+    "answer": 3
+  },
+  {
+    "id": 6,
+    "question": "世界上第一個商業化的基因改造食品(Genetically modified food)為下列何者？",
+    "options": [
+      "番茄",
+      "黃豆",
+      "葡萄",
+      "玉米"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 7,
+    "question": "發酵(Fermentation)是古老的生物技術之一，發酵過程中通常不會產生下列哪一個物質？",
+    "options": [
+      "乙醛",
+      "乙醇",
+      "乙烷",
+      "乳酸"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 8,
+    "question": "地球上最具生物多樣化的陸域生物相(Terrestrial biomes)為下列何者？",
+    "options": [
+      "針葉林(Coniferous forest)",
+      "溫帶濶葉林(Temperate broadleaf forest)",
+      "熱帶草原(Savanna)",
+      "熱帶雨林(Tropical rain forest)"
+    ],
+    "answer": 3
+  },
+  {
+    "id": 9,
+    "question": "氮是生物不可或缺的營養素，豆科植物與共生(Symbiosis)的根瘤菌，可以藉由固氮酶複合體(Nitrogenase enzyme complex)的作用，將大氣中的氮(Molecular nitrogen)直接還原為下列何者？",
+    "options": [
+      "銨(Ammonium)",
+      "氨(Ammonia)",
+      "硝酸銨(Ammonium nitrate)",
+      "亞硝酸銨(Ammonium nitrite)"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 10,
+    "question": "烏心石、臺灣二葉松、柳杉多分布於何種森林群系型？",
+    "options": [
+      "海岸林",
+      "熱帶雨林",
+      "亞熱帶與暖溫帶雨林",
+      "冷溫帶山地針葉樹林"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 11,
+    "question": "臺灣耕地土壤的一般特性是下列何者？",
+    "options": [
+      "有機物含量高",
+      "陽離子交換能力低",
+      "多中性",
+      "保肥力高"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 12,
+    "question": "下列何種作物之光合作用為 C4 型？",
+    "options": [
+      "水稻",
+      "小麥",
+      "大豆",
+      "玉米"
+    ],
+    "answer": 3
+  },
+  {
+    "id": 13,
+    "question": "乳酸菌之功效為下列何者？",
+    "options": [
+      "促進腸道腐敗菌",
+      "增加膽固醇",
+      "提高宿主免疫力",
+      "增加乳糖不耐症"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 14,
+    "question": "下列何種原因造成近年農產品行銷有巨大變化？",
+    "options": [
+      "經濟模農→小農制度",
+      "少量多頻率採購→多量少頻率採購",
+      "集中型產銷→分散型產銷",
+      "消費多樣性→需要固定"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 15,
+    "question": "自動化穴盤育苗系統多用於下列何者？",
+    "options": [
+      "蝴蝶蘭移植",
+      "蔬菜草花播種",
+      "種苗扦插",
+      "蔬菜移植"
+    ],
+    "answer": 1
+  }
+]
