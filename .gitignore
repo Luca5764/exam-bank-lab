@@ -6,11 +6,14 @@ dist/
 wheels/
 *.egg-info
 .tmp/
+.uv-cache/
 
 # Virtual environments
 .venv
 
 .env
+data/laws.*.json
+law_explanations*_cache*.json
 *.pdf
 *.txt
 *.pyc
