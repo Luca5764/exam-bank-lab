@@ -16,9 +16,18 @@ SUBJECT_ALIASES = {
     "經濟學概要": "經濟學概要",
     "農田水利概論與相關法規": "農田水利概論與相關法規",
     "會計學與經濟學": "會計學與經濟學",
+    "灌溉排水概要": "農田灌溉排水概要",
+    "農田灌溉排水概要": "農田灌溉排水概要",
+    "農業概要": "農業概論",
+    "農業概論": "農業概論",
 }
 
-TVE_RE = re.compile(r"^(\d{3})統測專二-(.+)$")
+TVE_RE = re.compile(r"^(\d{3})(統測[^-]+)-(.+)$")
+
+TVE_CATEGORIES = {
+    "統測專二": "商業與管理群",
+    "統測農概": "農業群",
+}
 
 
 def build_pdf_year_map(pdf_root: Path) -> dict[str, str]:
@@ -64,12 +73,12 @@ def parse_bank_parts(stem: str, year_map: dict[str, str]) -> dict[str, str]:
     cleaned = TRAILING_COPY_RE.sub("", stem.strip())
     tve_match = TVE_RE.match(cleaned)
     if tve_match:
-        year, subject = tve_match.groups()
+        year, source, subject = tve_match.groups()
         normalized_subject = SUBJECT_ALIASES.get(subject, subject)
         return {
             "year": year,
-            "source": "統測專二",
-            "category": "商業與管理群",
+            "source": source,
+            "category": TVE_CATEGORIES.get(source, ""),
             "subject": normalized_subject,
             "originalSubject": subject,
             "displayName": f"{year} {normalized_subject}",
@@ -147,7 +156,7 @@ def build_index():
                     count = len(data) if isinstance(data, list) else 0
                 
                 meta = parse_bank_parts(f.stem, year_map)
-                name_context = meta["source"] if meta["source"] in ("統測專二", "農田水利署") else meta["category"]
+                name_context = meta["source"] if meta["source"] in ("統測專二", "統測農概", "農田水利署") else meta["category"]
                 banks.append({
                     "file": f"questions/{f.name}",
                     "name": f"{meta['displayName']}（{name_context}）" if name_context else meta["displayName"],
