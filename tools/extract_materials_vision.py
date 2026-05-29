@@ -2,9 +2,9 @@
 """
 Extract missing question materials, especially tables, from PDF page images.
 
-This tool is intentionally narrower than parse_pdf_vision.py: it assumes the
-question JSON already exists and asks a vision model only for the missing
-`materials` block of selected questions.
+This tool is intentionally narrow: it assumes the question JSON already exists
+and asks a vision model only for the missing `materials` block of selected
+questions.
 
 Examples:
   python tools/extract_materials_vision.py ^
