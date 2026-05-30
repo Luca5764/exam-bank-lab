@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from convert_liteparse_questions import convert, qa_entry
+from normalize_question_spacing import normalize_question_item
 
 try:
     from import_management_questions import parse_tve_question_bank
@@ -76,6 +77,11 @@ TVE_BANKS = [
 
 DEFAULT_OUTPUT_DIR = BASE_DIR / ".tmp" / "hybrid-management-import"
 DEFAULT_VL_DIR = BASE_DIR / ".tmp" / "paddleocr-vl-output" / "management-best-questions"
+
+
+def normalize_question_spacing(questions: list[dict[str, Any]]) -> None:
+    for item in questions:
+        normalize_question_item(item)
 
 
 def parse_args() -> argparse.Namespace:
@@ -514,6 +520,7 @@ def main() -> int:
             continue
 
         questions = convert(liteparse_json)
+        normalize_question_spacing(questions)
         out_questions = question_dir / target.name
         out_questions.write_text(
             json.dumps(questions, ensure_ascii=False, indent=2) + "\n",
@@ -573,6 +580,7 @@ def main() -> int:
                 asset_root=args.assets,
                 crop_root=args.output_dir / "material-crops",
             )
+            normalize_question_spacing(questions)
             out_questions.write_text(
                 json.dumps(questions, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
