@@ -15,6 +15,8 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+from normalize_question_spacing import normalize_question_item
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SOURCE_DIR = BASE_DIR / "農水_管理組考題" / "農水_管理組考題"
@@ -265,6 +267,9 @@ def parse_tve_question_bank(question_pdf: Path, answer_pdf: Path) -> list[dict]:
 
 
 def write_bank(filename: str, questions: list[dict]) -> None:
+    for item in questions:
+        normalize_question_item(item)
+
     output_path = QUESTION_DIR / filename
     with output_path.open("w", encoding="utf-8") as file:
         json.dump(questions, file, ensure_ascii=False, indent=2)

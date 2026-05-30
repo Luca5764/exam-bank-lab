@@ -25,6 +25,8 @@ prototypes should stay outside the repository, preferably under `.tmp/`.
   quiz-bank JSON.
 - `import_management_questions.py` imports irrigation-management and TVE
   agriculture PDF text layers.
+- `normalize_question_spacing.py` removes accidental Chinese word-break spaces
+  from question-bank JSON while preserving table-like option spacing.
 - `run_management_hybrid_import.py` is the preferred end-to-end management-bank
   pipeline.
 
