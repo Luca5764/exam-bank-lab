@@ -418,12 +418,12 @@
 
         clearPendingAdvance();
         if (answeredIdx < quizQ.length - 1) {
-          optionInputLockedUntil = Date.now() + 1200;
+          optionInputLockedUntil = Date.now() + 300; // Lock input for 300ms to cover the 250ms advance timeout
           pendingAdvanceTimer = setTimeout(() => {
             pendingAdvanceTimer = null;
             if (cur === answeredIdx) {
               go(answeredIdx + 1, { autoAdvance: true });
-              optionInputLockedUntil = Date.now() + 900;
+              optionInputLockedUntil = Date.now() + 50; // Tiny 50ms lock to prevent accidental double clicks from carrying over
             }
           }, 250);
         }
