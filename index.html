@@ -12,6 +12,14 @@
 <body>
   <div class="container fade-in">
 
+    <!-- Top segmented track switcher -->
+    <div class="track-switcher-wrap">
+      <div class="track-switcher">
+        <button class="track-btn" id="trackBtnIrrigation" onclick="switchTrack('irrigation')">🌾 農田水利招考</button>
+        <button class="track-btn" id="trackBtnTraffic" onclick="switchTrack('traffic')">🚗 交通部檢考驗員</button>
+      </div>
+    </div>
+
     <section class="hero-panel">
       <div class="page-header">
         <div class="eyebrow">題庫持續更新</div>
@@ -119,25 +127,210 @@
 
   </div>
 
+  <!-- Stunning full-screen Glassmorphic Track Selection Overlay -->
+  <div class="track-overlay" id="trackOverlay" style="display: none;">
+    <div class="track-modal fade-in">
+      <div class="track-modal-header">
+        <h2>歡迎來到考古題練習室</h2>
+        <p>請選擇您要準備的考試類別，系統將為您切換專屬的題庫與紀錄：</p>
+      </div>
+      <div class="track-cards-container">
+        <div class="track-card card-irrigation" onclick="selectTrack('irrigation')">
+          <div class="track-icon">🌾</div>
+          <h3>農田水利招考</h3>
+          <p>包含農田水利署、水利會歷屆考古題、農業概論、灌溉排水概要，以及統測專二商管群精選科目。</p>
+          <button class="btn btn-primary btn-block" style="min-height: 48px; border-radius: 12px; font-size: 1rem; padding: 8px 16px;">進入此練習室</button>
+        </div>
+        <div class="track-card card-traffic" onclick="selectTrack('traffic')">
+          <div class="track-icon">🚗</div>
+          <h3>交通部檢考驗員</h3>
+          <p>包含汽車構造原理、汽車構造原理概論、汽車駕駛理論、道路交通法規等檢定考試學科題庫。</p>
+          <button class="btn btn-primary btn-block" style="min-height: 48px; border-radius: 12px; font-size: 1rem; padding: 8px 16px;">進入此練習室</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="js/shared.js?v=theme1"></script>
   <script>
     let allQuestions = [];
     let currentBank = '';
     let BANK_INFO = [];
+    let ALL_BANKS = [];
     let selectedBanks = new Set();
     let activeSource = '全部';
     let activeSubject = '全部';
     let visibleBanks = [];
     let useAllQuestions = false;
 
-    const COLLECTIONS = [
-      { id: '全部', title: '全部題庫', desc: '跨系列搜尋與混合練習' },
-      { id: 'irrigation', title: '農田水利招考', desc: '水利會、農田水利署與共同/專業科目' },
-      { id: 'tve-business', title: '統測商管群', desc: '專二：會計學與經濟學' },
-    ];
+    let COLLECTIONS = [];
 
     function bankCollection(bank) {
-      return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
+      const track = getSelectedTrack();
+      if (track === 'traffic') {
+        const sub = bank.subject || '';
+        const name = bank.name || '';
+        if (sub.includes('構造') || name.includes('構造')) return 'traffic-structure';
+        if (sub.includes('駕駛') || name.includes('駕駛')) return 'traffic-theory';
+        if (sub.includes('法規') || name.includes('法規')) return 'traffic-law';
+        return 'traffic-law';
+      } else {
+        return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
+      }
+    }
+
+    function selectTrack(track) {
+      setSelectedTrack(track);
+      
+      const overlay = document.getElementById('trackOverlay');
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        overlay.style.opacity = '1';
+      }, 300);
+      
+      document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
+      document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
+      
+      applyTrackFilter();
+      updateSubtitle();
+    }
+
+    function switchTrack(track) {
+      if (getSelectedTrack() === track) return;
+      setSelectedTrack(track);
+      
+      document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
+      document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
+      
+      applyTrackFilter();
+      updateSubtitle();
+    }
+
+    function updateSubtitle() {
+      const track = getSelectedTrack();
+      const subtitleEl = document.querySelector('.hero-panel .subtitle');
+      if (subtitleEl) {
+        if (track === 'traffic') {
+          subtitleEl.textContent = '交通部公路局公路監理人員及客貨運業汽車檢驗員/考驗員歷年精選學科題庫。';
+        } else {
+          subtitleEl.textContent = '農田水利、統測專二與更多題庫，都用同一套流程練習。';
+        }
+      }
+    }
+
+    function applyTrackFilter() {
+      const track = getSelectedTrack();
+      
+      if (track === 'traffic') {
+        COLLECTIONS = [
+          { id: '全部', title: '全部題庫', desc: '跨系列搜尋與混合練習' },
+          { id: 'traffic-structure', title: '汽車構造原理', desc: '汽車構造與構造原理概論' },
+          { id: 'traffic-theory', title: '汽車駕駛理論', desc: '駕駛理論與安全駕駛知識' },
+          { id: 'traffic-law', title: '道路交通法規', desc: '交通安全法規與相關監理實務' }
+        ];
+      } else {
+        COLLECTIONS = [
+          { id: '全部', title: '全部題庫', desc: '跨系列搜尋與混合練習' },
+          { id: 'irrigation', title: '農田水利招考', desc: '水利會、農田水利署與共同/專業科目' },
+          { id: 'tve-business', title: '統測商管群', desc: '專二：會計學與經濟學' }
+        ];
+      }
+      
+      const colGrid = document.getElementById('sourceFilters');
+      if (colGrid) {
+        if (track === 'traffic') {
+          colGrid.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
+        } else {
+          colGrid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+        }
+      }
+
+      BANK_INFO = ALL_BANKS.filter(isBankInActiveTrack);
+      selectedBanks = new Set();
+      
+      document.getElementById('totalCount').textContent =
+        BANK_INFO.reduce((sum, bank) => sum + (bank.count || 0), 0);
+      
+      activeSource = '全部';
+      activeSubject = '全部';
+      renderBankBrowser();
+      
+      // 2. Check for saved session
+      try {
+        const raw = localStorage.getItem('quiz_session');
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (saved.quizQ && saved.quizQ.length > 0) {
+            const sessionBank = saved.bank || (saved.quizQ[0] && saved.quizQ[0]._bank) || '';
+            if (isBankFileInActiveTrack(sessionBank)) {
+              const answered = Object.keys(saved.userAns || {}).length;
+              const total = saved.quizQ.length;
+              const mins = Math.floor((saved.elapsed || 0) / 60);
+              document.getElementById('resumeInfo').textContent =
+                `${total} 題中已做 ${answered} 題，已用時 ${mins} 分鐘`;
+              document.getElementById('resumeCard').style.display = 'block';
+            } else {
+              document.getElementById('resumeCard').style.display = 'none';
+            }
+          }
+        } else {
+          document.getElementById('resumeCard').style.display = 'none';
+        }
+      } catch { }
+
+      const wp = getWrongPool();
+      document.getElementById('todayWrongCount').textContent = wp.today_wrong.length;
+      document.getElementById('pastWrongCount').textContent = wp.past_wrong.length;
+
+      const modeEl = document.getElementById('quizMode');
+      if (wp.ever_wrong.length === 0) {
+        modeEl.querySelector('[value="wrong"]').disabled = true;
+        modeEl.querySelector('[value="still-wrong"]').disabled = true;
+        modeEl.querySelector('[value="wrong"]').textContent = '曾錯過的題';
+        modeEl.querySelector('[value="still-wrong"]').textContent = '至今仍錯的題';
+      } else {
+        modeEl.querySelector('[value="wrong"]').disabled = false;
+        modeEl.querySelector('[value="still-wrong"]').disabled = false;
+        modeEl.querySelector('[value="wrong"]').textContent = `曾錯過的題（共 ${wp.ever_wrong.length} 題）`;
+        modeEl.querySelector('[value="still-wrong"]').textContent = `至今仍錯的題（剩 ${wp.still_wrong.length} 題）`;
+      }
+      updateModeHelp();
+      
+      renderHistoryList();
+    }
+
+    function renderHistoryList() {
+      const allHistory = loadLocalHistory();
+      const filteredHistory = allHistory
+        .map((h, index) => ({ record: h, index }))
+        .filter(item => isSessionInActiveTrack(item.record));
+      
+      const historyCard = document.getElementById('historyCard');
+      const list = document.getElementById('historyList');
+      
+      if (filteredHistory.length > 0) {
+        historyCard.style.display = 'block';
+        list.innerHTML = filteredHistory.slice().reverse().map((item, dispIdx) => {
+          const h = item.record;
+          const realIdx = item.index;
+          const pct = h.score || 0;
+          const cls = pct >= 70 ? 'text-green' : 'text-red';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <span class="text-dim" style="font-size:0.9rem">${h.date || '?'}</span>
+            <span class="fw-900 ${cls}" style="margin-left:12px">${pct}分 (${h.correct}/${h.total})</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" style="padding:6px 12px;min-height:36px;font-size:0.85rem" onclick="viewHistory(${realIdx})">查閱</button>
+            <button class="btn btn-sm" style="padding:6px 12px;min-height:36px;font-size:0.85rem;background:var(--wrong-bg);color:var(--wrong);border:1px solid #e57373" onclick="deleteSingle(${realIdx})">刪除</button>
+          </div>
+        </div>`;
+        }).join('');
+      } else {
+        historyCard.style.display = 'none';
+        list.innerHTML = '';
+      }
     }
 
     function collectionLabel(id) {
@@ -307,15 +500,12 @@
       try {
         const banks = await fetchJson('data/banks.json');
         if (banks && banks.length > 0) {
-          BANK_INFO = banks.map(b => ({
+          ALL_BANKS = banks.map(b => ({
             ...b,
             source: b.source || '農田水利',
             subject: b.subject || b.name,
           }));
-          selectedBanks = new Set();
-          document.getElementById('totalCount').textContent =
-            BANK_INFO.reduce((sum, bank) => sum + (bank.count || 0), 0);
-          renderBankBrowser();
+          applyTrackFilter();
           return '';
         }
       } catch (e) { 
@@ -326,62 +516,21 @@
     }
 
     async function init() {
+      // 0. Set up persona switcher and check for saved track
+      const track = getSelectedTrack();
+      if (!track) {
+        // Show selection overlay
+        document.getElementById('trackOverlay').style.display = 'flex';
+      } else {
+        document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
+        document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
+        updateSubtitle();
+      }
+
       // 1. Load dynamic bank list
       const firstBank = await loadBanks();
       if (firstBank) await loadBank(firstBank);
 
-      // 2. Check for saved session
-      try {
-        const raw = localStorage.getItem('quiz_session');
-        if (raw) {
-          const saved = JSON.parse(raw);
-          if (saved.quizQ && saved.quizQ.length > 0) {
-            const answered = Object.keys(saved.userAns || {}).length;
-            const total = saved.quizQ.length;
-            const mins = Math.floor((saved.elapsed || 0) / 60);
-            document.getElementById('resumeInfo').textContent =
-              `${total} 題中已做 ${answered} 題，已用時 ${mins} 分鐘`;
-            document.getElementById('resumeCard').style.display = 'block';
-          }
-        }
-      } catch { }
-
-      // 3. Load wrong pool stats from LocalStorage
-      const wp = getWrongPool();
-      document.getElementById('todayWrongCount').textContent = wp.today_wrong.length;
-      document.getElementById('pastWrongCount').textContent = wp.past_wrong.length;
-
-      const modeEl = document.getElementById('quizMode');
-      if (wp.ever_wrong.length === 0) {
-        modeEl.querySelector('[value="wrong"]').disabled = true;
-        modeEl.querySelector('[value="still-wrong"]').disabled = true;
-      } else {
-        modeEl.querySelector('[value="wrong"]').textContent = `曾錯過的題（共 ${wp.ever_wrong.length} 題）`;
-        modeEl.querySelector('[value="still-wrong"]').textContent = `至今仍錯的題（剩 ${wp.still_wrong.length} 題）`;
-      }
-      updateModeHelp();
-
-      // 4. Load history from LocalStorage
-      const history = loadLocalHistory();
-      if (history.length > 0) {
-        document.getElementById('historyCard').style.display = 'block';
-        const list = document.getElementById('historyList');
-        list.innerHTML = history.slice().reverse().map((h, dispIdx) => {
-          const realIdx = history.length - 1 - dispIdx;
-          const pct = h.score || 0;
-          const cls = pct >= 70 ? 'text-green' : 'text-red';
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
-          <div>
-            <span class="text-dim" style="font-size:0.9rem">${h.date || '?'}</span>
-            <span class="fw-900 ${cls}" style="margin-left:12px">${pct}分 (${h.correct}/${h.total})</span>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-secondary btn-sm" style="padding:6px 12px;min-height:36px;font-size:0.85rem" onclick="viewHistory(${realIdx})">查閱</button>
-            <button class="btn btn-sm" style="padding:6px 12px;min-height:36px;font-size:0.85rem;background:var(--wrong-bg);color:var(--wrong);border:1px solid #e57373" onclick="deleteSingle(${realIdx})">刪除</button>
-          </div>
-        </div>`;
-        }).join('');
-      }
     }
 
     function doStart() {

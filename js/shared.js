@@ -1,4 +1,21 @@
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+function isMultiAnswer(q) {
+  return Array.isArray(q.answer);
+}
+
+function multiAnswerCorrect(userAns, answer) {
+  if (!Array.isArray(userAns) || !Array.isArray(answer)) return false;
+  if (userAns.length !== answer.length) return false;
+  const a = [...userAns].sort();
+  const b = [...answer].sort();
+  return a.every((v, i) => v === b[i]);
+}
+
+function formatAnswerLetters(ans) {
+  if (Array.isArray(ans)) return ans.map(i => LETTERS[i]).filter(Boolean).join(',');
+  return LETTERS[ans] || '未設定';
+}
 
 function esc(s) {
   return String(s)
@@ -179,8 +196,13 @@ function renderMaterialsHTML(materials) {
 }
 
 function buildPrompt(q, userAns) {
-  const userLetter = userAns !== undefined && userAns !== null ? LETTERS[userAns] : '未作答';
-  const correctLetter = q.freeScore ? '送分' : (LETTERS[q.answer] || '未設定');
+  let userLetter;
+  if (isMultiAnswer(q)) {
+    userLetter = Array.isArray(userAns) && userAns.length > 0 ? formatAnswerLetters(userAns) : '未作答';
+  } else {
+    userLetter = userAns !== undefined && userAns !== null ? LETTERS[userAns] : '未作答';
+  }
+  const correctLetter = q.freeScore ? '送分' : formatAnswerLetters(q.answer);
   const materialsText = buildMaterialText(q.materials);
   let t = '';
   t += `請說明這題為什麼正確答案是 ${correctLetter}，並分析我選的答案 ${userLetter}。\n`;
@@ -197,7 +219,7 @@ function buildPrompt(q, userAns) {
 }
 
 function buildBrowsePrompt(q) {
-  const correctLetter = q.freeScore ? '送分' : (LETTERS[q.answer] || '未設定');
+  const correctLetter = q.freeScore ? '送分' : formatAnswerLetters(q.answer);
   const materialsText = buildMaterialText(q.materials);
   let t = '';
   t += `請說明這題為什麼正確答案是 ${correctLetter}。\n`;
@@ -217,27 +239,48 @@ function buildReviewItemHTML(q, opts) {
   const { idx, userAns, mode } = opts;
   const isResult = mode === 'result';
   const isFreeScore = !!q.freeScore;
-  const isSkipped = isResult && (userAns === undefined || userAns === null);
-  const isCorrect = isResult && (isFreeScore ? !isSkipped : userAns === q.answer);
+  const multi = isMultiAnswer(q);
+
+  let isSkipped, isCorrect;
+  if (multi) {
+    isSkipped = isResult && (!Array.isArray(userAns) || userAns.length === 0);
+    isCorrect = isResult && (isFreeScore ? !isSkipped : multiAnswerCorrect(userAns, q.answer));
+  } else {
+    isSkipped = isResult && (userAns === undefined || userAns === null);
+    isCorrect = isResult && (isFreeScore ? !isSkipped : userAns === q.answer);
+  }
   const isWrong = isResult && !isCorrect;
 
   let cls = 'ri-neutral';
   let badgeCls = 'badge-neutral';
-  let badgeText = isFreeScore ? '送分' : '';
+  let badgeText = isFreeScore ? '送分' : (multi ? '複選' : '');
 
   if (isResult) {
     cls = isWrong ? 'ri-wrong' : 'ri-correct';
     badgeCls = isWrong ? 'badge-wrong' : 'badge-correct';
     badgeText = isSkipped ? '未作答' : (isFreeScore ? '送分' : (isCorrect ? '答對' : '答錯'));
+    if (multi && !isSkipped) badgeText += '（複選）';
   }
+
+  const correctSet = multi ? new Set(q.answer) : null;
+  const userSet = multi && Array.isArray(userAns) ? new Set(userAns) : null;
 
   const optsHtml = q.options.map((opt, oi) => {
     let c = '';
-    if (!isFreeScore && oi === q.answer) {
-      c = 'opt-correct';
-    }
-    if (isResult && userAns === oi && !isCorrect) {
-      c = 'opt-wrong';
+    if (multi) {
+      if (!isFreeScore && correctSet.has(oi)) {
+        c = 'opt-correct';
+      }
+      if (isResult && !isCorrect && userSet && userSet.has(oi) && !correctSet.has(oi)) {
+        c = 'opt-wrong';
+      }
+    } else {
+      if (!isFreeScore && oi === q.answer) {
+        c = 'opt-correct';
+      }
+      if (isResult && userAns === oi && !isCorrect) {
+        c = 'opt-wrong';
+      }
     }
     return `<div class="${c}">(${LETTERS[oi]}) ${esc(opt)}</div>`;
   }).join('');
@@ -322,8 +365,12 @@ function getWrongPool() {
   for (const session of history) {
     const sessionBank = session.bank || 'questions/questions.json';
     for (const item of session.answers || []) {
-      const qid = item.qid;
       const bank = item.bank || sessionBank;
+      
+      // Filter dynamically: only count questions from banks that belong to the active track
+      if (!isBankFileInActiveTrack(bank)) continue;
+      
+      const qid = item.qid;
       const key = `${bank}|${qid}`;
       const ok = item.correct;
       lastResult[key] = ok;
@@ -350,4 +397,53 @@ function getWrongPool() {
     today_wrong: toList([...todayWrong]),
     past_wrong: toList(pastWrong),
   };
+}
+
+/* ===== Persona / Track Selection Utilities ===== */
+const TRACKS = {
+  irrigation: {
+    name: '農田水利招考',
+    sources: ['農田水利', '農田水利署', '統測專二', '統測農概']
+  },
+  traffic: {
+    name: '交通部檢考驗員',
+    sources: ['交通部']
+  }
+};
+
+function getSelectedTrack() {
+  try {
+    return localStorage.getItem('quiz_selected_track') || '';
+  } catch {
+    return '';
+  }
+}
+
+function setSelectedTrack(track) {
+  try {
+    localStorage.setItem('quiz_selected_track', track);
+    // Clear the active quiz session to avoid cross-contamination of questions
+    localStorage.removeItem('quiz_session');
+  } catch {}
+}
+
+function isBankFileInActiveTrack(file) {
+  const track = getSelectedTrack();
+  if (!track) return true; // Default to allow all if none selected
+  const isTrafficFile = file && file.includes('交通部');
+  return track === 'traffic' ? isTrafficFile : !isTrafficFile;
+}
+
+function isBankInActiveTrack(bank) {
+  const track = getSelectedTrack();
+  if (!track) return true;
+  const isTraffic = (bank.source === '交通部') || (bank.file && bank.file.includes('交通部'));
+  return track === 'traffic' ? isTraffic : !isTraffic;
+}
+
+function isSessionInActiveTrack(session) {
+  const sessionBank = (session.answers && session.answers[0] && session.answers[0].bank) ||
+                      (session.questions && session.questions[0] && session.questions[0]._bank) ||
+                      session.bank || '';
+  return isBankFileInActiveTrack(sessionBank);
 }

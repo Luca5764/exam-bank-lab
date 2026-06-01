@@ -13,6 +13,14 @@
   <div class="container fade-in">
     <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
 
+    <!-- Top segmented track switcher -->
+    <div class="track-switcher-wrap" style="margin-top: 10px;">
+      <div class="track-switcher">
+        <button class="track-btn" id="trackBtnIrrigation" onclick="switchTrack('irrigation')">🌾 農田水利招考</button>
+        <button class="track-btn" id="trackBtnTraffic" onclick="switchTrack('traffic')">🚗 交通部檢考驗員</button>
+      </div>
+    </div>
+
     <div class="page-header page-header-compact">
       <h1>題庫內容瀏覽</h1>
       <p class="subtitle">先從題庫書架挑一份，再檢查題目、答案與解析。</p>
@@ -63,18 +71,77 @@
     let activeSource = '全部';
     let activeSubject = '全部';
 
-    const COLLECTIONS = [
-      { id: '全部', title: '全部題庫', desc: '跨系列搜尋與檢查' },
-      { id: 'irrigation', title: '農田水利招考', desc: '水利會、農田水利署與共同/專業科目' },
-      { id: 'tve-business', title: '統測商管群', desc: '專二：會計學與經濟學' },
-    ];
+    let COLLECTIONS = [];
+    let ALL_BANKS = [];
+
+    function bankCollection(bank) {
+      const track = getSelectedTrack();
+      if (track === 'traffic') {
+        const sub = bank.subject || '';
+        const name = bank.name || '';
+        if (sub.includes('構造') || name.includes('構造')) return 'traffic-structure';
+        if (sub.includes('駕駛') || name.includes('駕駛')) return 'traffic-theory';
+        if (sub.includes('法規') || name.includes('法規')) return 'traffic-law';
+        return 'traffic-law';
+      } else {
+        return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
+      }
+    }
+
+    function switchTrack(track) {
+      if (getSelectedTrack() === track) return;
+      setSelectedTrack(track);
+      
+      document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
+      document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
+      
+      // Reset preview state
+      browseQ = [];
+      currentBankFile = '';
+      document.getElementById('currentBankTitle').textContent = '尚未選擇題庫';
+      document.getElementById('count').textContent = '0';
+      document.getElementById('copyAllBtn').disabled = true;
+      document.getElementById('list').innerHTML = '<div class="empty-state">請先從上方題庫書架選擇一份題庫。</div>';
+      
+      applyTrackFilter();
+    }
+
+    function applyTrackFilter() {
+      const track = getSelectedTrack();
+      
+      if (track === 'traffic') {
+        COLLECTIONS = [
+          { id: '全部', title: '全部題庫', desc: '跨系列搜尋與檢查' },
+          { id: 'traffic-structure', title: '汽車構造原理', desc: '汽車構造與構造原理概論' },
+          { id: 'traffic-theory', title: '汽車駕駛理論', desc: '駕駛理論與安全駕駛知識' },
+          { id: 'traffic-law', title: '道路交通法規', desc: '交通安全法規與相關監理實務' }
+        ];
+      } else {
+        COLLECTIONS = [
+          { id: '全部', title: '全部題庫', desc: '跨系列搜尋與檢查' },
+          { id: 'irrigation', title: '農田水利招考', desc: '水利會、農田水利署與共同/專業科目' },
+          { id: 'tve-business', title: '統測商管群', desc: '專二：會計學與經濟學' }
+        ];
+      }
+      
+      const colGrid = document.getElementById('browseSourceFilters');
+      if (colGrid) {
+        if (track === 'traffic') {
+          colGrid.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
+        } else {
+          colGrid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+        }
+      }
+
+      browseBanks = ALL_BANKS.filter(isBankInActiveTrack);
+      activeSource = '全部';
+      activeSubject = '全部';
+      
+      renderBrowseBankBrowser();
+    }
 
     function jsArg(value) {
       return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    }
-
-    function bankCollection(bank) {
-      return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
     }
 
     function collectionLabel(id) {
@@ -211,19 +278,28 @@
     async function loadBanks() {
       try {
         const banks = await fetchJson('data/banks.json');
-        browseBanks = (banks || []).map(b => ({
+        ALL_BANKS = (banks || []).map(b => ({
           ...b,
           source: b.source || '農田水利',
           subject: b.subject || b.name,
         }));
+        
+        // Initialize switcher active state
+        const track = getSelectedTrack() || 'irrigation';
+        setSelectedTrack(track); // fallback default
+        document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
+        document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
+        
+        applyTrackFilter();
+        
         const bankParam = new URLSearchParams(location.search).get('bank');
         const selectedBank = browseBanks.find(bank => bank.file === bankParam);
         if (selectedBank) {
           activeSource = bankCollection(selectedBank);
           activeSubject = selectedBank.subject || '全部';
+          renderBrowseBankBrowser();
+          await loadBank(selectedBank.file);
         }
-        renderBrowseBankBrowser();
-        if (selectedBank) await loadBank(selectedBank.file);
       } catch (e) {
         console.error(e);
         showToast('題庫索引讀取失敗');

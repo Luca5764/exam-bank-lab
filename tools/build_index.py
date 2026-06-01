@@ -24,6 +24,9 @@ SUBJECT_ALIASES = {
 
 TVE_RE = re.compile(r"^(\d{3})(統測[^-]+)-(.+)$")
 
+# 交通部 pattern: 交通部YYY-N-科目 or 交通部YYY-科目
+TRAFFIC_RE = re.compile(r"^交通部(\d{3})(?:-(\d+))?-(.+)$")
+
 TVE_CATEGORIES = {
     "統測專二": "商業與管理群",
     "統測農概": "農業群",
@@ -82,6 +85,21 @@ def parse_bank_parts(stem: str, year_map: dict[str, str]) -> dict[str, str]:
             "subject": normalized_subject,
             "originalSubject": subject,
             "displayName": f"{year} {normalized_subject}",
+        }
+
+    traffic_match = TRAFFIC_RE.match(cleaned)
+    if traffic_match:
+        year = traffic_match.group(1)
+        session = traffic_match.group(2) or ""
+        subject = traffic_match.group(3)
+        category = f"第{session}梯次" if session else "年度檢定"
+        return {
+            "year": year,
+            "source": "交通部",
+            "category": category,
+            "subject": subject,
+            "originalSubject": subject,
+            "displayName": f"{year} {subject}",
         }
 
     name = cleaned.replace("_", " ")
