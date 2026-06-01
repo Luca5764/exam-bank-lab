@@ -3,6 +3,10 @@
         "date":  "2026-06-01",
         "items":  [
                       {
+                          "time":  "20:46",
+                          "message":  "perf: shorten option select locking delay to make quiz highly responsive"
+                      },
+                      {
                           "time":  "20:42",
                           "message":  "feat: complete traffic question bank parse and implement multi-track selection"
                       }
