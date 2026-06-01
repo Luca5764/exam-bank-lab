@@ -3,6 +3,10 @@
         "date":  "2026-06-01",
         "items":  [
                       {
+                          "time":  "20:51",
+                          "message":  "feat: implement dynamic question type filtering for tf, sc, and mc"
+                      },
+                      {
                           "time":  "20:46",
                           "message":  "perf: shorten option select locking delay to make quiz highly responsive"
                       },
