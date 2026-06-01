@@ -33,6 +33,7 @@
     .option-btn.selected { border-color: var(--selected-border); background: var(--selected-bg); }
     .option-btn.selected .opt-letter { background: var(--selected-border); color: white; border-color: var(--selected-border); }
     .q-text { font-size: 1.25rem; line-height: 1.9; font-weight: 500; margin-bottom: 24px; }
+    .multi-badge { display: inline-block; font-size: 0.85rem; font-weight: 700; color: var(--gold); background: var(--count-bg); border: 2px solid var(--gold); padding: 3px 12px; border-radius: 8px; margin-bottom: 14px; }
     .warn-box { background: var(--count-bg); border: 2px solid var(--gold); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; font-size: 1rem; display: none; }
     .warn-box strong { color: var(--gold); }
     .nav-row { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -98,10 +99,16 @@
     function shuffle(a) { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[b[i], b[j]] = [b[j], b[i]]; } return b; }
 
     function prepareQuestion(q) {
-      if (q.noShuffle) return { ...q };
+      const forceNoShuffle = q.noShuffle || (q.options && q.options.length === 2);
+      if (forceNoShuffle) return { ...q };
       const idx = q.options.map((_, i) => i);
       const sh = shuffle(idx);
-      const answer = Number.isInteger(q.answer) ? sh.indexOf(q.answer) : q.answer;
+      let answer;
+      if (isMultiAnswer(q)) {
+        answer = q.answer.map(a => sh.indexOf(a));
+      } else {
+        answer = Number.isInteger(q.answer) ? sh.indexOf(q.answer) : q.answer;
+      }
       return { ...q, options: sh.map(i => q.options[i]), answer };
     }
 
@@ -337,22 +344,41 @@
         const i = +b.dataset.i;
         b.className = 'q-jump-btn';
         if (i === cur) b.classList.add('current');
-        else if (userAns[i] !== undefined) b.classList.add('answered');
+        else {
+          const ans = userAns[i];
+          const answered = Array.isArray(ans) ? ans.length > 0 : ans !== undefined;
+          if (answered) b.classList.add('answered');
+        }
       });
-      document.getElementById('ansCount').textContent = Object.keys(userAns).length;
+      const answeredCount = Object.keys(userAns).filter(k => {
+        const ans = userAns[k];
+        return Array.isArray(ans) ? ans.length > 0 : ans !== undefined;
+      }).length;
+      document.getElementById('ansCount').textContent = answeredCount;
     }
 
     function render() {
       const q = quizQ[cur];
+      const multi = isMultiAnswer(q);
       document.getElementById('curNum').textContent = cur + 1;
       document.getElementById('progFill').style.width = `${((cur + 1) / quizQ.length) * 100}%`;
       const sel = userAns[cur];
+
+      let optionsHtml;
+      if (multi) {
+        const selSet = new Set(Array.isArray(sel) ? sel : []);
+        optionsHtml = q.options.map((o, i) => `<button class="option-btn ${selSet.has(i) ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('');
+      } else {
+        optionsHtml = q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('');
+      }
+
       document.getElementById('qCard').innerHTML = `
         <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px;margin-bottom:16px">第 ${cur + 1} 題</span>
         <div class="q-text">${esc(q.question)}</div>
         ${renderMaterialsHTML(q.materials)}
+        ${multi ? '<div class="multi-badge">☑ 複選題（請選出所有正確答案）</div>' : ''}
         <div style="display:flex;flex-direction:column;gap:10px">
-          ${q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('')}
+          ${optionsHtml}
         </div>`;
       document.getElementById('btnPrev').style.visibility = cur > 0 ? 'visible' : 'hidden';
       document.getElementById('btnNext').style.visibility = cur < quizQ.length - 1 ? 'visible' : 'hidden';
@@ -371,20 +397,36 @@
         ev?.currentTarget?.blur();
         return;
       }
-      userAns[cur] = i;
-      const answeredIdx = cur;
-      render();
+      const q = quizQ[cur];
+      const multi = isMultiAnswer(q);
 
-      clearPendingAdvance();
-      if (answeredIdx < quizQ.length - 1) {
-        optionInputLockedUntil = Date.now() + 1200;
-        pendingAdvanceTimer = setTimeout(() => {
-          pendingAdvanceTimer = null;
-          if (cur === answeredIdx) {
-            go(answeredIdx + 1, { autoAdvance: true });
-            optionInputLockedUntil = Date.now() + 900;
-          }
-        }, 250);
+      if (multi) {
+        const current = Array.isArray(userAns[cur]) ? [...userAns[cur]] : [];
+        const idx = current.indexOf(i);
+        if (idx >= 0) {
+          current.splice(idx, 1);
+        } else {
+          current.push(i);
+        }
+        userAns[cur] = current.sort((a, b) => a - b);
+        render();
+        // No auto-advance for multi-answer
+      } else {
+        userAns[cur] = i;
+        const answeredIdx = cur;
+        render();
+
+        clearPendingAdvance();
+        if (answeredIdx < quizQ.length - 1) {
+          optionInputLockedUntil = Date.now() + 1200;
+          pendingAdvanceTimer = setTimeout(() => {
+            pendingAdvanceTimer = null;
+            if (cur === answeredIdx) {
+              go(answeredIdx + 1, { autoAdvance: true });
+              optionInputLockedUntil = Date.now() + 900;
+            }
+          }, 250);
+        }
       }
     }
 
@@ -397,7 +439,10 @@
     }
 
     function trySubmit() {
-      const unanswered = quizQ.length - Object.keys(userAns).length;
+      const unanswered = quizQ.length - Object.keys(userAns).filter(k => {
+        const ans = userAns[k];
+        return Array.isArray(ans) ? ans.length > 0 : ans !== undefined;
+      }).length;
       if (unanswered > 0) {
         document.getElementById('warnNum').textContent = unanswered;
         document.getElementById('warnBox').style.display = 'block';
@@ -413,10 +458,18 @@
       let correct = 0, wrong = 0, skip = 0;
       const answers = quizQ.map((q, i) => {
         const ua = userAns[i];
-        const skipped = ua === undefined;
-        const ok = q.freeScore ? !skipped : ua === q.answer;
+        const multi = isMultiAnswer(q);
+        const skipped = multi ? (!Array.isArray(ua) || ua.length === 0) : ua === undefined;
+        let ok;
+        if (q.freeScore) {
+          ok = !skipped;
+        } else if (multi) {
+          ok = multiAnswerCorrect(ua, q.answer);
+        } else {
+          ok = ua === q.answer;
+        }
         if (skipped) skip++; else if (ok) correct++; else wrong++;
-        return { qid: q.id, bank: q._bank || bank, userAnswer: ua !== undefined ? ua : null, correct: ok && !skipped };
+        return { qid: q.id, bank: q._bank || bank, userAnswer: skipped ? null : ua, correct: ok && !skipped };
       });
 
       const now = new Date();
