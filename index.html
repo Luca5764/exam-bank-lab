@@ -86,6 +86,17 @@
 
       <div class="settings-section">
         <div class="section-kicker">Step 3</div>
+        <label class="mb-8">題型篩選</label>
+        <div class="filter-row" id="typeFilters">
+          <button class="filter-chip active" id="typeBtnTF" onclick="toggleTypeFilter('tf')">是非題</button>
+          <button class="filter-chip active" id="typeBtnSC" onclick="toggleTypeFilter('sc')">單選題</button>
+          <button class="filter-chip active" id="typeBtnMC" onclick="toggleTypeFilter('mc')">複選題</button>
+        </div>
+        <div class="settings-hint">預設全選。若只挑特定題型，可取消點選不需要的題型。</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-kicker">Step 4</div>
         <label class="mb-8">測驗題數</label>
         <div class="quiz-count-row">
           <input id="numQuestions" class="number-input" type="number" min="1" step="1" value="50" inputmode="numeric" oninput="syncCountFromInput()">
@@ -533,13 +544,32 @@
 
     }
 
+    let selectedTypes = new Set(['tf', 'sc', 'mc']);
+
+    function toggleTypeFilter(type) {
+      if (selectedTypes.has(type)) {
+        if (selectedTypes.size === 1) {
+          showToast('請至少選擇一種題型！');
+          return;
+        }
+        selectedTypes.delete(type);
+        document.getElementById(`typeBtn${type.toUpperCase()}`).classList.remove('active');
+      } else {
+        selectedTypes.add(type);
+        document.getElementById(`typeBtn${type.toUpperCase()}`).classList.add('active');
+      }
+    }
+
     function doStart() {
       try { localStorage.removeItem('quiz_session'); } catch { }
       const mode = document.getElementById('quizMode').value;
       const num = getQuestionCount();
+      const typesStr = [...selectedTypes].join(',');
+
+      let url = `quiz.html?mode=${mode}&num=${num}&types=${typesStr}`;
 
       if (mode === 'wrong' || mode === 'still-wrong') {
-        window.location.href = `quiz.html?mode=${mode}&num=${num}`;
+        window.location.href = url;
         return;
       }
 
@@ -547,9 +577,9 @@
       if (selected.length === 0) { alert('請至少選擇一個題庫！'); return; }
 
       if (selected.length > 1) {
-        window.location.href = `quiz.html?mode=${mode}&num=${num}&banks=${selected.map(encodeURIComponent).join(',')}`;
+        window.location.href = `${url}&banks=${selected.map(encodeURIComponent).join(',')}`;
       } else {
-        window.location.href = `quiz.html?mode=${mode}&num=${num}&bank=${encodeURIComponent(selected[0])}`;
+        window.location.href = `${url}&bank=${encodeURIComponent(selected[0])}`;
       }
     }
 

@@ -314,8 +314,24 @@
         }
       }
 
+      // Filter by question type if requested
+      const typesParam = params.get('types');
+      if (typesParam) {
+        const allowed = typesParam.split(',');
+        pool = pool.filter(q => {
+          const isTF = !isMultiAnswer(q) && q.options.length === 2;
+          const isMC = isMultiAnswer(q);
+          const isSC = !isMultiAnswer(q) && q.options.length > 2;
+          
+          if (allowed.includes('tf') && isTF) return true;
+          if (allowed.includes('sc') && isSC) return true;
+          if (allowed.includes('mc') && isMC) return true;
+          return false;
+        });
+      }
+
       if (!pool.length) {
-        alert('題庫讀取失敗或內容為空，請回首頁重新選擇題庫。');
+        alert('選取的題庫在該篩選條件下沒有符合的題目（是非題/單選題/複選題），請回首頁重新選擇！');
         location.href = 'index.html';
         return;
       }
