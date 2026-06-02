@@ -172,11 +172,11 @@
           ? browseBanks
           : browseBanks.filter(bank => bankCollection(bank) === item.id);
         const questionCount = banks.reduce((sum, bank) => sum + (bank.count || 0), 0);
-        return `<button class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setBrowseSourceFilter(${jsArg(item.id)})">
+        return `<div class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setBrowseSourceFilter(${jsArg(item.id)})">
           <span class="collection-title">${esc(item.title)}</span>
           <span class="collection-desc">${esc(item.desc)}</span>
           <span class="collection-count">${banks.length} 份 / ${questionCount} 題</span>
-        </button>`;
+        </div>`;
       }).join('');
     }
 
@@ -235,7 +235,7 @@
 
       list.innerHTML = browseVisibleBanks.map(bank => {
         const selected = bank.file === currentBankFile;
-        return `<button class="bank-card ${selected ? 'selected' : ''}" onclick="selectBrowseBank(${jsArg(bank.file)})">
+        return `<div class="bank-card ${selected ? 'selected' : ''}" onclick="selectBrowseBank(${jsArg(bank.file)})">
           <span class="bank-check">${selected ? '✓' : ''}</span>
           <span class="bank-main">
             <span class="bank-title">${esc(bankDisplayName(bank))}</span>
@@ -243,7 +243,7 @@
           </span>
           <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
           <span class="bank-count">${bank.count} 題</span>
-        </button>`;
+        </div>`;
       }).join('');
     }
 
