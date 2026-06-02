@@ -250,6 +250,7 @@
     }
 
     function saveSession() {
+      if (isSubmitting) return;
       const now = Date.now();
       const totalElapsed = elapsedBefore + Math.floor((now - sessionStart) / 1000);
       const data = { quizQ, cur, userAns, elapsed: totalElapsed, savedAt: now };
@@ -300,6 +301,19 @@
             console.error('Failed to load wrong-question bank', bf, e);
           }
         }
+      } else if (mode === 'key') {
+        const keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
+        if (!keyQuestions.length) { alert('沒有重點標記題可以練習！'); location.href = 'index.html'; return; }
+        const byBank = {};
+        for (const { bank: b, qid } of keyQuestions) { (byBank[b] = byBank[b] || new Set()).add(qid); }
+        for (const [bf, qids] of Object.entries(byBank)) {
+          try {
+            const bankQ = await fetchJson(bf);
+            pool.push(...bankQ.filter(q => qids.has(q.id)).map(q => ({ ...q, _bank: bf })));
+          } catch(e) {
+            console.error('Failed to load key-question bank', bf, e);
+          }
+        }
       } else {
         const banksParam = params.get('banks');
         if (banksParam) {
@@ -336,6 +350,12 @@
           return false;
         });
       }
+
+      // Filter out excluded questions
+      pool = pool.filter(q => {
+        const meta = getQuestionMetadata(q._bank || bank, q.id);
+        return meta.tag !== 'exclude';
+      });
 
       if (!pool.length) {
         alert('選取的題庫在該篩選條件下沒有符合的題目（是非題/單選題/複選題），請回首頁重新選擇！');
@@ -402,14 +422,28 @@
         optionsHtml = q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('');
       }
 
+      const meta = getQuestionMetadata(q._bank || bank, q.id);
+      const metaHtml = `
+        <div class="q-meta-panel" data-bank="${q._bank || bank}" data-qid="${q.id}">
+          <div class="q-meta-tags">
+            <span style="font-size:0.85rem;color:var(--text-dim);font-weight:700;margin-right:4px">題目標記：</span>
+            <button class="tag-pill tag-key ${meta.tag === 'key' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'key', this)">⭐ 重點</button>
+            <button class="tag-pill tag-exclude ${meta.tag === 'exclude' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'exclude', this)">🚫 排除</button>
+          </div>
+          <div class="q-meta-notes-wrapper">
+            <textarea class="q-notes-input" placeholder="對此題撰寫筆記心得..." oninput="saveQuestionNotes('${q._bank || bank}', ${q.id}, this.value)">${esc(meta.notes)}</textarea>
+          </div>
+        </div>`;
+
       document.getElementById('qCard').innerHTML = `
         <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px;margin-bottom:16px">第 ${cur + 1} 題</span>
         <div class="q-text">${esc(q.question)}</div>
         ${renderMaterialsHTML(q.materials)}
         ${multi ? '<div class="multi-badge">☑ 複選題（請選出所有正確答案）</div>' : ''}
-        <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
           ${optionsHtml}
-        </div>`;
+        </div>
+        ${metaHtml}`;
       document.getElementById('btnPrev').style.visibility = cur > 0 ? 'visible' : 'hidden';
       document.getElementById('btnNext').style.visibility = cur < quizQ.length - 1 ? 'visible' : 'hidden';
       updateJump();

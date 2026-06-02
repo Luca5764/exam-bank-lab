@@ -288,6 +288,19 @@ function buildReviewItemHTML(q, opts) {
   const copyFn = isResult ? `copyReview(${idx})` : `copyBrowse(${idx})`;
   const copyLabel = '複製解析提示';
 
+  const meta = getQuestionMetadata(q._bank || '', q.id);
+  const metaHtml = `
+    <div class="q-meta-panel" data-bank="${q._bank || ''}" data-qid="${q.id}">
+      <div class="q-meta-tags">
+        <span style="font-size:0.85rem;color:var(--text-dim);font-weight:700;margin-right:4px">題目標記：</span>
+        <button class="tag-pill tag-key ${meta.tag === 'key' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || ''}', ${q.id}, 'key', this)">⭐ 重點</button>
+        <button class="tag-pill tag-exclude ${meta.tag === 'exclude' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || ''}', ${q.id}, 'exclude', this)">🚫 排除</button>
+      </div>
+      <div class="q-meta-notes-wrapper">
+        <textarea class="q-notes-input" placeholder="對此題撰寫筆記心得..." oninput="saveQuestionNotes('${q._bank || ''}', ${q.id}, this.value)">${esc(meta.notes)}</textarea>
+      </div>
+    </div>`;
+
   return `<div class="review-item ${cls}">
     <div class="ri-header">
       <span style="font-weight:700;color:var(--text-dim)">第 ${idx + 1} 題</span>
@@ -296,7 +309,10 @@ function buildReviewItemHTML(q, opts) {
     <div class="ri-q">${esc(q.question)}</div>
     ${renderMaterialsHTML(q.materials)}
     <div class="ri-opts">${optsHtml}</div>
-    <button class="copy-btn" id="cpbtn-${idx}" onclick="${copyFn}">${copyLabel}</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px;flex-wrap:wrap">
+      <button class="copy-btn" id="cpbtn-${idx}" onclick="${copyFn}">${copyLabel}</button>
+    </div>
+    ${metaHtml}
   </div>`;
 }
 
@@ -446,4 +462,77 @@ function isSessionInActiveTrack(session) {
                       (session.questions && session.questions[0] && session.questions[0]._bank) ||
                       session.bank || '';
   return isBankFileInActiveTrack(sessionBank);
+}
+
+/* ===== Question Metadata / Tagging & Notes Storage API ===== */
+const METADATA_KEY = 'quiz_question_metadata';
+
+function getQuestionMetadata(bank, qid) {
+  try {
+    const raw = localStorage.getItem(METADATA_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    const key = `${bank}::${qid}`;
+    return data[key] || { tag: '', notes: '' };
+  } catch {
+    return { tag: '', notes: '' };
+  }
+}
+
+function saveQuestionMetadata(bank, qid, meta) {
+  try {
+    const raw = localStorage.getItem(METADATA_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    const key = `${bank}::${qid}`;
+    if (!meta.tag && !meta.notes) {
+      delete data[key];
+    } else {
+      data[key] = { tag: meta.tag || '', notes: meta.notes || '' };
+    }
+    localStorage.setItem(METADATA_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save question metadata', e);
+  }
+}
+
+function getQuestionsWithTag(tag) {
+  try {
+    const raw = localStorage.getItem(METADATA_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    const result = [];
+    for (const [key, val] of Object.entries(data)) {
+      if (val.tag === tag) {
+        const idx = key.indexOf('::');
+        if (idx === -1) continue;
+        const bank = key.substring(0, idx);
+        const qid = parseInt(key.substring(idx + 2), 10);
+        result.push({ bank, qid, notes: val.notes });
+      }
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+function toggleQuestionTag(bank, qid, tag, btn) {
+  const meta = getQuestionMetadata(bank, qid);
+  const newTag = meta.tag === tag ? '' : tag;
+  meta.tag = newTag;
+  saveQuestionMetadata(bank, qid, meta);
+  
+  const container = btn.closest('.q-meta-panel');
+  if (container) {
+    container.querySelectorAll('.tag-pill').forEach(b => b.classList.remove('active'));
+    if (newTag) {
+      const activeBtn = container.querySelector(`.tag-${newTag}`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+  }
+  showToast(newTag ? `已標記為${newTag === 'key' ? '重點題' : '排除題'}` : '已取消標記');
+}
+
+function saveQuestionNotes(bank, qid, notes) {
+  const meta = getQuestionMetadata(bank, qid);
+  meta.notes = notes;
+  saveQuestionMetadata(bank, qid, meta);
 }

@@ -79,6 +79,7 @@
           <option value="random">隨機抽題</option>
           <option value="wrong">曾錯過的題</option>
           <option value="still-wrong">至今仍錯的題</option>
+          <option value="key">重點標記題</option>
           <option value="all">全部練習（照順序）</option>
         </select>
         <div class="settings-hint" id="modeHelp">會從已選題庫中依題數抽題，已做過的題會降低出現機率，題組會一起保留。</div>
@@ -302,6 +303,19 @@
         modeEl.querySelector('[value="wrong"]').textContent = `曾錯過的題（共 ${wp.ever_wrong.length} 題）`;
         modeEl.querySelector('[value="still-wrong"]').textContent = `至今仍錯的題（剩 ${wp.still_wrong.length} 題）`;
       }
+
+      const keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
+      const keyCount = keyQuestions.length;
+      const keyOption = modeEl.querySelector('[value="key"]');
+      if (keyOption) {
+        if (keyCount === 0) {
+          keyOption.disabled = true;
+          keyOption.textContent = '重點標記題';
+        } else {
+          keyOption.disabled = false;
+          keyOption.textContent = `重點標記題（共 ${keyCount} 題）`;
+        }
+      }
       updateModeHelp();
       
       renderHistoryList();
@@ -381,7 +395,7 @@
       const btn = document.getElementById('startBtn');
       if (!btn) return;
       const mode = document.getElementById('quizMode')?.value || 'random';
-      const needsBank = mode !== 'wrong' && mode !== 'still-wrong';
+      const needsBank = mode !== 'wrong' && mode !== 'still-wrong' && mode !== 'key';
       const ready = !needsBank || selectedBanks.size > 0;
       btn.disabled = !ready;
       btn.textContent = ready ? '🚀 開始測驗練習' : '請先選擇題庫';
@@ -564,7 +578,7 @@
 
       let url = `quiz.html?mode=${mode}&num=${num}&types=${typesStr}`;
 
-      if (mode === 'wrong' || mode === 'still-wrong') {
+      if (mode === 'wrong' || mode === 'still-wrong' || mode === 'key') {
         window.location.href = url;
         return;
       }
@@ -624,6 +638,7 @@
         random: '會從已選題庫中依題數隨機抽題，已做過的題會降低出現機率，題組會一起保留。',
         wrong: '會從曾答錯過的題目中依題數抽題，不受目前題庫篩選限制。',
         'still-wrong': '會從目前仍未答對的錯題中依題數抽題。',
+        key: '會從已標記為重點的題目中依題數抽題，不受目前題庫篩選限制。',
         all: '會依題庫原順序練習；如果有設定題數，只取前段題目。',
       };
       help.textContent = text[mode] || text.random;

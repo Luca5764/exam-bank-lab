@@ -84,7 +84,7 @@
   --floating-bg: rgba(23, 35, 30, 0.92);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { font-size: 18px; }
 
 body {
@@ -1600,4 +1600,75 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   .track-card {
     padding: 24px 16px;
   }
+}
+
+/* ===== Question Tagging & Notes Panel ===== */
+.q-meta-panel {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.q-meta-tags {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.tag-pill {
+  border: 1px solid var(--border);
+  background: var(--paper-soft);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.tag-pill:hover {
+  background: var(--surface-hover);
+  border-color: var(--text-dim);
+}
+.tag-pill.tag-key.active {
+  background: rgba(230, 168, 0, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+:root[data-theme="dark"] .tag-pill.tag-key.active {
+  background: rgba(241, 199, 109, 0.2);
+  color: var(--gold);
+}
+.tag-pill.tag-exclude.active {
+  background: var(--wrong-bg);
+  border-color: var(--wrong);
+  color: var(--wrong);
+}
+.q-meta-notes-wrapper {
+  width: 100%;
+}
+.q-notes-input {
+  width: 100%;
+  min-height: 48px;
+  max-height: 200px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--paper-soft);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.q-notes-input:focus {
+  border-color: var(--accent);
+  background: var(--card);
 }
