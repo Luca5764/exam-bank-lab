@@ -5,7 +5,7 @@
   <link rel="icon" href="data:,">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>測驗中 | 農田水利考古題</title>
+  <title>測驗中 | 考古題練習室</title>
   <link rel="stylesheet" href="css/style.css?v=theme1">
   <style>
     .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
@@ -50,13 +50,20 @@
       <div style="font-size:1rem;color:var(--text-dim);font-variant-numeric:tabular-nums" id="timer">00:00</div>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
-    <div class="q-jump-bar" id="jumpBar"></div>
-    <div class="jump-legend">
-      <span><span class="ldot l-cur"></span> 目前</span>
-      <span><span class="ldot l-ans"></span> 已答</span>
-      <span><span class="ldot l-empty"></span> 未答</span>
+    <!-- Collapsible Jump Bar for Mobile -->
+    <div class="jump-toggle-bar" id="jumpToggleBar" onclick="toggleJumpBar()">
+      <span>題號捷徑面板</span>
+      <span class="toggle-icon" id="jumpToggleIcon">▼</span>
     </div>
-    <div class="card" id="qCard" style="padding:28px"></div>
+    <div class="jump-bar-wrapper" id="jumpBarWrapper">
+      <div class="q-jump-bar" id="jumpBar"></div>
+      <div class="jump-legend">
+        <span><span class="ldot l-cur"></span> 目前</span>
+        <span><span class="ldot l-ans"></span> 已答</span>
+        <span><span class="ldot l-empty"></span> 未答</span>
+      </div>
+    </div>
+    <div class="card" id="qCard"></div>
     <div class="warn-box" id="warnBox">
       ⚠️ 您還有 <strong id="warnNum">0</strong> 題尚未回答，確定要提交嗎？
       <div style="margin-top:10px;display:flex;gap:10px">
@@ -353,6 +360,13 @@
 
     function buildJump() {
       document.getElementById('jumpBar').innerHTML = quizQ.map((_, i) => `<button class="q-jump-btn" data-i="${i}" onclick="go(${i})">${i + 1}</button>`).join('');
+    }
+
+    function toggleJumpBar() {
+      const bar = document.getElementById('jumpToggleBar');
+      const wrapper = document.getElementById('jumpBarWrapper');
+      const isExpanded = wrapper.classList.toggle('expanded');
+      bar.classList.toggle('active', isExpanded);
     }
 
     function updateJump() {
