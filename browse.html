@@ -126,11 +126,7 @@
       
       const colGrid = document.getElementById('browseSourceFilters');
       if (colGrid) {
-        if (track === 'traffic') {
-          colGrid.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
-        } else {
-          colGrid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-        }
+        colGrid.style.setProperty('--cols', track === 'traffic' ? 4 : 3);
       }
 
       browseBanks = ALL_BANKS.filter(isBankInActiveTrack);
