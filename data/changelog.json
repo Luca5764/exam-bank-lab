@@ -3,6 +3,10 @@
         "date":  "2026-06-02",
         "items":  [
                       {
+                          "time":  "20:19",
+                          "message":  "feat: make notes area collapsible in quiz view and default expanded elsewhere"
+                      },
+                      {
                           "time":  "20:16",
                           "message":  "fix: change mode, collection, and bank cards from button to div for WebKit WebView rendering compatibility"
                       },

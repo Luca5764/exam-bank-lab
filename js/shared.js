@@ -289,15 +289,17 @@ function buildReviewItemHTML(q, opts) {
   const copyLabel = '複製解析提示';
 
   const meta = getQuestionMetadata(q._bank || '', q.id);
+  const hasNotes = !!meta.notes;
   const metaHtml = `
     <div class="q-meta-panel" data-bank="${q._bank || ''}" data-qid="${q.id}">
       <div class="q-meta-tags">
         <span style="font-size:0.85rem;color:var(--text-dim);font-weight:700;margin-right:4px">題目標記：</span>
-        <button class="tag-pill tag-key ${meta.tag === 'key' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || ''}', ${q.id}, 'key', this)">⭐ 重點</button>
-        <button class="tag-pill tag-exclude ${meta.tag === 'exclude' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || ''}', ${q.id}, 'exclude', this)">🚫 排除</button>
+        <div class="tag-pill tag-key ${meta.tag === 'key' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || ''}', ${q.id}, 'key', this)">⭐ 重點</div>
+        <div class="tag-pill tag-exclude ${meta.tag === 'exclude' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || ''}', ${q.id}, 'exclude', this)">🚫 排除</div>
+        <div class="tag-pill tag-notes-toggle active ${hasNotes ? 'has-notes' : ''}" onclick="toggleNotesCollapse(this)">📝 筆記</div>
       </div>
-      <div class="q-meta-notes-wrapper">
-        <textarea class="q-notes-input" placeholder="對此題撰寫筆記心得..." oninput="saveQuestionNotes('${q._bank || ''}', ${q.id}, this.value)">${esc(meta.notes)}</textarea>
+      <div class="q-meta-notes-wrapper" style="display: block; margin-top: 8px;">
+        <textarea class="q-notes-input" placeholder="對此題撰寫筆記心得..." oninput="saveQuestionNotes('${q._bank || ''}', ${q.id}, this.value, this)">${esc(meta.notes)}</textarea>
       </div>
     </div>`;
 
@@ -531,8 +533,29 @@ function toggleQuestionTag(bank, qid, tag, btn) {
   showToast(newTag ? `已標記為${newTag === 'key' ? '重點題' : '排除題'}` : '已取消標記');
 }
 
-function saveQuestionNotes(bank, qid, notes) {
+function saveQuestionNotes(bank, qid, notes, el) {
   const meta = getQuestionMetadata(bank, qid);
   meta.notes = notes;
   saveQuestionMetadata(bank, qid, meta);
+  if (el) {
+    const container = el.closest('.q-meta-panel');
+    if (container) {
+      const btn = container.querySelector('.tag-notes-toggle');
+      if (btn) btn.classList.toggle('has-notes', !!notes);
+    }
+  }
+}
+
+function toggleNotesCollapse(btn) {
+  const container = btn.closest('.q-meta-panel');
+  const wrapper = container.querySelector('.q-meta-notes-wrapper');
+  if (wrapper) {
+    const isCollapsed = wrapper.style.display === 'none';
+    wrapper.style.display = isCollapsed ? 'block' : 'none';
+    btn.classList.toggle('active', isCollapsed);
+    if (isCollapsed) {
+      const textarea = wrapper.querySelector('.q-notes-input');
+      if (textarea) textarea.focus();
+    }
+  }
 }
