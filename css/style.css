@@ -1414,6 +1414,15 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   .review-item {
     padding: 14px 16px;
   }
+  .theme-toggle {
+    position: static;
+    margin: 24px auto 12px;
+    display: block;
+    width: fit-content;
+    box-shadow: none;
+    background: var(--surface-soft);
+    border-color: var(--border);
+  }
 }
 
 /* ===== Track Selection Overlay & Persona Switcher ===== */

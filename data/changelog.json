@@ -3,6 +3,10 @@
         "date":  "2026-06-02",
         "items":  [
                       {
+                          "time":  "20:08",
+                          "message":  "style: position theme toggle statically on mobile to prevent obscuring submit buttons"
+                      },
+                      {
                           "time":  "20:03",
                           "message":  "feat: implement session redirect fix, mobile tap highlight reset, and question tagging/notes system with key question quiz mode"
                       },
