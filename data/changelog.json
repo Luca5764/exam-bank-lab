@@ -3,6 +3,10 @@
         "date":  "2026-06-02",
         "items":  [
                       {
+                          "time":  "20:24",
+                          "message":  "chore: bump caching version query parameters for styles and scripts"
+                      },
+                      {
                           "time":  "20:19",
                           "message":  "feat: make notes area collapsible in quiz view and default expanded elsewhere"
                       },
