@@ -3,6 +3,10 @@
         "date":  "2026-06-02",
         "items":  [
                       {
+                          "time":  "20:11",
+                          "message":  "style: replace quiz mode select dropdown with premium button card selection grid"
+                      },
+                      {
                           "time":  "20:08",
                           "message":  "style: position theme toggle statically on mobile to prevent obscuring submit buttons"
                       },
