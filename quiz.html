@@ -423,15 +423,17 @@
       }
 
       const meta = getQuestionMetadata(q._bank || bank, q.id);
+      const hasNotes = !!meta.notes;
       const metaHtml = `
         <div class="q-meta-panel" data-bank="${q._bank || bank}" data-qid="${q.id}">
           <div class="q-meta-tags">
             <span style="font-size:0.85rem;color:var(--text-dim);font-weight:700;margin-right:4px">題目標記：</span>
-            <button class="tag-pill tag-key ${meta.tag === 'key' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'key', this)">⭐ 重點</button>
-            <button class="tag-pill tag-exclude ${meta.tag === 'exclude' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'exclude', this)">🚫 排除</button>
+            <div class="tag-pill tag-key ${meta.tag === 'key' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'key', this)">⭐ 重點</div>
+            <div class="tag-pill tag-exclude ${meta.tag === 'exclude' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'exclude', this)">🚫 排除</div>
+            <div class="tag-pill tag-notes-toggle ${hasNotes ? 'has-notes' : ''}" onclick="toggleNotesCollapse(this)">📝 筆記</div>
           </div>
-          <div class="q-meta-notes-wrapper">
-            <textarea class="q-notes-input" placeholder="對此題撰寫筆記心得..." oninput="saveQuestionNotes('${q._bank || bank}', ${q.id}, this.value)">${esc(meta.notes)}</textarea>
+          <div class="q-meta-notes-wrapper" style="display: none; margin-top: 8px;">
+            <textarea class="q-notes-input" placeholder="對此題撰寫筆記心得..." oninput="saveQuestionNotes('${q._bank || bank}', ${q.id}, this.value, this)">${esc(meta.notes)}</textarea>
           </div>
         </div>`;
 

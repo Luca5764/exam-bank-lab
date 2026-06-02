@@ -1659,6 +1659,15 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   border-color: var(--wrong);
   color: var(--wrong);
 }
+.tag-pill.tag-notes-toggle.active {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tag-pill.tag-notes-toggle.has-notes:not(.active) {
+  border-color: var(--accent);
+  border-style: dashed;
+}
 .q-meta-notes-wrapper {
   width: 100%;
 }
