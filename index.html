@@ -77,26 +77,26 @@
         <label class="mb-8">測驗模式</label>
         <!-- Premium Grid Mode Select Cards -->
         <div class="mode-select-grid mb-16" id="modeSelectGrid">
-          <button type="button" class="mode-card active" data-value="random" onclick="selectQuizMode('random')">
+          <div class="mode-card active" data-value="random" onclick="selectQuizMode('random')">
             <span class="mode-icon">🎲</span>
             <span class="mode-title">隨機抽題</span>
-          </button>
-          <button type="button" class="mode-card" data-value="wrong" id="modeCardWrong" onclick="selectQuizMode('wrong')">
+          </div>
+          <div class="mode-card" data-value="wrong" id="modeCardWrong" onclick="selectQuizMode('wrong')">
             <span class="mode-icon">❌</span>
             <span class="mode-title">曾錯過的題</span>
-          </button>
-          <button type="button" class="mode-card" data-value="still-wrong" id="modeCardStillWrong" onclick="selectQuizMode('still-wrong')">
+          </div>
+          <div class="mode-card" data-value="still-wrong" id="modeCardStillWrong" onclick="selectQuizMode('still-wrong')">
             <span class="mode-icon">⏳</span>
             <span class="mode-title">至今仍錯的題</span>
-          </button>
-          <button type="button" class="mode-card" data-value="key" id="modeCardKey" onclick="selectQuizMode('key')">
+          </div>
+          <div class="mode-card" data-value="key" id="modeCardKey" onclick="selectQuizMode('key')">
             <span class="mode-icon">⭐</span>
             <span class="mode-title">重點標記題</span>
-          </button>
-          <button type="button" class="mode-card" data-value="all" onclick="selectQuizMode('all')">
+          </div>
+          <div class="mode-card" data-value="all" onclick="selectQuizMode('all')">
             <span class="mode-icon">📖</span>
             <span class="mode-title">全部練習（照順序）</span>
-          </button>
+          </div>
         </div>
         <input type="hidden" id="quizMode" value="random">
         <div class="settings-hint" id="modeHelp">會從已選題庫中依題數抽題，已做過的題會降低出現機率，題組會一起保留。</div>
@@ -447,11 +447,11 @@
           ? BANK_INFO
           : BANK_INFO.filter(bank => bankCollection(bank) === item.id);
         const questionCount = banks.reduce((sum, bank) => sum + (bank.count || 0), 0);
-        return `<button class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setSourceFilter(${jsArg(item.id)})">
+        return `<div class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setSourceFilter(${jsArg(item.id)})">
           <span class="collection-title">${esc(item.title)}</span>
           <span class="collection-desc">${esc(item.desc)}</span>
           <span class="collection-count">${banks.length} 份 / ${questionCount} 題</span>
-        </button>`;
+        </div>`;
       }).join('');
     }
 
@@ -507,7 +507,7 @@
 
       list.innerHTML = visibleBanks.map(bank => {
         const selected = selectedBanks.has(bank.file);
-        return `<button class="bank-card ${selected ? 'selected' : ''}" onclick="toggleBank(${jsArg(bank.file)})">
+        return `<div class="bank-card ${selected ? 'selected' : ''}" onclick="toggleBank(${jsArg(bank.file)})">
           <span class="bank-check">${selected ? '✓' : ''}</span>
           <span class="bank-main">
             <span class="bank-title">${esc(bankTitle(bank))}</span>
@@ -515,7 +515,7 @@
           </span>
           <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
           <span class="bank-count">${bank.count} 題</span>
-        </button>`;
+        </div>`;
       }).join('');
       updateSelectedSummary();
     }

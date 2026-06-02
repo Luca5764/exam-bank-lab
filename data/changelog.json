@@ -3,6 +3,10 @@
         "date":  "2026-06-02",
         "items":  [
                       {
+                          "time":  "20:16",
+                          "message":  "fix: change mode, collection, and bank cards from button to div for WebKit WebView rendering compatibility"
+                      },
+                      {
                           "time":  "20:11",
                           "message":  "style: replace quiz mode select dropdown with premium button card selection grid"
                       },
