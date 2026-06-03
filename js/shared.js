@@ -236,6 +236,7 @@ function buildBrowsePrompt(q) {
 }
 
 function buildReviewItemHTML(q, opts) {
+  applyQuestionOverrides(q);
   const { idx, userAns, mode } = opts;
   const isResult = mode === 'result';
   const isFreeScore = !!q.freeScore;
@@ -303,12 +304,20 @@ function buildReviewItemHTML(q, opts) {
       </div>
     </div>`;
 
+  const repeatsHtml = q._repeats && q._repeats.length > 1
+    ? `<span class="repeat-badge" style="margin-left:8px" title="重複考過年份：${q._repeats.join('、')}">🔄 重複 ${q._repeats.length} 次</span>`
+    : '';
+  const warningHtml = q._warning
+    ? `<div class="amendment-warning">${esc(q._warning)}</div>`
+    : '';
+
   return `<div class="review-item ${cls}">
     <div class="ri-header">
-      <span style="font-weight:700;color:var(--text-dim)">第 ${idx + 1} 題</span>
+      <span style="font-weight:700;color:var(--text-dim)">第 ${idx + 1} 題 ${repeatsHtml}</span>
       ${badgeText ? `<span class="ri-badge ${badgeCls}">${badgeText}</span>` : ''}
     </div>
     <div class="ri-q">${esc(q.question)}</div>
+    ${warningHtml}
     ${renderMaterialsHTML(q.materials)}
     <div class="ri-opts">${optsHtml}</div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px;flex-wrap:wrap">
@@ -464,6 +473,39 @@ function isSessionInActiveTrack(session) {
                       (session.questions && session.questions[0] && session.questions[0]._bank) ||
                       session.bank || '';
   return isBankFileInActiveTrack(sessionBank);
+}
+
+/* ===== Overrides API ===== */
+let _overridesData = null;
+async function initOverrides() {
+  if (!_overridesData) {
+    try {
+      _overridesData = await fetchJson('data/overrides.json');
+    } catch (e) {
+      console.error('Failed to load overrides.json', e);
+      _overridesData = {};
+    }
+  }
+  return _overridesData;
+}
+
+function applyQuestionOverrides(q) {
+  if (!_overridesData || !q || !q._bank) return;
+  const fileKey = q._bank;
+  const qidKey = String(q.id);
+  const bankOverrides = _overridesData[fileKey];
+  if (bankOverrides && bankOverrides[qidKey]) {
+    const patch = bankOverrides[qidKey];
+    if (patch.answer !== undefined) {
+      q.answer = patch.answer;
+    }
+    if (patch.warning) {
+      q._warning = patch.warning;
+    }
+    if (patch.repeats) {
+      q._repeats = patch.repeats;
+    }
+  }
 }
 
 /* ===== Question Metadata / Tagging & Notes Storage API ===== */
