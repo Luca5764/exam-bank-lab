@@ -505,6 +505,9 @@ function applyQuestionOverrides(q) {
     if (patch.repeats) {
       q._repeats = patch.repeats;
     }
+    if (patch.freeScore !== undefined) {
+      q.freeScore = patch.freeScore;
+    }
   }
 }
 
