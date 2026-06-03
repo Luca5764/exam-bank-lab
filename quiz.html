@@ -362,6 +362,9 @@
         location.href = 'index.html';
         return;
       }
+      await initOverrides();
+      pool.forEach(applyQuestionOverrides);
+
       if (numQ === 0 || numQ > pool.length) numQ = pool.length;
       pool = selectQuestionPool(pool, mode, numQ);
       numQ = pool.length;
@@ -437,9 +440,20 @@
           </div>
         </div>`;
 
+      const repeatsHtml = q._repeats && q._repeats.length > 1
+        ? `<span class="repeat-badge" title="重複考過年份：${q._repeats.join('、')}">🔄 重複 ${q._repeats.length} 次</span>`
+        : '';
+      const warningHtml = q._warning
+        ? `<div class="amendment-warning">${esc(q._warning)}</div>`
+        : '';
+
       document.getElementById('qCard').innerHTML = `
-        <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px;margin-bottom:16px">第 ${cur + 1} 題</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px">第 ${cur + 1} 題</span>
+          ${repeatsHtml}
+        </div>
         <div class="q-text">${esc(q.question)}</div>
+        ${warningHtml}
         ${renderMaterialsHTML(q.materials)}
         ${multi ? '<div class="multi-badge">☑ 複選題（請選出所有正確答案）</div>' : ''}
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">

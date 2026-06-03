@@ -30,6 +30,7 @@
     }
 
     async function init() {
+      await initOverrides();
       const history = loadLocalHistory();
       const qMap = {};
       history.forEach(session => {

@@ -27,6 +27,7 @@
     }
 
     async function init() {
+      await initOverrides();
       const history = loadLocalHistory();
       if (isNaN(histIdx) || histIdx < 0 || histIdx >= history.length) {
         document.getElementById('content').innerHTML = '<p class="text-red">找不到此筆測驗紀錄</p>';

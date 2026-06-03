@@ -260,6 +260,8 @@
       try {
         browseQ = await fetchJson(file);
         browseQ.forEach(q => q._bank = file);
+        await initOverrides();
+        browseQ.forEach(applyQuestionOverrides);
         document.getElementById('count').textContent = browseQ.length;
         document.getElementById('currentBankTitle').textContent = bankDisplayName(selectedBank);
         document.getElementById('copyAllBtn').disabled = false;
