@@ -3,6 +3,10 @@
         "date":  "2026-06-03",
         "items":  [
                       {
+                          "time":  "20:20",
+                          "message":  "refactor: refine overrides keyword matching rules to prevent false-positives"
+                      },
+                      {
                           "time":  "20:16",
                           "message":  "feat: implement traffic law overrides system, amendment warnings, and repeating question badges"
                       }
