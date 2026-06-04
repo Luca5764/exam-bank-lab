@@ -3,6 +3,10 @@
         "date":  "2026-06-04",
         "items":  [
                       {
+                          "time":  "21:40",
+                          "message":  "fix: clean up outdated warnings and fake positives in overrides"
+                      },
+                      {
                           "time":  "21:36",
                           "message":  "style: format repeat badge to display specific years instead of count"
                       },
