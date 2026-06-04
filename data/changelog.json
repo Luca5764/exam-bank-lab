@@ -1,5 +1,14 @@
 [
     {
+        "date":  "2026-06-04",
+        "items":  [
+                      {
+                          "time":  "21:28",
+                          "message":  "feat: support law amendment warnings (traffic rules \u0026 safety rules) and display warning badges on index/browse pages"
+                      }
+                  ]
+    },
+    {
         "date":  "2026-06-03",
         "items":  [
                       {

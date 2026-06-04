@@ -511,6 +511,20 @@ function applyQuestionOverrides(q) {
   }
 }
 
+function getBankWarningCount(file) {
+  if (!_overridesData) return 0;
+  const bankOverrides = _overridesData[file];
+  if (!bankOverrides) return 0;
+  let count = 0;
+  for (const qid in bankOverrides) {
+    if (bankOverrides[qid].warning) {
+      count++;
+    }
+  }
+  return count;
+}
+
+
 /* ===== Question Metadata / Tagging & Notes Storage API ===== */
 const METADATA_KEY = 'quiz_question_metadata';
 

@@ -1786,3 +1786,23 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   padding: 3px 8px;
   border-radius: 6px;
 }
+.bank-warning-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #b27a00;
+  background: #fdf6e2;
+  border: 1px solid #ffd066;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+[data-theme="dark"] .bank-warning-badge {
+  color: #ffc233;
+  background: rgba(230, 168, 0, 0.15);
+  border-color: rgba(230, 168, 0, 0.35);
+}
+
