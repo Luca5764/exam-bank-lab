@@ -507,6 +507,8 @@
 
       list.innerHTML = visibleBanks.map(bank => {
         const selected = selectedBanks.has(bank.file);
+        const warnCount = getBankWarningCount(bank.file);
+        const warningBadge = warnCount > 0 ? `<span class="bank-warning-badge">⚠️ ${warnCount} 題受修法影響</span>` : '';
         return `<div class="bank-card ${selected ? 'selected' : ''}" onclick="toggleBank(${jsArg(bank.file)})">
           <span class="bank-check">${selected ? '✓' : ''}</span>
           <span class="bank-main">
@@ -514,7 +516,7 @@
             <span class="bank-meta">${esc(bankMeta(bank))}</span>
           </span>
           <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
-          <span class="bank-count">${bank.count} 題</span>
+          <span class="bank-count">${bank.count} 題${warningBadge}</span>
         </div>`;
       }).join('');
       updateSelectedSummary();
@@ -571,6 +573,7 @@
     }
 
     async function init() {
+      await initOverrides();
       // 0. Set up persona switcher and check for saved track
       const track = getSelectedTrack();
       if (!track) {
