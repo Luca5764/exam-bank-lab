@@ -305,7 +305,7 @@ function buildReviewItemHTML(q, opts) {
     </div>`;
 
   const repeatsHtml = q._repeats && q._repeats.length > 1
-    ? `<span class="repeat-badge" style="margin-left:8px" title="重複考過年份：${q._repeats.join('、')}">🔄 重複 ${q._repeats.length} 次</span>`
+    ? `<span class="repeat-badge" style="margin-left:8px" title="重複考過年份：${q._repeats.join('、')}">🔄 ${q._repeats.map(r => r.split(' ')[0]).join('、')} 年</span>`
     : '';
   const warningHtml = q._warning
     ? `<div class="amendment-warning">${esc(q._warning)}</div>`
