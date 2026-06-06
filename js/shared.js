@@ -307,8 +307,11 @@ function buildReviewItemHTML(q, opts) {
   const repeatsHtml = q._repeats && q._repeats.length > 1
     ? `<span class="repeat-badge" style="margin-left:8px" title="重複考過年份：${q._repeats.join('、')}">🔄 ${q._repeats.map(r => r.split(' ')[0]).join('、')} 年</span>`
     : '';
+  const amendLinkHtml = q._amendmentUrl
+    ? ` <a href="${esc(q._amendmentUrl)}" target="_blank" rel="noopener" class="amendment-link" title="查看現行法條">📜 查看異動法條</a>`
+    : '';
   const warningHtml = q._warning
-    ? `<div class="amendment-warning">${esc(q._warning)}</div>`
+    ? `<div class="amendment-warning">${esc(q._warning)}${amendLinkHtml}</div>`
     : '';
 
   return `<div class="review-item ${cls}">
@@ -501,6 +504,9 @@ function applyQuestionOverrides(q) {
     }
     if (patch.warning) {
       q._warning = patch.warning;
+    }
+    if (patch.amendmentUrl) {
+      q._amendmentUrl = patch.amendmentUrl;
     }
     if (patch.repeats) {
       q._repeats = patch.repeats;

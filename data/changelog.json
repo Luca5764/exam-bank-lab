@@ -3,6 +3,10 @@
         "date":  "2026-06-06",
         "items":  [
                       {
+                          "time":  "16:34",
+                          "message":  "feat: add clickable amendment law links to warning badges"
+                      },
+                      {
                           "time":  "16:16",
                           "message":  "feat: 3-stage amendment audit pipeline with Claude review"
                       }

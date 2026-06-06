@@ -1771,8 +1771,25 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   margin: 8px 0 16px;
   font-weight: 700;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 8px;
+  gap: 4px 8px;
+}
+.amendment-link {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--wrong);
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.amendment-link:hover {
+  opacity: 0.8;
 }
 .repeat-badge {
   display: inline-flex;
