@@ -3,6 +3,10 @@
         "date":  "2026-06-07",
         "items":  [
                       {
+                          "time":  "19:33",
+                          "message":  "fix: move leaked trailing words (甇?蝵圈/隞乩?) back into question text"
+                      },
+                      {
                           "time":  "15:50",
                           "message":  "fix: repair 51 OCR-truncated last options across traffic-law/theory banks"
                       },
