@@ -4,6 +4,10 @@
         "items":  [
                       {
                           "time":  "20:05",
+                          "message":  "chore: fix mojibake changelog entry for the 43-article speeding fix"
+                      },
+                      {
+                          "time":  "20:05",
                           "message":  "fix: flag missed 蝚?3璇?speeding amendment (60??0km) on 4 traffic-law questions"
                       },
                       {
