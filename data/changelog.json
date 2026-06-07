@@ -3,6 +3,10 @@
         "date":  "2026-06-07",
         "items":  [
                       {
+                          "time":  "20:05",
+                          "message":  "fix: flag missed 蝚?3璇?speeding amendment (60??0km) on 4 traffic-law questions"
+                      },
+                      {
                           "time":  "19:33",
                           "message":  "fix: move leaked trailing words (甇?蝵圈/隞乩?) back into question text"
                       },
