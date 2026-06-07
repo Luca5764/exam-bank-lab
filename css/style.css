@@ -1251,7 +1251,7 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 
 /* Collapsible Jump Bar Wrapper & Toggle */
 .jump-toggle-bar {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--card);
@@ -1264,6 +1264,14 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   color: var(--accent);
   user-select: none;
   font-size: 0.95rem;
+}
+.jump-bar-wrapper {
+  display: none;
+  margin-bottom: 12px;
+}
+.jump-bar-wrapper.expanded {
+  display: block;
+  animation: fadeIn 0.2s ease;
 }
 .jump-toggle-bar:hover {
   border-color: var(--accent);
@@ -1382,17 +1390,6 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   }
 
   /* Collapsible Jump Bar Wrapper inside Media Query */
-  .jump-toggle-bar {
-    display: flex;
-  }
-  .jump-bar-wrapper {
-    display: none;
-    margin-bottom: 12px;
-  }
-  .jump-bar-wrapper.expanded {
-    display: block;
-    animation: fadeIn 0.2s ease;
-  }
 
   /* Compact option buttons and texts on mobile */
   .option-btn {
