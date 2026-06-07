@@ -3,6 +3,10 @@
         "date":  "2026-06-07",
         "items":  [
                       {
+                          "time":  "15:50",
+                          "message":  "fix: repair 51 OCR-truncated last options across traffic-law/theory banks"
+                      },
+                      {
                           "time":  "14:00",
                           "message":  "fix: auto-hide source label when navigating to next question"
                       },
