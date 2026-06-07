@@ -3,6 +3,10 @@
         "date":  "2026-06-07",
         "items":  [
                       {
+                          "time":  "14:00",
+                          "message":  "fix: auto-hide source label when navigating to next question"
+                      },
+                      {
                           "time":  "13:29",
                           "message":  "feat: make source label toggleable, hidden by default"
                       },
