@@ -3,6 +3,10 @@
         "date":  "2026-06-07",
         "items":  [
                       {
+                          "time":  "13:20",
+                          "message":  "fix: restore truncated option 4 in Q34 of 112-2 traffic law bank"
+                      },
+                      {
                           "time":  "13:17",
                           "message":  "style: make question jump panel collapsible on desktop too"
                       }
