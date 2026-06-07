@@ -3,6 +3,10 @@
         "date":  "2026-06-07",
         "items":  [
                       {
+                          "time":  "13:29",
+                          "message":  "feat: make source label toggleable, hidden by default"
+                      },
+                      {
                           "time":  "13:26",
                           "message":  "feat: show source bank and original question number during quiz"
                       },
