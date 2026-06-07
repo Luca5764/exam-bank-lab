@@ -100,6 +100,7 @@
     let isSubmitting = false;
     let pendingAdvanceTimer = null;
     let optionInputLockedUntil = 0;
+    let showSource = false;
 
     const SAVE_KEY = 'quiz_session';
 
@@ -453,11 +454,14 @@
         : '';
 
       document.getElementById('qCard').innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${showSource ? '8px' : '16px'};flex-wrap:wrap;gap:8px">
           <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px">第 ${cur + 1} 題</span>
-          ${repeatsHtml}
+          <div style="display:flex;align-items:center;gap:8px">
+            ${repeatsHtml}
+            <button onclick="showSource=!showSource;render()" style="font-size:0.75rem;color:var(--text-dim);background:none;border:1.5px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:inherit">${showSource ? '隱藏來源' : '顯示來源'}</button>
+          </div>
         </div>
-        <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:14px">來源：${bankLabel(q._bank)} · 原試卷第 ${q.id} 題</div>
+        ${showSource ? `<div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:14px">來源：${bankLabel(q._bank)} · 原試卷第 ${q.id} 題</div>` : ''}
         <div class="q-text">${esc(q.question)}</div>
         ${warningHtml}
         ${renderMaterialsHTML(q.materials)}
