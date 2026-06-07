@@ -3,16 +3,20 @@
         "date":  "2026-06-07",
         "items":  [
                       {
+                          "time":  "20:07",
+                          "message":  "fix: changelog hook 以 UTF-8 解碼 git log，修正中文 commit 訊息亂碼"
+                      },
+                      {
                           "time":  "20:05",
                           "message":  "chore: fix mojibake changelog entry for the 43-article speeding fix"
                       },
                       {
                           "time":  "20:05",
-                          "message":  "fix: flag missed 蝚?3璇?speeding amendment (60??0km) on 4 traffic-law questions"
+                          "message":  "fix: flag missed 第43條 speeding amendment (60→40km) on 4 traffic-law questions"
                       },
                       {
                           "time":  "19:33",
-                          "message":  "fix: move leaked trailing words (甇?蝵圈/隞乩?) back into question text"
+                          "message":  "fix: move leaked trailing words (止/罰鍰/以上) back into question text"
                       },
                       {
                           "time":  "15:50",
