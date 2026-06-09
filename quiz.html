@@ -364,6 +364,16 @@
         return meta.tag !== 'exclude';
       });
 
+      // 「未練過」模式：只留下從未實際作答過的題（跳過不算，與單題「作答 N 次」一致）
+      if (mode === 'unseen') {
+        pool = pool.filter(q => getQuestionAttemptCount(q._bank || bank, q.id) === 0);
+        if (!pool.length) {
+          alert('選取的題庫都已經練過了！可改用其他模式，或加選更多題庫。');
+          location.href = 'index.html';
+          return;
+        }
+      }
+
       if (!pool.length) {
         alert('選取的題庫在該篩選條件下沒有符合的題目（是非題/單選題/複選題），請回首頁重新選擇！');
         location.href = 'index.html';
