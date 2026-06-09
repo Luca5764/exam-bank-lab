@@ -3,6 +3,10 @@
         "date":  "2026-06-09",
         "items":  [
                       {
+                          "time":  "19:59",
+                          "message":  "chore: remove 汽車構造原理 banks (檢驗員 subject, not needed for 考驗員)"
+                      },
+                      {
                           "time":  "19:37",
                           "message":  "fix: repair 4 merged/truncated questions in 交通部111-道路交通法規"
                       },
