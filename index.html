@@ -362,9 +362,18 @@
     function sessionBankSummary(h) {
       const files = [...new Set((h.answers || []).map(a => a.bank).filter(Boolean))];
       if (!files.length) return '';
-      const names = files.map(bankFileLabel);
-      if (names.length <= 2) return names.join('、');
-      return `${names.slice(0, 2).join('、')} 等 ${names.length} 份`;
+      // 依 displayName（含年份+科目）分組，組內列出梯次/年度檢定，避免同名混淆
+      const groups = new Map();
+      files.forEach(f => {
+        const b = ALL_BANKS.find(x => x.file === f);
+        const title = b ? bankTitle(b) : bankFileLabel(f);
+        const cat = b ? (b.category || '') : '';
+        if (!groups.has(title)) groups.set(title, []);
+        if (cat) groups.get(title).push(cat);
+      });
+      return [...groups.entries()]
+        .map(([title, cats]) => cats.length ? `${title}（${cats.join('、')}）` : title)
+        .join('、');
     }
 
     function renderHistoryList() {
