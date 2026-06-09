@@ -43,6 +43,11 @@
           <div class="lbl">往日錯題</div>
           <div class="stat-note">回頭補洞</div>
         </div>
+        <div class="stat-box" onclick="navigateToBrowse()">
+          <div class="num" id="practicedCount">0</div>
+          <div class="lbl">已練題數</div>
+          <div class="stat-note" id="practicedNote">尚未開始</div>
+        </div>
       </div>
     </section>
 
@@ -308,6 +313,14 @@
       document.getElementById('todayWrongCount').textContent = wp.today_wrong.length;
       document.getElementById('pastWrongCount').textContent = wp.past_wrong.length;
 
+      const ps = getPracticeStats();
+      const trackTotal = BANK_INFO.reduce((sum, bank) => sum + (bank.count || 0), 0);
+      const pct = trackTotal ? Math.round(ps.attemptedCount / trackTotal * 100) : 0;
+      document.getElementById('practicedCount').textContent = ps.attemptedCount;
+      document.getElementById('practicedNote').textContent = ps.attemptedCount
+        ? `共 ${trackTotal} 題 · 涵蓋 ${pct}% · 累計作答 ${ps.attemptCount} 次`
+        : '尚未開始';
+
       const wrongCard = document.getElementById('modeCardWrong');
       const stillWrongCard = document.getElementById('modeCardStillWrong');
       const keyCard = document.getElementById('modeCardKey');
@@ -340,6 +353,20 @@
       renderHistoryList();
     }
 
+    function bankFileLabel(file) {
+      const b = ALL_BANKS.find(x => x.file === file);
+      if (b) return bankTitle(b);
+      return (file || '').replace(/^.*\//, '').replace(/\.json$/, '');
+    }
+
+    function sessionBankSummary(h) {
+      const files = [...new Set((h.answers || []).map(a => a.bank).filter(Boolean))];
+      if (!files.length) return '';
+      const names = files.map(bankFileLabel);
+      if (names.length <= 2) return names.join('、');
+      return `${names.slice(0, 2).join('、')} 等 ${names.length} 份`;
+    }
+
     function renderHistoryList() {
       const allHistory = loadLocalHistory();
       const filteredHistory = allHistory
@@ -356,10 +383,14 @@
           const realIdx = item.index;
           const pct = h.score || 0;
           const cls = pct >= 70 ? 'text-green' : 'text-red';
+          const bankSummary = sessionBankSummary(h);
           return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
           <div>
-            <span class="text-dim" style="font-size:0.9rem">${h.date || '?'}</span>
-            <span class="fw-900 ${cls}" style="margin-left:12px">${pct}分 (${h.correct}/${h.total})</span>
+            <div>
+              <span class="text-dim" style="font-size:0.9rem">${h.date || '?'}</span>
+              <span class="fw-900 ${cls}" style="margin-left:12px">${pct}分 (${h.correct}/${h.total})</span>
+            </div>
+            ${bankSummary ? `<div class="text-dim" style="font-size:0.8rem;margin-top:3px">📄 ${esc(bankSummary)}</div>` : ''}
           </div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-secondary btn-sm" style="padding:6px 12px;min-height:36px;font-size:0.85rem" onclick="viewHistory(${realIdx})">查閱</button>
@@ -505,15 +536,21 @@
         return;
       }
 
+      const ps = getPracticeStats();
       list.innerHTML = visibleBanks.map(bank => {
         const selected = selectedBanks.has(bank.file);
         const warnCount = getBankWarningCount(bank.file);
         const warningBadge = warnCount > 0 ? `<span class="bank-warning-badge">⚠️ ${warnCount} 題受修法影響</span>` : '';
+        const pb = ps.perBank[bank.file];
+        const practiceInfo = pb
+          ? `🕒 最後練習 ${formatMonthDay(pb.lastIso)} · 已練 ${pb.attempted.size}/${bank.count}`
+          : '尚未練習';
         return `<div class="bank-card ${selected ? 'selected' : ''}" onclick="toggleBank(${jsArg(bank.file)})">
           <span class="bank-check">${selected ? '✓' : ''}</span>
           <span class="bank-main">
             <span class="bank-title">${esc(bankTitle(bank))}</span>
             <span class="bank-meta">${esc(bankMeta(bank))}</span>
+            <span class="bank-practice ${pb ? '' : 'is-fresh'}">${practiceInfo}</span>
           </span>
           <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
           <span class="bank-count">${bank.count} 題${warningBadge}</span>
