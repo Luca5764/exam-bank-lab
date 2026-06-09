@@ -449,6 +449,7 @@
       const repeatsHtml = q._repeats && q._repeats.length > 1
         ? `<span class="repeat-badge" title="重複考過年份：${q._repeats.join('、')}">🔄 ${q._repeats.map(r => r.split(' ')[0]).join('、')} 年</span>`
         : '';
+      const attemptHtml = `<span style="font-size:0.75rem;color:var(--text-dim)" title="此題歷史作答次數（不含本次）">${questionAttemptLabel(q._bank || bank, q.id)}</span>`;
       const warningHtml = q._warning
         ? `<div class="amendment-warning">${esc(q._warning)}</div>`
         : '';
@@ -458,6 +459,7 @@
           <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px">第 ${cur + 1} 題</span>
           <div style="display:flex;align-items:center;gap:8px">
             ${repeatsHtml}
+            ${attemptHtml}
             <button onclick="showSource=!showSource;render()" style="font-size:0.75rem;color:var(--text-dim);background:none;border:1.5px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:inherit">${showSource ? '隱藏來源' : '顯示來源'}</button>
           </div>
         </div>
