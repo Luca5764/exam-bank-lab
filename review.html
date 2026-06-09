@@ -28,6 +28,7 @@
 
     async function init() {
       await initOverrides();
+      await loadBankLabels();
       const history = loadLocalHistory();
       if (isNaN(histIdx) || histIdx < 0 || histIdx >= history.length) {
         document.getElementById('content').innerHTML = '<p class="text-red">找不到此筆測驗紀錄</p>';
@@ -98,9 +99,9 @@
           answered = ua !== null && ua !== undefined;
           ok = answered && (q.freeScore || ua === q.answer);
         }
-        if (!ok) texts.push(buildPrompt(q, ua));
+        if (!ok) texts.push(buildPrompt(q, ua, { searchHint: false }));
       });
-      const header = `以下為 ${texts.length} 題我答錯的農田水利相關考古題：\n請詳細為我解析正確答案與錯誤原因。\n`;
+      const header = `${SEARCH_HINT}\n以下為 ${texts.length} 題我答錯的考古題：\n請詳細為我解析正確答案與錯誤原因。\n`;
       copyText(header + '\n' + texts.join('\n' + '='.repeat(50) + '\n'), event.target);
     }
 

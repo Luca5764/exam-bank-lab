@@ -330,17 +330,6 @@
     "count": 50
   },
   {
-    "file": "questions/交通部110-2-汽車構造原理.json",
-    "name": "110 汽車構造原理（第2梯次）",
-    "displayName": "110 汽車構造原理",
-    "year": "110",
-    "source": "交通部",
-    "category": "第2梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 40
-  },
-  {
     "file": "questions/交通部110-2-汽車構造原理概論.json",
     "name": "110 汽車構造原理概論（第2梯次）",
     "displayName": "110 汽車構造原理概論",
@@ -371,17 +360,6 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
-  },
-  {
-    "file": "questions/交通部110-3-汽車構造原理.json",
-    "name": "110 汽車構造原理（第3梯次）",
-    "displayName": "110 汽車構造原理",
-    "year": "110",
-    "source": "交通部",
-    "category": "第3梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 40
   },
   {
@@ -418,17 +396,6 @@
     "count": 40
   },
   {
-    "file": "questions/交通部110-汽車構造原理.json",
-    "name": "110 汽車構造原理（年度檢定）",
-    "displayName": "110 汽車構造原理",
-    "year": "110",
-    "source": "交通部",
-    "category": "年度檢定",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 40
-  },
-  {
     "file": "questions/交通部110-汽車構造原理概論.json",
     "name": "110 汽車構造原理概論（年度檢定）",
     "displayName": "110 汽車構造原理概論",
@@ -459,17 +426,6 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
-  },
-  {
-    "file": "questions/交通部111-1-汽車構造原理.json",
-    "name": "111 汽車構造原理（第1梯次）",
-    "displayName": "111 汽車構造原理",
-    "year": "111",
-    "source": "交通部",
-    "category": "第1梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 40
   },
   {
@@ -506,17 +462,6 @@
     "count": 40
   },
   {
-    "file": "questions/交通部111-2-汽車構造原理.json",
-    "name": "111 汽車構造原理（第2梯次）",
-    "displayName": "111 汽車構造原理",
-    "year": "111",
-    "source": "交通部",
-    "category": "第2梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 40
-  },
-  {
     "file": "questions/交通部111-2-汽車構造原理概論.json",
     "name": "111 汽車構造原理概論（第2梯次）",
     "displayName": "111 汽車構造原理概論",
@@ -547,17 +492,6 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
-  },
-  {
-    "file": "questions/交通部111-3-汽車構造原理.json",
-    "name": "111 汽車構造原理（第3梯次）",
-    "displayName": "111 汽車構造原理",
-    "year": "111",
-    "source": "交通部",
-    "category": "第3梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 40
   },
   {
@@ -594,17 +528,6 @@
     "count": 40
   },
   {
-    "file": "questions/交通部111-汽車構造原理.json",
-    "name": "111 汽車構造原理（年度檢定）",
-    "displayName": "111 汽車構造原理",
-    "year": "111",
-    "source": "交通部",
-    "category": "年度檢定",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 40
-  },
-  {
     "file": "questions/交通部111-汽車構造原理概論.json",
     "name": "111 汽車構造原理概論（年度檢定）",
     "displayName": "111 汽車構造原理概論",
@@ -635,17 +558,6 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
-  },
-  {
-    "file": "questions/交通部112-1-汽車構造原理.json",
-    "name": "112 汽車構造原理（第1梯次）",
-    "displayName": "112 汽車構造原理",
-    "year": "112",
-    "source": "交通部",
-    "category": "第1梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 40
   },
   {
@@ -682,17 +594,6 @@
     "count": 40
   },
   {
-    "file": "questions/交通部112-2-汽車構造原理.json",
-    "name": "112 汽車構造原理（第2梯次）",
-    "displayName": "112 汽車構造原理",
-    "year": "112",
-    "source": "交通部",
-    "category": "第2梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 50
-  },
-  {
     "file": "questions/交通部112-2-汽車構造原理概論.json",
     "name": "112 汽車構造原理概論（第2梯次）",
     "displayName": "112 汽車構造原理概論",
@@ -723,17 +624,6 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
-  },
-  {
-    "file": "questions/交通部112-3-汽車構造原理.json",
-    "name": "112 汽車構造原理（第3梯次）",
-    "displayName": "112 汽車構造原理",
-    "year": "112",
-    "source": "交通部",
-    "category": "第3梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 50
   },
   {
@@ -770,17 +660,6 @@
     "count": 50
   },
   {
-    "file": "questions/交通部112-汽車構造原理.json",
-    "name": "112 汽車構造原理（年度檢定）",
-    "displayName": "112 汽車構造原理",
-    "year": "112",
-    "source": "交通部",
-    "category": "年度檢定",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 40
-  },
-  {
     "file": "questions/交通部112-汽車構造原理概論.json",
     "name": "112 汽車構造原理概論（年度檢定）",
     "displayName": "112 汽車構造原理概論",
@@ -812,17 +691,6 @@
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
     "count": 40
-  },
-  {
-    "file": "questions/交通部113-1-汽車構造原理.json",
-    "name": "113 汽車構造原理（第1梯次）",
-    "displayName": "113 汽車構造原理",
-    "year": "113",
-    "source": "交通部",
-    "category": "第1梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 50
   },
   {
     "file": "questions/交通部113-1-汽車構造原理概論.json",
@@ -858,17 +726,6 @@
     "count": 50
   },
   {
-    "file": "questions/交通部113-2-汽車構造原理.json",
-    "name": "113 汽車構造原理（第2梯次）",
-    "displayName": "113 汽車構造原理",
-    "year": "113",
-    "source": "交通部",
-    "category": "第2梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 50
-  },
-  {
     "file": "questions/交通部113-2-汽車構造原理概論.json",
     "name": "113 汽車構造原理概論（第2梯次）",
     "displayName": "113 汽車構造原理概論",
@@ -899,17 +756,6 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
-  },
-  {
-    "file": "questions/交通部113-3-汽車構造原理.json",
-    "name": "113 汽車構造原理（第3梯次）",
-    "displayName": "113 汽車構造原理",
-    "year": "113",
-    "source": "交通部",
-    "category": "第3梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 50
   },
   {
@@ -979,17 +825,6 @@
     "count": 50
   },
   {
-    "file": "questions/交通部113-汽車構造原理.json",
-    "name": "113 汽車構造原理（年度檢定）",
-    "displayName": "113 汽車構造原理",
-    "year": "113",
-    "source": "交通部",
-    "category": "年度檢定",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 50
-  },
-  {
     "file": "questions/交通部113-汽車構造原理概論.json",
     "name": "113 汽車構造原理概論（年度檢定）",
     "displayName": "113 汽車構造原理概論",
@@ -1020,17 +855,6 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
-  },
-  {
-    "file": "questions/交通部114-1-汽車構造原理.json",
-    "name": "114 汽車構造原理（第1梯次）",
-    "displayName": "114 汽車構造原理",
-    "year": "114",
-    "source": "交通部",
-    "category": "第1梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 50
   },
   {
@@ -1067,17 +891,6 @@
     "count": 50
   },
   {
-    "file": "questions/交通部114-2-汽車構造原理.json",
-    "name": "114 汽車構造原理（第2梯次）",
-    "displayName": "114 汽車構造原理",
-    "year": "114",
-    "source": "交通部",
-    "category": "第2梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 50
-  },
-  {
     "file": "questions/交通部114-2-汽車構造原理概論.json",
     "name": "114 汽車構造原理概論（第2梯次）",
     "displayName": "114 汽車構造原理概論",
@@ -1108,17 +921,6 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
-  },
-  {
-    "file": "questions/交通部114-3-汽車構造原理.json",
-    "name": "114 汽車構造原理（第3梯次）",
-    "displayName": "114 汽車構造原理",
-    "year": "114",
-    "source": "交通部",
-    "category": "第3梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 50
   },
   {
@@ -1155,17 +957,6 @@
     "count": 50
   },
   {
-    "file": "questions/交通部114-汽車構造原理.json",
-    "name": "114 汽車構造原理（年度檢定）",
-    "displayName": "114 汽車構造原理",
-    "year": "114",
-    "source": "交通部",
-    "category": "年度檢定",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 50
-  },
-  {
     "file": "questions/交通部114-汽車構造原理概論.json",
     "name": "114 汽車構造原理概論（年度檢定）",
     "displayName": "114 汽車構造原理概論",
@@ -1199,17 +990,6 @@
     "count": 50
   },
   {
-    "file": "questions/交通部115-1-汽車構造原理.json",
-    "name": "115 汽車構造原理（第1梯次）",
-    "displayName": "115 汽車構造原理",
-    "year": "115",
-    "source": "交通部",
-    "category": "第1梯次",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
-    "count": 50
-  },
-  {
     "file": "questions/交通部115-1-汽車構造原理概論.json",
     "name": "115 汽車構造原理概論（第1梯次）",
     "displayName": "115 汽車構造原理概論",
@@ -1240,17 +1020,6 @@
     "category": "第1梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
-  },
-  {
-    "file": "questions/交通部115-汽車構造原理.json",
-    "name": "115 汽車構造原理（年度檢定）",
-    "displayName": "115 汽車構造原理",
-    "year": "115",
-    "source": "交通部",
-    "category": "年度檢定",
-    "subject": "汽車構造原理",
-    "originalSubject": "汽車構造原理",
     "count": 50
   },
   {

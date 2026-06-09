@@ -31,6 +31,7 @@
 
     async function init() {
       await initOverrides();
+      await loadBankLabels();
       const history = loadLocalHistory();
       const qMap = {};
       history.forEach(session => {
@@ -60,8 +61,8 @@
     }
 
     function copyAllWrongPool() {
-      const header = `以下為我在「${document.getElementById('pageTitle').textContent}」分類中的 ${wrongQ.length} 題農田水利考古題：\n請詳細為我解析正確答案與相關法規。\n`;
-      copyText(header + '\n' + wrongQ.map(q => buildBrowsePrompt(q)).join('\n' + '='.repeat(50) + '\n'), document.getElementById('btnCopyAll'));
+      const header = `${SEARCH_HINT}\n以下為我在「${document.getElementById('pageTitle').textContent}」分類中的 ${wrongQ.length} 題考古題：\n請詳細為我解析正確答案與相關法規。\n`;
+      copyText(header + '\n' + wrongQ.map(q => buildBrowsePrompt(q, { searchHint: false })).join('\n' + '='.repeat(50) + '\n'), document.getElementById('btnCopyAll'));
     }
 
     function retryAll() {
