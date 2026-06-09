@@ -3,6 +3,10 @@
         "date":  "2026-06-09",
         "items":  [
                       {
+                          "time":  "19:37",
+                          "message":  "fix: repair 4 merged/truncated questions in 交通部111-道路交通法規"
+                      },
+                      {
                           "time":  "19:32",
                           "message":  "fix: restore truncated predicate on 計程車 license question (111-1 q15)"
                       },
