@@ -514,6 +514,19 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   line-height: 1.5;
 }
 
+.bank-practice {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.bank-practice.is-fresh {
+  color: var(--series);
+  font-weight: 700;
+}
+
 .bank-series {
   grid-column: 2;
   width: fit-content;

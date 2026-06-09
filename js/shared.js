@@ -463,6 +463,48 @@ function getWrongPool() {
   };
 }
 
+// 將 ISO 時間轉成 M/D（本地時區）；無效時回空字串
+function formatMonthDay(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+// 練習統計（僅計目前作答類別）：
+//   attemptedCount 不重複已作答題數（跳過不算、重複不加）
+//   attemptCount   累計作答次數（含重複，跳過不算）
+//   perBank        每個題庫的 { lastIso 最後練習時間, attempted 已練過的題號集合 }
+function getPracticeStats() {
+  const history = loadLocalHistory();
+  const attempted = new Set();
+  let attemptCount = 0;
+  const perBank = {};
+
+  for (const session of history) {
+    const sessionBank = session.bank || 'questions/questions.json';
+    const iso = session.date_iso || '';
+    for (const item of session.answers || []) {
+      const bank = item.bank || sessionBank;
+      if (!isBankFileInActiveTrack(bank)) continue;
+
+      // 該題庫只要出現在這次測驗就算「練習過」一次（用於最後練習日期）
+      if (!perBank[bank]) perBank[bank] = { lastIso: '', attempted: new Set() };
+      if (iso > perBank[bank].lastIso) perBank[bank].lastIso = iso;
+
+      // 跳過（未作答）不計入已練題數
+      const answered = item.userAnswer !== null && item.userAnswer !== undefined;
+      if (!answered) continue;
+
+      attemptCount++;
+      attempted.add(`${bank}|${item.qid}`);
+      perBank[bank].attempted.add(item.qid);
+    }
+  }
+
+  return { attemptedCount: attempted.size, attemptCount, perBank };
+}
+
 /* ===== Persona / Track Selection Utilities ===== */
 const TRACKS = {
   irrigation: {
