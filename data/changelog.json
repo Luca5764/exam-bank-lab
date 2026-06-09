@@ -3,6 +3,10 @@
         "date":  "2026-06-09",
         "items":  [
                       {
+                          "time":  "19:32",
+                          "message":  "fix: restore truncated predicate on 計程車 license question (111-1 q15)"
+                      },
+                      {
                           "time":  "19:11",
                           "message":  "fix: restore truncated units on bare-number options (16 questions)"
                       }
