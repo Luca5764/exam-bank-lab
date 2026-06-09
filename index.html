@@ -16,7 +16,7 @@
     <div class="track-switcher-wrap">
       <div class="track-switcher">
         <button class="track-btn" id="trackBtnIrrigation" onclick="switchTrack('irrigation')">🌾 農田水利招考</button>
-        <button class="track-btn" id="trackBtnTraffic" onclick="switchTrack('traffic')">🚗 交通部檢考驗員</button>
+        <button class="track-btn" id="trackBtnTraffic" onclick="switchTrack('traffic')">🚗 交通部考驗員</button>
       </div>
     </div>
 
@@ -177,8 +177,8 @@
         </div>
         <div class="track-card card-traffic" onclick="selectTrack('traffic')">
           <div class="track-icon">🚗</div>
-          <h3>交通部檢考驗員</h3>
-          <p>包含汽車構造原理、汽車構造原理概論、汽車駕駛理論、道路交通法規等檢定考試學科題庫。</p>
+          <h3>交通部考驗員</h3>
+          <p>包含汽車構造原理概論、汽車駕駛理論、道路交通法規等汽車駕駛考驗員檢定學科題庫。</p>
           <button class="btn btn-primary btn-block" style="min-height: 48px; border-radius: 12px; font-size: 1rem; padding: 8px 16px;">進入此練習室</button>
         </div>
       </div>
@@ -246,7 +246,7 @@
       const subtitleEl = document.querySelector('.hero-panel .subtitle');
       if (subtitleEl) {
         if (track === 'traffic') {
-          subtitleEl.textContent = '交通部公路局公路監理人員及客貨運業汽車檢驗員/考驗員歷年精選學科題庫。';
+          subtitleEl.textContent = '交通部公路局公路監理人員汽車駕駛考驗員歷年精選學科題庫。';
         } else {
           subtitleEl.textContent = '農田水利、統測專二與更多題庫，都用同一套流程練習。';
         }

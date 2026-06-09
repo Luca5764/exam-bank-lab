@@ -512,7 +512,7 @@ const TRACKS = {
     sources: ['農田水利', '農田水利署', '統測專二', '統測農概']
   },
   traffic: {
-    name: '交通部檢考驗員',
+    name: '交通部考驗員',
     sources: ['交通部']
   }
 };
