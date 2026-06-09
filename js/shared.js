@@ -319,8 +319,11 @@ function buildReviewItemHTML(q, opts) {
     ? `<div class="amendment-warning">${esc(q._warning)}${amendLinkHtml}</div>`
     : '';
 
+  const attemptHtml = q._bank
+    ? ` · ${questionAttemptLabel(q._bank, q.id)}`
+    : '';
   const sourceHtml = q._bank
-    ? `<div class="ri-source" style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px">📄 來源：${esc(bankLabel(q._bank))} · 原試卷第 ${q.id} 題</div>`
+    ? `<div class="ri-source" style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px">📄 來源：${esc(bankLabel(q._bank))} · 原試卷第 ${q.id} 題${attemptHtml}</div>`
     : '';
 
   return `<div class="review-item ${cls}">
@@ -405,6 +408,7 @@ function saveLocalHistory(record) {
   } catch (e) {
     console.error('Failed to save history to localStorage', e);
   }
+  _attemptCountMap = null;
 }
 
 function deleteLocalHistory(idx) {
@@ -412,11 +416,13 @@ function deleteLocalHistory(idx) {
   if (idx >= 0 && idx < history.length) {
     history.splice(idx, 1);
     localStorage.setItem(DB_KEY, JSON.stringify(history));
+    _attemptCountMap = null;
   }
 }
 
 function clearLocalHistory() {
   localStorage.setItem(DB_KEY, JSON.stringify([]));
+  _attemptCountMap = null;
 }
 
 function getWrongPool() {
@@ -503,6 +509,34 @@ function getPracticeStats() {
   }
 
   return { attemptedCount: attempted.size, attemptCount, perBank };
+}
+
+// 各題歷史作答次數（跳過不計）。建立一次並快取，於紀錄變動時失效。
+let _attemptCountMap = null;
+function getAttemptCountMap() {
+  if (_attemptCountMap) return _attemptCountMap;
+  const map = {};
+  for (const session of loadLocalHistory()) {
+    const sessionBank = session.bank || 'questions/questions.json';
+    for (const item of session.answers || []) {
+      if (item.userAnswer === null || item.userAnswer === undefined) continue;
+      const bank = item.bank || sessionBank;
+      const key = `${bank}|${item.qid}`;
+      map[key] = (map[key] || 0) + 1;
+    }
+  }
+  _attemptCountMap = map;
+  return map;
+}
+
+function getQuestionAttemptCount(bank, qid) {
+  return getAttemptCountMap()[`${bank}|${qid}`] || 0;
+}
+
+// 單題作答次數標籤；0 次顯示「尚未作答」
+function questionAttemptLabel(bank, qid) {
+  const n = getQuestionAttemptCount(bank, qid);
+  return n > 0 ? `✍️ 已作答 ${n} 次` : '✍️ 尚未作答';
 }
 
 /* ===== Persona / Track Selection Utilities ===== */

@@ -318,7 +318,7 @@
       const pct = trackTotal ? Math.round(ps.attemptedCount / trackTotal * 100) : 0;
       document.getElementById('practicedCount').textContent = ps.attemptedCount;
       document.getElementById('practicedNote').textContent = ps.attemptedCount
-        ? `共 ${trackTotal} 題 · 涵蓋 ${pct}% · 累計作答 ${ps.attemptCount} 次`
+        ? `共 ${trackTotal} 題 · 涵蓋 ${pct}%`
         : '尚未開始';
 
       const wrongCard = document.getElementById('modeCardWrong');
