@@ -1,5 +1,8 @@
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
+// 提示詞開頭的共用提醒：請 AI 先查最新資料再回答（適用所有科目，非僅法規）。
+const SEARCH_HINT = '請先上網搜尋最新的相關資訊，確認內容仍為正確且現行有效後再回答。';
+
 function isMultiAnswer(q) {
   return Array.isArray(q.answer);
 }
@@ -195,7 +198,7 @@ function renderMaterialsHTML(materials) {
   return html ? `<div class="q-materials">${html}</div>` : '';
 }
 
-function buildPrompt(q, userAns) {
+function buildPrompt(q, userAns, { searchHint = true } = {}) {
   let userLetter;
   if (isMultiAnswer(q)) {
     userLetter = Array.isArray(userAns) && userAns.length > 0 ? formatAnswerLetters(userAns) : '未作答';
@@ -205,6 +208,7 @@ function buildPrompt(q, userAns) {
   const correctLetter = q.freeScore ? '送分' : formatAnswerLetters(q.answer);
   const materialsText = buildMaterialText(q.materials);
   let t = '';
+  if (searchHint) t += `${SEARCH_HINT}\n`;
   t += `請說明這題為什麼正確答案是 ${correctLetter}，並分析我選的答案 ${userLetter}。\n`;
   t += `請用簡潔、易懂的方式說明，先講解題意，再比較各選項，最後指出判斷關鍵。\n\n`;
   t += `題目：${q.question}\n`;
@@ -218,10 +222,11 @@ function buildPrompt(q, userAns) {
   return t;
 }
 
-function buildBrowsePrompt(q) {
+function buildBrowsePrompt(q, { searchHint = true } = {}) {
   const correctLetter = q.freeScore ? '送分' : formatAnswerLetters(q.answer);
   const materialsText = buildMaterialText(q.materials);
   let t = '';
+  if (searchHint) t += `${SEARCH_HINT}\n`;
   t += `請說明這題為什麼正確答案是 ${correctLetter}。\n`;
   t += `請用簡潔、易懂的方式說明，先講解題意，再比較各選項，最後指出判斷關鍵。\n\n`;
   t += `題目：${q.question}\n`;
@@ -314,11 +319,16 @@ function buildReviewItemHTML(q, opts) {
     ? `<div class="amendment-warning">${esc(q._warning)}${amendLinkHtml}</div>`
     : '';
 
+  const sourceHtml = q._bank
+    ? `<div class="ri-source" style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px">📄 來源：${esc(bankLabel(q._bank))} · 原試卷第 ${q.id} 題</div>`
+    : '';
+
   return `<div class="review-item ${cls}">
     <div class="ri-header">
       <span style="font-weight:700;color:var(--text-dim)">第 ${idx + 1} 題 ${repeatsHtml}</span>
       ${badgeText ? `<span class="ri-badge ${badgeCls}">${badgeText}</span>` : ''}
     </div>
+    ${sourceHtml}
     <div class="ri-q">${esc(q.question)}</div>
     ${warningHtml}
     ${renderMaterialsHTML(q.materials)}
@@ -351,6 +361,30 @@ async function fetchJson(path) {
     throw new Error(`Failed to fetch ${path}: ${res.status}`);
   }
   return res.json();
+}
+
+// 題庫來源名稱對照（file 路徑 -> 易讀名稱），由 loadBankLabels() 載入 banks.json 後填入
+let _bankLabelMap = null;
+
+async function loadBankLabels() {
+  if (_bankLabelMap) return _bankLabelMap;
+  _bankLabelMap = {};
+  try {
+    const banks = await fetchJson('data/banks.json');
+    (banks || []).forEach(b => {
+      if (b && b.file) _bankLabelMap[b.file] = b.displayName || b.name || b.file;
+    });
+  } catch (e) {
+    console.error('Failed to load bank labels', e);
+  }
+  return _bankLabelMap;
+}
+
+function bankLabel(bankPath) {
+  if (!bankPath) return '未知來源';
+  if (_bankLabelMap && _bankLabelMap[bankPath]) return _bankLabelMap[bankPath];
+  // 後備：直接從檔名推導
+  return bankPath.replace(/^.*\//, '').replace(/\.json$/, '');
 }
 
 function loadLocalHistory() {

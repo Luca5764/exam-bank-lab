@@ -315,8 +315,8 @@
       }
       const selectedBank = browseBanks.find(bank => bank.file === currentBankFile);
       const bankName = selectedBank ? bankDisplayName(selectedBank) : '目前題庫';
-      const header = `以下為「${bankName}」共 ${browseQ.length} 題題目內容：\n請根據這些內容回答問題，若有正確答案與說明請依照對應格式呈現。\n`;
-      const texts = browseQ.map(q => buildBrowsePrompt(q));
+      const header = `${SEARCH_HINT}\n以下為「${bankName}」共 ${browseQ.length} 題題目內容：\n請根據這些內容回答問題，若有正確答案與說明請依照對應格式呈現。\n`;
+      const texts = browseQ.map(q => buildBrowsePrompt(q, { searchHint: false }));
       const full = header + '\n' + texts.join('\n' + '='.repeat(50) + '\n');
       copyText(full, btn);
     }
