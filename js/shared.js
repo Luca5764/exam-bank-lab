@@ -511,7 +511,7 @@ function getPracticeStats() {
   return { attemptedCount: attempted.size, attemptCount, perBank };
 }
 
-// 各題歷史作答次數（跳過不計）。建立一次並快取，於紀錄變動時失效。
+// 各題歷史作答統計（跳過不計）：{ total, correct, wrong }。建立一次並快取，紀錄變動時失效。
 let _attemptCountMap = null;
 function getAttemptCountMap() {
   if (_attemptCountMap) return _attemptCountMap;
@@ -522,21 +522,80 @@ function getAttemptCountMap() {
       if (item.userAnswer === null || item.userAnswer === undefined) continue;
       const bank = item.bank || sessionBank;
       const key = `${bank}|${item.qid}`;
-      map[key] = (map[key] || 0) + 1;
+      const e = map[key] || (map[key] = { total: 0, correct: 0, wrong: 0 });
+      e.total++;
+      if (item.correct) e.correct++; else e.wrong++;
     }
   }
   _attemptCountMap = map;
   return map;
 }
 
-function getQuestionAttemptCount(bank, qid) {
-  return getAttemptCountMap()[`${bank}|${qid}`] || 0;
+function getQuestionStats(bank, qid) {
+  return getAttemptCountMap()[`${bank}|${qid}`] || { total: 0, correct: 0, wrong: 0 };
 }
 
-// 單題作答次數標籤；0 次顯示「尚未作答」
+function getQuestionAttemptCount(bank, qid) {
+  return getQuestionStats(bank, qid).total;
+}
+
+// 單題作答標籤：作答次數 + 對/錯；答 2 次以上且正確率 < 50% 標為「常錯」
 function questionAttemptLabel(bank, qid) {
-  const n = getQuestionAttemptCount(bank, qid);
-  return n > 0 ? `✍️ 已作答 ${n} 次` : '✍️ 尚未作答';
+  const s = getQuestionStats(bank, qid);
+  if (!s.total) return '✍️ 尚未作答';
+  const often = s.total >= 2 && s.correct / s.total < 0.5;
+  return `✍️ 作答 ${s.total} 次 · 對 ${s.correct}／錯 ${s.wrong}${often ? ' · 🔴 常錯' : ''}`;
+}
+
+/* ===== 進度備份（匯出/還原所有本機資料） ===== */
+// 要備份的固定鍵與前綴：歷程、題目標記/筆記、選取類別、主題、法條備註
+const BACKUP_KEYS = ['quiz_history', 'quiz_question_metadata', 'quiz_selected_track', 'exam_bank_theme'];
+const BACKUP_PREFIXES = ['law_notes:v1:'];
+
+function isBackupKey(key) {
+  return BACKUP_KEYS.includes(key) || BACKUP_PREFIXES.some(p => key.startsWith(p));
+}
+
+function collectBackupData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && isBackupKey(key)) data[key] = localStorage.getItem(key);
+  }
+  return data;
+}
+
+function exportAllProgress() {
+  const payload = {
+    app: 'exam-bank-lab',
+    type: 'progress-backup',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: collectBackupData(),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  link.download = `exam-bank-progress-${stamp}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// 以備份檔還原（覆蓋同名鍵）。回傳成功寫入的鍵數。
+async function importAllProgress(file) {
+  const payload = JSON.parse(await file.text());
+  const data = payload && payload.data ? payload.data : payload;
+  if (!data || typeof data !== 'object') throw new Error('invalid backup');
+  let count = 0;
+  Object.entries(data).forEach(([key, value]) => {
+    if (!isBackupKey(key)) return;
+    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    count++;
+  });
+  _attemptCountMap = null;
+  return count;
 }
 
 /* ===== Persona / Track Selection Utilities ===== */

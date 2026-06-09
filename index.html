@@ -154,6 +154,18 @@
       </div>
     </div>
 
+    <!-- Data backup -->
+    <div class="card" id="backupCard">
+      <h3 class="mb-8">💾 進度備份</h3>
+      <p class="text-dim" style="font-size:0.85rem;margin-bottom:12px">紀錄、筆記、重點/排除標記與法條備註都只存在這個瀏覽器。換裝置或清除瀏覽器資料前，建議先匯出備份；之後可在新裝置匯入還原。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="doExportProgress()">⬇️ 匯出進度</button>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer">⬆️ 匯入進度
+          <input id="progressImport" type="file" accept="application/json" onchange="doImportProgress(event)" style="display:none">
+        </label>
+      </div>
+    </div>
+
     <div class="footer-links">
       <a href="laws.html">法條字卡</a>
       <a href="changelog.html">更新日誌</a>
@@ -752,6 +764,31 @@
       if (!confirm('確定要清空所有紀錄嗎？此動作無法復原！')) return;
       clearLocalHistory();
       location.reload();
+    }
+
+    function doExportProgress() {
+      try {
+        exportAllProgress();
+        showToast('已匯出進度備份');
+      } catch (e) {
+        console.error('Export failed', e);
+        alert('匯出失敗，請稍後再試。');
+      }
+    }
+
+    async function doImportProgress(event) {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      if (!confirm('匯入會以備份檔覆蓋目前的紀錄、筆記與標記，確定要還原嗎？')) return;
+      try {
+        const count = await importAllProgress(file);
+        showToast(`已還原 ${count} 筆資料`);
+        setTimeout(() => location.reload(), 600);
+      } catch (e) {
+        console.error('Import failed', e);
+        alert('匯入失敗，請確認檔案是本站匯出的進度備份 JSON。');
+      }
     }
 
     init();
