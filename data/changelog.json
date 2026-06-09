@@ -1,5 +1,14 @@
 [
     {
+        "date":  "2026-06-09",
+        "items":  [
+                      {
+                          "time":  "19:11",
+                          "message":  "fix: restore truncated units on bare-number options (16 questions)"
+                      }
+                  ]
+    },
+    {
         "date":  "2026-06-07",
         "items":  [
                       {
