@@ -33,11 +33,13 @@
       await initOverrides();
       await loadBankLabels();
       const history = loadLocalHistory();
+      // 鍵的推導方式必須與 getWrongPool 一致（item.bank || session 預設值），
+      // 不可退回裸 qid：不同題庫共用小整數題號，會撈到別的題庫的題目
       const qMap = {};
       history.forEach(session => {
+        const sessionBank = session.bank || 'questions/questions.json';
         (session.questions || []).forEach(q => {
-          if (q._bank) qMap[`${q._bank}:${q.id}`] = q;
-          qMap[q.id] = q;
+          qMap[`${q._bank || sessionBank}:${q.id}`] = q;
         });
       });
 
@@ -47,7 +49,7 @@
       document.getElementById('pageTitle').textContent = `🚩 ${title}`;
       document.getElementById('pageDesc').textContent = `系統記錄中 ${title} 共 ${ids.length} 題`;
 
-      wrongQ = ids.map(item => qMap[`${item.bank}:${item.qid}`] || qMap[item.qid]).filter(Boolean);
+      wrongQ = ids.map(item => qMap[`${item.bank}:${item.qid}`]).filter(Boolean);
 
       if (wrongQ.length === 0) {
         document.getElementById('list').innerHTML = '<div class="card text-center" style="padding:40px"><p style="font-size:1.2rem">🎉 這裡目前沒有題目！</p><p class="text-dim mt-16">太棒了，繼續保持下去吧。</p></div>';

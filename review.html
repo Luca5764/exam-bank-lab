@@ -52,15 +52,7 @@
       const wrongIds = [];
       reviewQuestions.forEach((q, i) => {
         const ua = reviewAnswers[i];
-        const multi = isMultiAnswer(q);
-        let answered, ok;
-        if (multi) {
-          answered = Array.isArray(ua) && ua.length > 0;
-          ok = answered && (q.freeScore || multiAnswerCorrect(ua, q.answer));
-        } else {
-          answered = ua !== null && ua !== undefined;
-          ok = answered && (q.freeScore || ua === q.answer);
-        }
+        const { ok } = evaluateAnswer(q, ua);
         const html = buildReviewItemHTML(q, { idx: i, userAns: ua, mode: 'result' });
         if (ok) correctHtml += html; else { wrongHtml += html; wrongIds.push(q.id); }
       });
@@ -90,35 +82,14 @@
       let texts = [];
       reviewQuestions.forEach((q, i) => {
         const ua = reviewAnswers[i];
-        const multi = isMultiAnswer(q);
-        let answered, ok;
-        if (multi) {
-          answered = Array.isArray(ua) && ua.length > 0;
-          ok = answered && (q.freeScore || multiAnswerCorrect(ua, q.answer));
-        } else {
-          answered = ua !== null && ua !== undefined;
-          ok = answered && (q.freeScore || ua === q.answer);
-        }
-        if (!ok) texts.push(buildPrompt(q, ua, { searchHint: false }));
+        if (!evaluateAnswer(q, ua).ok) texts.push(buildPrompt(q, ua, { searchHint: false }));
       });
       const header = `${SEARCH_HINT}\n以下為 ${texts.length} 題我答錯的考古題：\n請詳細為我解析正確答案與錯誤原因。\n`;
       copyText(header + '\n' + texts.join('\n' + '='.repeat(50) + '\n'), event.target);
     }
 
     function retryWrong() {
-      const wrongQ = reviewQuestions.filter((q, i) => {
-        const ua = reviewAnswers[i];
-        const multi = isMultiAnswer(q);
-        let answered, ok;
-        if (multi) {
-          answered = Array.isArray(ua) && ua.length > 0;
-          ok = answered && (q.freeScore || multiAnswerCorrect(ua, q.answer));
-        } else {
-          answered = ua !== null && ua !== undefined;
-          ok = answered && (q.freeScore || ua === q.answer);
-        }
-        return !ok;
-      });
+      const wrongQ = reviewQuestions.filter((q, i) => !evaluateAnswer(q, reviewAnswers[i]).ok);
       if (!wrongQ.length) return;
       sessionStorage.setItem('retry_questions', JSON.stringify(wrongQ));
       location.href = 'quiz.html?mode=retry_session&num=0';

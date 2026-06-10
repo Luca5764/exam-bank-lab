@@ -107,11 +107,6 @@
 
     const SAVE_KEY = 'quiz_session';
 
-    function bankLabel(bankPath) {
-      if (!bankPath) return '未知來源';
-      return bankPath.replace(/^.*\//, '').replace(/\.json$/, '');
-    }
-
     function shuffle(a) { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[b[i], b[j]] = [b[j], b[i]]; } return b; }
 
     function prepareQuestion(q) {
@@ -216,28 +211,17 @@
       return `${q._bank || bank}|${q.id}`;
     }
 
-    function getQuestionAttemptCounts() {
-      const counts = new Map();
-      const history = loadLocalHistory();
-
-      history.forEach((session) => {
-        const sessionBank = session.bank || 'questions/questions.json';
-        (session.answers || []).forEach((item) => {
-          const key = `${item.bank || sessionBank}|${item.qid}`;
-          counts.set(key, (counts.get(key) || 0) + 1);
-        });
-      });
-
-      return counts;
-    }
-
-    function getBlockAttemptScore(block, attemptCounts) {
-      return block.reduce((max, q) => Math.max(max, attemptCounts.get(getQuestionHistoryKey(q)) || 0), 0);
+    function getBlockAttemptScore(block, statsMap) {
+      return block.reduce((max, q) => {
+        const s = statsMap[getQuestionHistoryKey(q)];
+        return Math.max(max, s ? s.total : 0);
+      }, 0);
     }
 
     function weightedShuffleQuestionBlocks(blocks) {
-      const attemptCounts = getQuestionAttemptCounts();
-      if (!attemptCounts.size) return shuffle(blocks);
+      // 共用 shared.js 的作答統計快取（跳過不計，與「沒做過的題」模式同口徑）
+      const attemptCounts = getAttemptCountMap();
+      if (!Object.keys(attemptCounts).length) return shuffle(blocks);
 
       return blocks
         .map((block, index) => {
@@ -274,7 +258,27 @@
       window.addEventListener('beforeunload', saveSession);
     }
 
+    // 平行載入多個題庫檔，單檔失敗只略過該檔（與原本逐檔 try/catch 行為一致）
+    async function fetchBanksParallel(bankFiles, pickQids = null) {
+      const results = await Promise.all(bankFiles.map(async bf => {
+        try {
+          const qs = await fetchJson(bf);
+          const picked = pickQids ? qs.filter(q => pickQids[bf].has(q.id)) : qs;
+          return picked.map(q => ({ ...q, _bank: bf }));
+        } catch (e) {
+          console.error('Failed to load bank', bf, e);
+          return [];
+        }
+      }));
+      return results.flat();
+    }
+
     async function init() {
+      // 先把 overrides 與題庫名稱索引的下載踢出去，跟題庫檔平行載入；
+      // 名稱索引不阻塞開場（載入前「顯示來源」會暫以檔名呈現）
+      const overridesReady = initOverrides();
+      loadBankLabels();
+
       if (isResume) {
         const saved = loadSession();
         if (saved && saved.quizQ && saved.quizQ.length > 0) {
@@ -293,9 +297,9 @@
       let pool = [];
       if (mode === 'retry_session') {
         const stored = sessionStorage.getItem('retry_questions');
-        if (!stored) { location.href = 'index.html'; return; }
         sessionStorage.removeItem('retry_questions');
-        pool = JSON.parse(stored);
+        try { pool = JSON.parse(stored) || []; } catch { pool = []; }
+        if (!Array.isArray(pool) || !pool.length) { location.href = 'index.html'; return; }
       } else if (mode === 'wrong' || mode === 'still-wrong') {
         const wp = getWrongPool();
         let items = mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
@@ -303,47 +307,20 @@
         if (!items.length) { alert('沒有錯題可以練習！'); location.href = 'index.html'; return; }
         const byBank = {};
         for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
-        for (const [bf, qids] of Object.entries(byBank)) {
-          try {
-            const bankQ = await fetchJson(bf);
-            pool.push(...bankQ.filter(q => qids.has(q.id)).map(q => ({ ...q, _bank: bf })));
-          } catch(e) {
-            console.error('Failed to load wrong-question bank', bf, e);
-          }
-        }
+        pool = await fetchBanksParallel(Object.keys(byBank), byBank);
       } else if (mode === 'key') {
         let keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
         if (srcBanks) keyQuestions = keyQuestions.filter(it => srcBanks.has(it.bank));
         if (!keyQuestions.length) { alert('沒有重點標記題可以練習！'); location.href = 'index.html'; return; }
         const byBank = {};
         for (const { bank: b, qid } of keyQuestions) { (byBank[b] = byBank[b] || new Set()).add(qid); }
-        for (const [bf, qids] of Object.entries(byBank)) {
-          try {
-            const bankQ = await fetchJson(bf);
-            pool.push(...bankQ.filter(q => qids.has(q.id)).map(q => ({ ...q, _bank: bf })));
-          } catch(e) {
-            console.error('Failed to load key-question bank', bf, e);
-          }
-        }
+        pool = await fetchBanksParallel(Object.keys(byBank), byBank);
       } else {
         const banksParam = params.get('banks');
-        if (banksParam) {
-          for (const bf of banksParam.split(',').map(decodeURIComponent)) {
-            try {
-              const qs = await fetchJson(bf);
-              pool.push(...qs.map(q => ({ ...q, _bank: bf })));
-            } catch(e) {
-              console.error('Failed to load selected bank', bf, e);
-            }
-          }
-        } else {
-          try {
-            const rawQ = await fetchJson(decodeURIComponent(bank));
-            pool = rawQ.map(q => ({ ...q, _bank: bank }));
-          } catch(e) {
-            console.error('Failed to load default bank', bank, e);
-          }
-        }
+        const bankFiles = banksParam
+          ? banksParam.split(',').map(decodeURIComponent)
+          : [decodeURIComponent(bank)];
+        pool = await fetchBanksParallel(bankFiles);
       }
 
       // Filter by question type if requested
@@ -566,18 +543,9 @@
       let correct = 0, wrong = 0, skip = 0;
       const answers = quizQ.map((q, i) => {
         const ua = userAns[i];
-        const multi = isMultiAnswer(q);
-        const skipped = multi ? (!Array.isArray(ua) || ua.length === 0) : ua === undefined;
-        let ok;
-        if (q.freeScore) {
-          ok = !skipped;
-        } else if (multi) {
-          ok = multiAnswerCorrect(ua, q.answer);
-        } else {
-          ok = ua === q.answer;
-        }
-        if (skipped) skip++; else if (ok) correct++; else wrong++;
-        return { qid: q.id, bank: q._bank || bank, userAnswer: skipped ? null : ua, correct: ok && !skipped };
+        const { answered, ok } = evaluateAnswer(q, ua);
+        if (!answered) skip++; else if (ok) correct++; else wrong++;
+        return { qid: q.id, bank: q._bank || bank, userAnswer: answered ? ua : null, correct: ok };
       });
 
       const now = new Date();
@@ -597,7 +565,7 @@
     }
 
     function onQuizKeydown(e) {
-      if (!quizQ.length) return;
+      if (!quizQ.length || isSubmitting) return;
       const t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;

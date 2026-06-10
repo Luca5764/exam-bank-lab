@@ -216,20 +216,6 @@
 
     let COLLECTIONS = [];
 
-    function bankCollection(bank) {
-      const track = getSelectedTrack();
-      if (track === 'traffic') {
-        const sub = bank.subject || '';
-        const name = bank.name || '';
-        if (sub.includes('構造') || name.includes('構造')) return 'traffic-structure';
-        if (sub.includes('駕駛') || name.includes('駕駛')) return 'traffic-theory';
-        if (sub.includes('法規') || name.includes('法規')) return 'traffic-law';
-        return 'traffic-law';
-      } else {
-        return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
-      }
-    }
-
     function selectTrack(track) {
       setSelectedTrack(track);
       
@@ -431,22 +417,8 @@
       }
     }
 
-    function collectionLabel(id) {
-      return COLLECTIONS.find(item => item.id === id)?.title || id;
-    }
-
     function bankTitle(bank) {
       return bank.displayName || `${bank.year || ''} ${bank.subject || bank.name || ''}`.trim();
-    }
-
-    function bankMeta(bank) {
-      return [bank.source, bank.category, bank.originalSubject && bank.originalSubject !== bank.subject ? bank.originalSubject : '']
-        .filter(Boolean)
-        .join(' / ');
-    }
-
-    function jsArg(value) {
-      return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     }
 
     function getSelectedBankList() {
@@ -472,7 +444,7 @@
       const btn = document.getElementById('startBtn');
       if (!btn) return;
       const mode = document.getElementById('quizMode')?.value || 'random';
-      const isScopeMode = ['wrong', 'still-wrong', 'key'].includes(mode);
+      const isScopeMode = SCOPE_MODES.includes(mode);
       let ready, emptyText;
       if (isScopeMode) {
         // scopeSelected 為 null 代表尚未渲染（視同全選）；否則需至少留一個來源題庫
@@ -504,10 +476,9 @@
       renderModeScopePanel();
     }
 
-    // 「曾錯過/至今仍錯/重點標記」模式的來源題庫篩選（null 代表全選）
+    // 「曾錯過/至今仍錯/重點標記」模式（SCOPE_MODES，定義於 shared.js）的來源題庫篩選（null 代表全選）
     let scopeSelected = null;
     let scopeBanks = [];
-    const SCOPE_MODES = ['wrong', 'still-wrong', 'key'];
 
     function getModeSourceItems(mode) {
       if (mode === 'wrong' || mode === 'still-wrong') {
@@ -604,6 +575,8 @@
       clearTimeout(_scopeResizeTimer);
       _scopeResizeTimer = setTimeout(applyScopeMarquee, 150);
     });
+    // Web 字型載入後字寬會變，首次量測可能失準，需重量一次
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(applyScopeMarquee);
 
     // 只更新統計文字與開始鈕狀態，避免重建 innerHTML 導致清單捲動位置被重置
     function updateScopeSummary() {
@@ -617,7 +590,8 @@
     }
 
     function toggleScopeBank(input) {
-      if (!scopeSelected) scopeSelected = new Set();
+      // null 代表全選，先補齊為全部來源再增刪
+      if (!scopeSelected) scopeSelected = new Set(scopeBanks.map(b => b.file));
       const item = input.closest('.scope-item');
       const file = item.dataset.file;
       if (input.checked) scopeSelected.add(file); else scopeSelected.delete(file);
@@ -764,6 +738,7 @@
       try {
         const banks = await fetchJson('data/banks.json');
         if (banks && banks.length > 0) {
+          registerBankIndex(banks);
           ALL_BANKS = banks.map(b => ({
             ...b,
             source: b.source || '農田水利',
@@ -822,7 +797,7 @@
 
       let url = `quiz.html?mode=${mode}&num=${num}&types=${typesStr}`;
 
-      if (mode === 'wrong' || mode === 'still-wrong' || mode === 'key') {
+      if (SCOPE_MODES.includes(mode)) {
         const banks = getModeSourceBanks(mode);
         if (banks.length === 0) { alert('目前沒有可練習的題目！'); return; }
         const chosen = scopeSelected ? banks.filter(b => scopeSelected.has(b.file)) : banks;
