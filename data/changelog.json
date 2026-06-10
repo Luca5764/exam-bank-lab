@@ -3,6 +3,14 @@
         "date":  "2026-06-10",
         "items":  [
                       {
+                          "time":  "20:50",
+                          "message":  "chore: 歸檔過時 tools 腳本、補 README、新增 CLAUDE.md"
+                      },
+                      {
+                          "time":  "20:45",
+                          "message":  "chore: 歸檔 scratch 一次性腳本至 .tmp/archived-oneoffs-20260610"
+                      },
+                      {
                           "time":  "20:30",
                           "message":  "fix: 匯出/匯入進度按鈕等高（button 與 label 高度不一致）"
                       },

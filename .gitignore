@@ -12,6 +12,7 @@ wheels/
 .venv
 
 .env
+scratch/
 data/laws.*.json
 law_explanations*_cache*.json
 *.pdf
