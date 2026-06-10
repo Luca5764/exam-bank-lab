@@ -573,12 +573,37 @@
           ${banks.map(b => `
             <label class="scope-item ${scopeSelected.has(b.file) ? 'selected' : ''}" data-file="${esc(b.file)}">
               <input type="checkbox" ${scopeSelected.has(b.file) ? 'checked' : ''} onchange="toggleScopeBank(this)">
-              <span class="scope-item-title">${esc(b.title)}</span>
+              <span class="scope-item-title"><span class="scope-marquee">${esc(b.title)}</span></span>
               <span class="scope-item-count">${b.count} 題</span>
             </label>`).join('')}
         </div>`;
       updateScopeSummary();
+      applyScopeMarquee();
     }
+
+    // 量測每個標題是否超出可視寬度，只有超出的才啟用跑馬燈，並依超出量決定捲動距離與速度
+    function applyScopeMarquee() {
+      document.querySelectorAll('#modeScopePanel .scope-item-title').forEach(box => {
+        const inner = box.querySelector('.scope-marquee');
+        if (!inner) return;
+        box.classList.remove('is-marquee');
+        box.style.removeProperty('--marquee-shift');
+        box.style.removeProperty('--marquee-dur');
+        const overflow = inner.scrollWidth - box.clientWidth;
+        if (overflow > 2) {
+          const dist = overflow + 8;
+          box.style.setProperty('--marquee-shift', `-${dist}px`);
+          box.style.setProperty('--marquee-dur', `${Math.max(5, dist / 22).toFixed(1)}s`);
+          box.classList.add('is-marquee');
+        }
+      });
+    }
+
+    let _scopeResizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(_scopeResizeTimer);
+      _scopeResizeTimer = setTimeout(applyScopeMarquee, 150);
+    });
 
     // 只更新統計文字與開始鈕狀態，避免重建 innerHTML 導致清單捲動位置被重置
     function updateScopeSummary() {
