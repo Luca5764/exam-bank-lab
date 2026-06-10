@@ -3,6 +3,10 @@
         "date":  "2026-06-10",
         "items":  [
                       {
+                          "time":  "20:30",
+                          "message":  "fix: 匯出/匯入進度按鈕等高（button 與 label 高度不一致）"
+                      },
+                      {
                           "time":  "20:10",
                           "message":  "feat: 來源題庫過長標題改用跑馬燈顯示"
                       },
