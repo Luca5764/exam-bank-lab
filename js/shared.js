@@ -15,6 +15,16 @@ function multiAnswerCorrect(userAns, answer) {
   return a.every((v, i) => v === b[i]);
 }
 
+// 判定單題作答結果（單選/複選/送分共用）：answered 是否有作答、ok 是否得分
+function evaluateAnswer(q, ua) {
+  const multi = isMultiAnswer(q);
+  const answered = multi
+    ? (Array.isArray(ua) && ua.length > 0)
+    : (ua !== null && ua !== undefined);
+  const ok = answered && (q.freeScore ? true : (multi ? multiAnswerCorrect(ua, q.answer) : ua === q.answer));
+  return { answered, ok };
+}
+
 function formatAnswerLetters(ans) {
   if (Array.isArray(ans)) return ans.map(i => LETTERS[i]).filter(Boolean).join(',');
   return LETTERS[ans] || '未設定';
@@ -25,6 +35,11 @@ function esc(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+// 把值安全地塞進 HTML 屬性裡的 inline handler 參數（onclick="fn(${jsArg(v)})"）
+function jsArg(value) {
+  return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
 const THEME_KEY = 'exam_bank_theme';
@@ -247,14 +262,9 @@ function buildReviewItemHTML(q, opts) {
   const isFreeScore = !!q.freeScore;
   const multi = isMultiAnswer(q);
 
-  let isSkipped, isCorrect;
-  if (multi) {
-    isSkipped = isResult && (!Array.isArray(userAns) || userAns.length === 0);
-    isCorrect = isResult && (isFreeScore ? !isSkipped : multiAnswerCorrect(userAns, q.answer));
-  } else {
-    isSkipped = isResult && (userAns === undefined || userAns === null);
-    isCorrect = isResult && (isFreeScore ? !isSkipped : userAns === q.answer);
-  }
+  const { answered, ok } = evaluateAnswer(q, userAns);
+  const isSkipped = isResult && !answered;
+  const isCorrect = isResult && ok;
   const isWrong = isResult && !isCorrect;
 
   let cls = 'ri-neutral';
@@ -359,24 +369,36 @@ function toAssetUrl(path) {
 }
 
 async function fetchJson(path) {
-  const res = await fetch(toAssetUrl(path), { cache: 'no-store' });
+  // 交給瀏覽器 HTTP 快取（GitHub Pages 為 max-age=600 + ETag），
+  // 題庫更新最多延遲 10 分鐘可見，換來重複開測驗不必整包重新下載。
+  const res = await fetch(toAssetUrl(path));
   if (!res.ok) {
     throw new Error(`Failed to fetch ${path}: ${res.status}`);
   }
   return res.json();
 }
 
-// 題庫來源名稱對照（file 路徑 -> 易讀名稱），由 loadBankLabels() 載入 banks.json 後填入
+// 題庫索引快取（file -> 顯示名稱、file -> 是否屬交通部分流）。
+// 由 loadBankLabels() 或頁面自行載入 banks.json 後呼叫 registerBankIndex() 填入。
 let _bankLabelMap = null;
+let _bankTrackMap = null;
+
+function registerBankIndex(banks) {
+  _bankLabelMap = _bankLabelMap || {};
+  _bankTrackMap = _bankTrackMap || {};
+  (banks || []).forEach(b => {
+    if (!b || !b.file) return;
+    _bankLabelMap[b.file] = b.displayName || b.name || b.file;
+    _bankTrackMap[b.file] = TRACKS.traffic.sources.includes(b.source || '');
+  });
+  invalidateHistoryCaches();
+}
 
 async function loadBankLabels() {
   if (_bankLabelMap) return _bankLabelMap;
   _bankLabelMap = {};
   try {
-    const banks = await fetchJson('data/banks.json');
-    (banks || []).forEach(b => {
-      if (b && b.file) _bankLabelMap[b.file] = b.displayName || b.name || b.file;
-    });
+    registerBankIndex(await fetchJson('data/banks.json'));
   } catch (e) {
     console.error('Failed to load bank labels', e);
   }
@@ -408,7 +430,7 @@ function saveLocalHistory(record) {
   } catch (e) {
     console.error('Failed to save history to localStorage', e);
   }
-  _attemptCountMap = null;
+  invalidateHistoryCaches();
 }
 
 function deleteLocalHistory(idx) {
@@ -416,13 +438,13 @@ function deleteLocalHistory(idx) {
   if (idx >= 0 && idx < history.length) {
     history.splice(idx, 1);
     localStorage.setItem(DB_KEY, JSON.stringify(history));
-    _attemptCountMap = null;
+    invalidateHistoryCaches();
   }
 }
 
 function clearLocalHistory() {
   localStorage.setItem(DB_KEY, JSON.stringify([]));
-  _attemptCountMap = null;
+  invalidateHistoryCaches();
 }
 
 function getWrongPool() {
@@ -481,7 +503,10 @@ function formatMonthDay(iso) {
 //   attemptedCount 不重複已作答題數（跳過不算、重複不加）
 //   attemptCount   累計作答次數（含重複，跳過不算）
 //   perBank        每個題庫的 { lastIso 最後練習時間, attempted 已練過的題號集合 }
+// 結果會快取（搜尋框每個按鍵都會重繪題庫清單，不能每次全掃歷程），
+// 紀錄或分流變動時由 invalidateHistoryCaches() 失效。
 function getPracticeStats() {
+  if (_practiceStatsCache) return _practiceStatsCache;
   const history = loadLocalHistory();
   const attempted = new Set();
   let attemptCount = 0;
@@ -508,11 +533,19 @@ function getPracticeStats() {
     }
   }
 
-  return { attemptedCount: attempted.size, attemptCount, perBank };
+  _practiceStatsCache = { attemptedCount: attempted.size, attemptCount, perBank };
+  return _practiceStatsCache;
 }
 
 // 各題歷史作答統計（跳過不計）：{ total, correct, wrong }。建立一次並快取，紀錄變動時失效。
 let _attemptCountMap = null;
+let _practiceStatsCache = null;
+
+function invalidateHistoryCaches() {
+  _attemptCountMap = null;
+  _practiceStatsCache = null;
+}
+
 function getAttemptCountMap() {
   if (_attemptCountMap) return _attemptCountMap;
   const map = {};
@@ -594,7 +627,7 @@ async function importAllProgress(file) {
     localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
     count++;
   });
-  _attemptCountMap = null;
+  invalidateHistoryCaches();
   return count;
 }
 
@@ -624,19 +657,24 @@ function setSelectedTrack(track) {
     // Clear the active quiz session to avoid cross-contamination of questions
     localStorage.removeItem('quiz_session');
   } catch {}
+  // 練習統計依分流過濾，分流變動後必須重算
+  invalidateHistoryCaches();
 }
 
 function isBankFileInActiveTrack(file) {
   const track = getSelectedTrack();
   if (!track) return true; // Default to allow all if none selected
-  const isTrafficFile = file && file.includes('交通部');
+  // 優先用 banks.json 的 source 欄位（registerBankIndex 填入）；索引尚未載入時退回檔名判斷
+  const isTrafficFile = _bankTrackMap && file in _bankTrackMap
+    ? _bankTrackMap[file]
+    : !!(file && file.includes('交通部'));
   return track === 'traffic' ? isTrafficFile : !isTrafficFile;
 }
 
 function isBankInActiveTrack(bank) {
   const track = getSelectedTrack();
   if (!track) return true;
-  const isTraffic = (bank.source === '交通部') || (bank.file && bank.file.includes('交通部'));
+  const isTraffic = TRACKS.traffic.sources.includes(bank.source || '') || (bank.file && bank.file.includes('交通部'));
   return track === 'traffic' ? isTraffic : !isTraffic;
 }
 
@@ -645,6 +683,35 @@ function isSessionInActiveTrack(session) {
                       (session.questions && session.questions[0] && session.questions[0]._bank) ||
                       session.bank || '';
   return isBankFileInActiveTrack(sessionBank);
+}
+
+// 需要「限定來源題庫」面板的測驗模式（index.html 的面板與 doStart 共用）
+const SCOPE_MODES = ['wrong', 'still-wrong', 'key'];
+
+// 題庫歸屬的系列（題庫書架的分類卡片）。交通部分流依科目關鍵字分三類。
+function bankCollection(bank) {
+  const track = getSelectedTrack();
+  if (track === 'traffic') {
+    const sub = bank.subject || '';
+    const name = bank.name || '';
+    if (sub.includes('構造') || name.includes('構造')) return 'traffic-structure';
+    if (sub.includes('駕駛') || name.includes('駕駛')) return 'traffic-theory';
+    if (sub.includes('法規') || name.includes('法規')) return 'traffic-law';
+    return 'traffic-law';
+  } else {
+    return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
+  }
+}
+
+// 系列 id -> 顯示名稱。COLLECTIONS 由 index/browse 各自定義（兩頁文案不同）。
+function collectionLabel(id) {
+  return (typeof COLLECTIONS !== 'undefined' && COLLECTIONS.find(item => item.id === id)?.title) || id;
+}
+
+function bankMeta(bank) {
+  return [bank.source, bank.category, bank.originalSubject && bank.originalSubject !== bank.subject ? bank.originalSubject : '']
+    .filter(Boolean)
+    .join(' / ');
 }
 
 /* ===== Overrides API ===== */

@@ -1904,13 +1904,16 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   line-height: 1.4;
   overflow: hidden;
   white-space: nowrap;
+  /* 跑馬燈未啟用時（JS 失效或量測失準）以省略號收尾，避免無聲截斷 */
+  text-overflow: ellipsis;
 }
 .scope-item-title .scope-marquee {
   display: inline-block;
-  will-change: transform;
 }
 /* 只有放不下的標題會被加上 is-marquee，由右往左來回滑動 */
+.scope-item-title.is-marquee { text-overflow: clip; }
 .scope-item-title.is-marquee .scope-marquee {
+  will-change: transform;
   animation: scopeMarquee var(--marquee-dur, 8s) ease-in-out infinite alternate;
 }
 @keyframes scopeMarquee {

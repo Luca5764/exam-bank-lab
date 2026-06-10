@@ -74,20 +74,6 @@
     let COLLECTIONS = [];
     let ALL_BANKS = [];
 
-    function bankCollection(bank) {
-      const track = getSelectedTrack();
-      if (track === 'traffic') {
-        const sub = bank.subject || '';
-        const name = bank.name || '';
-        if (sub.includes('構造') || name.includes('構造')) return 'traffic-structure';
-        if (sub.includes('駕駛') || name.includes('駕駛')) return 'traffic-theory';
-        if (sub.includes('法規') || name.includes('法規')) return 'traffic-law';
-        return 'traffic-law';
-      } else {
-        return bank.source === '統測專二' ? 'tve-business' : 'irrigation';
-      }
-    }
-
     function switchTrack(track) {
       if (getSelectedTrack() === track) return;
       setSelectedTrack(track);
@@ -136,22 +122,8 @@
       renderBrowseBankBrowser();
     }
 
-    function jsArg(value) {
-      return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    }
-
-    function collectionLabel(id) {
-      return COLLECTIONS.find(item => item.id === id)?.title || id;
-    }
-
     function bankDisplayName(bank) {
       return bank.displayName || bank.name || bank.file;
-    }
-
-    function bankMeta(bank) {
-      return [bank.source, bank.category, bank.originalSubject && bank.originalSubject !== bank.subject ? bank.originalSubject : '']
-        .filter(Boolean)
-        .join(' / ');
     }
 
     function copyBrowse(idx) {
@@ -280,6 +252,7 @@
       try {
         await initOverrides();
         const banks = await fetchJson('data/banks.json');
+        registerBankIndex(banks);
         ALL_BANKS = (banks || []).map(b => ({
           ...b,
           source: b.source || '農田水利',
