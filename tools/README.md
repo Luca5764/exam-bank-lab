@@ -30,6 +30,15 @@ prototypes should stay outside the repository, preferably under `.tmp/`.
 - `run_management_hybrid_import.py` is the preferred end-to-end management-bank
   pipeline.
 
+## Amendment audit (traffic law)
+
+- `audit_amendments_v2.py` runs Stages 0-2 of the 3-stage amendment audit
+  funnel (consolidate amendments, deterministic matching, local LLM filter).
+- `run_claude_review.py` formats Stage 2 output into batches for Claude
+  sub-agent review (Stage 3).
+- `claude_review_stage3.py` applies Claude-reviewed results to
+  `data/overrides.json`.
+
 ## Visual materials
 
 - `crop_tvee_questions.py` crops full TVE question screenshots.
