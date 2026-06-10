@@ -3,6 +3,10 @@
         "date":  "2026-06-10",
         "items":  [
                       {
+                          "time":  "22:19",
+                          "message":  "chore: CLAUDE.md 補上 shared.js 共用邏輯與禁止同名遮蔽的慣例"
+                      },
+                      {
                           "time":  "22:14",
                           "message":  "fix: 修正全專案 review 發現的問題並優化測驗載入速度"
                       },

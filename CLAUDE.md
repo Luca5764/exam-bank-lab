@@ -28,6 +28,10 @@ Python 環境用 uv 管理（`uv.lock`、`.python-version`，Python 3.13+）。
 ## 慣例
 
 - Commit 訊息：繁體中文，`feat:`/`fix:`/`chore:` 前綴（見 `git log`）。
+- **跨頁共用的 JS 邏輯一律放 `js/shared.js`，頁面 inline script 不得定義與
+  shared.js 同名的函式**（全域函式會互相遮蔽，曾因此出過 `bankLabel` 顯示錯誤
+  的 bug）。要改共用行為就直接改 shared.js；新增頁面函式前先到 shared.js 搜尋
+  名字確認沒有撞名。
 - **post-commit hook 會自動更新 `data/changelog.json` 並 amend 進同一個 commit**
   （`.githooks/post-commit`）。commit 後看到 hash 變動是正常的；
   設 `SKIP_CHANGELOG=1` 可跳過。
