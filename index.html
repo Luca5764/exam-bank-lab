@@ -109,6 +109,7 @@
         </div>
         <input type="hidden" id="quizMode" value="random">
         <div class="settings-hint" id="modeHelp">會從已選題庫中依題數抽題，已做過的題會降低出現機率，題組會一起保留。</div>
+        <div id="modeScopePanel" class="mode-scope-panel" style="display:none"></div>
       </div>
 
       <div class="settings-section">
@@ -365,7 +366,8 @@
         selectQuizMode('random');
       }
       updateModeHelp();
-      
+      renderModeScopePanel();
+
       renderHistoryList();
     }
 
@@ -470,10 +472,18 @@
       const btn = document.getElementById('startBtn');
       if (!btn) return;
       const mode = document.getElementById('quizMode')?.value || 'random';
-      const needsBank = mode !== 'wrong' && mode !== 'still-wrong' && mode !== 'key';
-      const ready = !needsBank || selectedBanks.size > 0;
+      const isScopeMode = ['wrong', 'still-wrong', 'key'].includes(mode);
+      let ready, emptyText;
+      if (isScopeMode) {
+        // scopeSelected 為 null 代表尚未渲染（視同全選）；否則需至少留一個來源題庫
+        ready = !scopeSelected || scopeSelected.size > 0;
+        emptyText = '請至少選擇一個來源題庫';
+      } else {
+        ready = selectedBanks.size > 0;
+        emptyText = '請先選擇題庫';
+      }
       btn.disabled = !ready;
-      btn.textContent = ready ? '🚀 開始測驗練習' : '請先選擇題庫';
+      btn.textContent = ready ? '🚀 開始測驗練習' : emptyText;
     }
 
     function selectQuizMode(mode) {
@@ -488,7 +498,89 @@
       const modeInput = document.getElementById('quizMode');
       if (modeInput) modeInput.value = mode;
 
+      // 切換模式時重設「來源題庫」篩選（不同模式的錯題來源不同），預設全選
+      scopeSelected = null;
       updateModeHelp();
+      renderModeScopePanel();
+    }
+
+    // 「曾錯過/至今仍錯/重點標記」模式的來源題庫篩選（null 代表全選）
+    let scopeSelected = null;
+    const SCOPE_MODES = ['wrong', 'still-wrong', 'key'];
+
+    function getModeSourceItems(mode) {
+      if (mode === 'wrong' || mode === 'still-wrong') {
+        const wp = getWrongPool();
+        return mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
+      }
+      if (mode === 'key') {
+        return getQuestionsWithTag('key')
+          .filter(item => isBankFileInActiveTrack(item.bank))
+          .map(item => ({ bank: item.bank, qid: item.qid }));
+      }
+      return [];
+    }
+
+    function getModeSourceBanks(mode) {
+      const counts = {};
+      for (const it of getModeSourceItems(mode)) counts[it.bank] = (counts[it.bank] || 0) + 1;
+      return Object.keys(counts)
+        .map(file => ({ file, count: counts[file], title: bankFileLabel(file) }))
+        .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
+    }
+
+    function renderModeScopePanel() {
+      const mode = document.getElementById('quizMode').value;
+      const panel = document.getElementById('modeScopePanel');
+      if (!panel) return;
+      if (!SCOPE_MODES.includes(mode)) { panel.style.display = 'none'; return; }
+
+      const banks = getModeSourceBanks(mode);
+      const total = banks.reduce((s, b) => s + b.count, 0);
+      if (!banks.length) { panel.style.display = 'none'; return; }
+
+      const valid = new Set(banks.map(b => b.file));
+      if (!scopeSelected) {
+        // null 代表尚未初始化 → 預設全選（空集合是使用者刻意「全不選」，需保留）
+        scopeSelected = new Set(valid);
+      } else {
+        // 移除已不存在的題庫（例如該題庫的錯題已全部答對）
+        scopeSelected = new Set([...scopeSelected].filter(f => valid.has(f)));
+      }
+
+      const selCount = banks.filter(b => scopeSelected.has(b.file)).reduce((s, b) => s + b.count, 0);
+      panel.style.display = 'block';
+      panel.innerHTML = `
+        <div class="scope-head">
+          <span class="scope-title">限定來源題庫</span>
+          <span class="scope-summary">已選 ${selCount} 題 / 共 ${total} 題</span>
+        </div>
+        <div class="scope-hint">這些是你的錯題／標記題實際所在的題庫，預設全選；取消勾選可只練特定來源。</div>
+        <div class="bank-toolbar">
+          <button class="btn btn-secondary btn-sm" onclick="setAllScope(true)">全選</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAllScope(false)">全不選</button>
+        </div>
+        <div class="scope-list">
+          ${banks.map(b => `
+            <label class="scope-item ${scopeSelected.has(b.file) ? 'selected' : ''}">
+              <input type="checkbox" ${scopeSelected.has(b.file) ? 'checked' : ''} onchange="toggleScopeBank(${jsArg(b.file)})">
+              <span class="scope-item-title">${esc(b.title)}</span>
+              <span class="scope-item-count">${b.count} 題</span>
+            </label>`).join('')}
+        </div>`;
+      updateStartState();
+    }
+
+    function toggleScopeBank(file) {
+      if (!scopeSelected) scopeSelected = new Set(getModeSourceBanks(document.getElementById('quizMode').value).map(b => b.file));
+      if (scopeSelected.has(file)) scopeSelected.delete(file); else scopeSelected.add(file);
+      renderModeScopePanel();
+    }
+
+    function setAllScope(selectAll) {
+      const banks = getModeSourceBanks(document.getElementById('quizMode').value);
+      scopeSelected = selectAll ? new Set(banks.map(b => b.file)) : new Set();
+      renderModeScopePanel();
     }
 
     function renderFilterButtons(containerId, items, active, handlerName) {
@@ -678,6 +770,14 @@
       let url = `quiz.html?mode=${mode}&num=${num}&types=${typesStr}`;
 
       if (mode === 'wrong' || mode === 'still-wrong' || mode === 'key') {
+        const banks = getModeSourceBanks(mode);
+        if (banks.length === 0) { alert('目前沒有可練習的題目！'); return; }
+        const chosen = scopeSelected ? banks.filter(b => scopeSelected.has(b.file)) : banks;
+        if (chosen.length === 0) { alert('請至少選擇一個來源題庫！'); return; }
+        // 只在非全選時才帶 srcBanks，全選維持原本全域行為
+        if (chosen.length < banks.length) {
+          url += `&srcBanks=${chosen.map(b => encodeURIComponent(b.file)).join(',')}`;
+        }
         window.location.href = url;
         return;
       }
@@ -736,9 +836,9 @@
       const text = {
         random: '會從已選題庫中依題數隨機抽題，已做過的題會降低出現機率，題組會一起保留。',
         unseen: '只抽「從未實際作答過」的題（從已選題庫中濾掉做過的，跳過不算已做）；隨機模式則只是降低做過題的出現機率。',
-        wrong: '會從曾答錯過的題目中依題數抽題，不受目前題庫篩選限制。',
-        'still-wrong': '會從目前仍未答對的錯題中依題數抽題。',
-        key: '會從已標記為重點的題目中依題數抽題，不受目前題庫篩選限制。',
+        wrong: '會從曾答錯過的題目中依題數抽題；可在下方「限定來源題庫」勾選只練特定題庫的錯題。',
+        'still-wrong': '會從目前仍未答對的錯題中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
+        key: '會從已標記為重點的題目中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
         all: '會依題庫原順序練習；如果有設定題數，只取前段題目。',
       };
       help.textContent = text[mode] || text.random;

@@ -89,6 +89,8 @@
     const retryIds = params.get('retryIds');
     const isResume = params.get('resume') === '1';
     const bank = params.get('bank') || 'questions/questions.json';
+    const srcBanksParam = params.get('srcBanks');
+    const srcBanks = srcBanksParam ? new Set(srcBanksParam.split(',').map(decodeURIComponent)) : null;
 
     let allQ = [];
     let quizQ = [];
@@ -296,7 +298,8 @@
         pool = JSON.parse(stored);
       } else if (mode === 'wrong' || mode === 'still-wrong') {
         const wp = getWrongPool();
-        const items = mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
+        let items = mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
+        if (srcBanks) items = items.filter(it => srcBanks.has(it.bank));
         if (!items.length) { alert('沒有錯題可以練習！'); location.href = 'index.html'; return; }
         const byBank = {};
         for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
@@ -309,7 +312,8 @@
           }
         }
       } else if (mode === 'key') {
-        const keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
+        let keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
+        if (srcBanks) keyQuestions = keyQuestions.filter(it => srcBanks.has(it.bank));
         if (!keyQuestions.length) { alert('沒有重點標記題可以練習！'); location.href = 'index.html'; return; }
         const byBank = {};
         for (const { bank: b, qid } of keyQuestions) { (byBank[b] = byBank[b] || new Set()).add(qid); }
