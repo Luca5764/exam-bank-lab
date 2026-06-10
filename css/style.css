@@ -1900,10 +1900,8 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   min-width: 0;
   font-weight: 700;
   font-size: 0.92rem;
-  line-height: 1.45;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .scope-item-count {
   color: var(--text-dim);

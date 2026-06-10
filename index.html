@@ -506,6 +506,7 @@
 
     // 「曾錯過/至今仍錯/重點標記」模式的來源題庫篩選（null 代表全選）
     let scopeSelected = null;
+    let scopeBanks = [];
     const SCOPE_MODES = ['wrong', 'still-wrong', 'key'];
 
     function getModeSourceItems(mode) {
@@ -524,9 +525,17 @@
     function getModeSourceBanks(mode) {
       const counts = {};
       for (const it of getModeSourceItems(mode)) counts[it.bank] = (counts[it.bank] || 0) + 1;
-      return Object.keys(counts)
-        .map(file => ({ file, count: counts[file], title: bankFileLabel(file) }))
-        .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
+      const banks = Object.keys(counts).map(file => ({ file, count: counts[file], title: bankFileLabel(file) }));
+      // 清單內若有同名（年度＋科目相同、僅梯次/組別不同）的題庫，補上 category 以利區分
+      const nameCount = {};
+      banks.forEach(b => { nameCount[b.title] = (nameCount[b.title] || 0) + 1; });
+      banks.forEach(b => {
+        if (nameCount[b.title] > 1) {
+          const info = ALL_BANKS.find(x => x.file === b.file);
+          if (info && info.category && !b.title.includes(info.category)) b.title += ` · ${info.category}`;
+        }
+      });
+      return banks.sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
     }
 
     function renderModeScopePanel() {
@@ -548,12 +557,12 @@
         scopeSelected = new Set([...scopeSelected].filter(f => valid.has(f)));
       }
 
-      const selCount = banks.filter(b => scopeSelected.has(b.file)).reduce((s, b) => s + b.count, 0);
+      scopeBanks = banks;
       panel.style.display = 'block';
       panel.innerHTML = `
         <div class="scope-head">
           <span class="scope-title">限定來源題庫</span>
-          <span class="scope-summary">已選 ${selCount} 題 / 共 ${total} 題</span>
+          <span class="scope-summary"></span>
         </div>
         <div class="scope-hint">這些是你的錯題／標記題實際所在的題庫，預設全選；取消勾選可只練特定來源。</div>
         <div class="bank-toolbar">
@@ -562,25 +571,44 @@
         </div>
         <div class="scope-list">
           ${banks.map(b => `
-            <label class="scope-item ${scopeSelected.has(b.file) ? 'selected' : ''}">
-              <input type="checkbox" ${scopeSelected.has(b.file) ? 'checked' : ''} onchange="toggleScopeBank(${jsArg(b.file)})">
+            <label class="scope-item ${scopeSelected.has(b.file) ? 'selected' : ''}" data-file="${esc(b.file)}">
+              <input type="checkbox" ${scopeSelected.has(b.file) ? 'checked' : ''} onchange="toggleScopeBank(this)">
               <span class="scope-item-title">${esc(b.title)}</span>
               <span class="scope-item-count">${b.count} 題</span>
             </label>`).join('')}
         </div>`;
+      updateScopeSummary();
+    }
+
+    // 只更新統計文字與開始鈕狀態，避免重建 innerHTML 導致清單捲動位置被重置
+    function updateScopeSummary() {
+      const panel = document.getElementById('modeScopePanel');
+      const summary = panel && panel.querySelector('.scope-summary');
+      if (!summary) return;
+      const total = scopeBanks.reduce((s, b) => s + b.count, 0);
+      const selCount = scopeBanks.filter(b => scopeSelected && scopeSelected.has(b.file)).reduce((s, b) => s + b.count, 0);
+      summary.textContent = `已選 ${selCount} 題 / 共 ${total} 題`;
       updateStartState();
     }
 
-    function toggleScopeBank(file) {
-      if (!scopeSelected) scopeSelected = new Set(getModeSourceBanks(document.getElementById('quizMode').value).map(b => b.file));
-      if (scopeSelected.has(file)) scopeSelected.delete(file); else scopeSelected.add(file);
-      renderModeScopePanel();
+    function toggleScopeBank(input) {
+      if (!scopeSelected) scopeSelected = new Set();
+      const item = input.closest('.scope-item');
+      const file = item.dataset.file;
+      if (input.checked) scopeSelected.add(file); else scopeSelected.delete(file);
+      item.classList.toggle('selected', input.checked);
+      updateScopeSummary();
     }
 
     function setAllScope(selectAll) {
-      const banks = getModeSourceBanks(document.getElementById('quizMode').value);
-      scopeSelected = selectAll ? new Set(banks.map(b => b.file)) : new Set();
-      renderModeScopePanel();
+      scopeSelected = selectAll ? new Set(scopeBanks.map(b => b.file)) : new Set();
+      document.querySelectorAll('#modeScopePanel .scope-item').forEach(item => {
+        const on = scopeSelected.has(item.dataset.file);
+        item.classList.toggle('selected', on);
+        const cb = item.querySelector('input');
+        if (cb) cb.checked = on;
+      });
+      updateScopeSummary();
     }
 
     function renderFilterButtons(containerId, items, active, handlerName) {
