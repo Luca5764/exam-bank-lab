@@ -1901,7 +1901,23 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   font-weight: 700;
   font-size: 0.92rem;
   line-height: 1.4;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.scope-item-title .scope-marquee {
+  display: inline-block;
+  will-change: transform;
+}
+/* 只有放不下的標題會被加上 is-marquee，由右往左來回滑動 */
+.scope-item-title.is-marquee .scope-marquee {
+  animation: scopeMarquee var(--marquee-dur, 8s) ease-in-out infinite alternate;
+}
+@keyframes scopeMarquee {
+  0%, 18% { transform: translateX(0); }
+  82%, 100% { transform: translateX(var(--marquee-shift, 0)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scope-item-title.is-marquee .scope-marquee { animation: none; }
 }
 .scope-item-count {
   color: var(--text-dim);
