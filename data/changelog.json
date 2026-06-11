@@ -1,5 +1,14 @@
 [
     {
+        "date":  "2026-06-11",
+        "items":  [
+                      {
+                          "time":  "14:51",
+                          "message":  "fix: 移除114交通法規第7題的錯誤warning與freeScore"
+                      }
+                  ]
+    },
+    {
         "date":  "2026-06-10",
         "items":  [
                       {
