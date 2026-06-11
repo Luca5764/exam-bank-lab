@@ -16,6 +16,20 @@
       <button class="btn btn-secondary" id="btnCopyAll" onclick="copyAllWrongPool()">📋 複製所有錯題 (傳送給 AI)</button>
       <button class="btn btn-primary" id="btnRetry" onclick="retryAll()">🔥 開始錯題挑戰測驗</button>
     </div>
+    <div class="card mb-16" id="statFilterCard" style="display:none">
+      <div class="scope-head">
+        <span class="scope-title">依作答統計篩選</span>
+        <span class="scope-summary" id="statFilterCount"></span>
+      </div>
+      <div class="scope-hint">與題目上的「作答 N 次 · 對 X／錯 Y」同口徑（跳過不計，後來答對過仍算錯過）。複製與挑戰測驗只會包含篩選後的題目。</div>
+      <div class="stat-filter-row">
+        <span>累計答錯 ≥</span>
+        <input id="fMinWrong" class="number-input stat-num-input" type="number" min="1" step="1" placeholder="不限" inputmode="numeric" oninput="applyStatFilter()">
+        <span>次，且正確率低於</span>
+        <input id="fMaxAcc" class="number-input stat-num-input" type="number" min="1" max="100" step="1" placeholder="不限" inputmode="numeric" oninput="applyStatFilter()">
+        <span>%（留空＝不限）</span>
+      </div>
+    </div>
     <div id="list"><p class="text-dim text-center mt-24">讀取中...</p></div>
   </div>
   <script src="js/shared.js?v=theme2"></script>
@@ -23,10 +37,33 @@
     const params = new URLSearchParams(location.search);
     const scope = params.get('scope') || 'today';
     let wrongQ = [];
+    let allWrongIds = [];
+    let qMap = {};
+    let pageTitleText = '';
 
     function copyBrowse(idx) {
       const q = wrongQ[idx];
       copyText(buildBrowsePrompt(q), document.getElementById(`cpbtn-${idx}`));
+    }
+
+    // 依「累計答錯次數／正確率」門檻重篩清單；複製與挑戰測驗都吃篩選後的 wrongQ
+    function applyStatFilter() {
+      const p = parseStatFilterInputs(
+        document.getElementById('fMinWrong').value,
+        document.getElementById('fMaxAcc').value
+      );
+      const ids = allWrongIds.filter(it => matchesStatFilter(getQuestionStats(it.bank, it.qid), p.minWrong, p.maxAccPct));
+      wrongQ = ids.map(item => qMap[`${item.bank}:${item.qid}`]).filter(Boolean);
+
+      const isFiltered = p.minWrong > 0 || p.maxAccPct !== null;
+      document.getElementById('statFilterCount').textContent = `符合門檻 ${ids.length} 題 / 共 ${allWrongIds.length} 題`;
+      document.getElementById('pageDesc').textContent = isFiltered
+        ? `篩選後 ${ids.length} 題（${pageTitleText}共 ${allWrongIds.length} 題）`
+        : `系統記錄中 ${pageTitleText} 共 ${allWrongIds.length} 題`;
+      document.getElementById('actions').style.display = wrongQ.length ? 'flex' : 'none';
+      document.getElementById('list').innerHTML = wrongQ.length
+        ? wrongQ.map((q, i) => buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })).join('')
+        : '<div class="card text-center" style="padding:40px"><p style="font-size:1.2rem">沒有符合篩選門檻的題目</p><p class="text-dim mt-16">可以調低答錯次數或放寬正確率上限。</p></div>';
     }
 
     async function init() {
@@ -35,7 +72,6 @@
       const history = loadLocalHistory();
       // 鍵的推導方式必須與 getWrongPool 一致（item.bank || session 預設值），
       // 不可退回裸 qid：不同題庫共用小整數題號，會撈到別的題庫的題目
-      const qMap = {};
       history.forEach(session => {
         const sessionBank = session.bank || 'questions/questions.json';
         (session.questions || []).forEach(q => {
@@ -44,22 +80,19 @@
       });
 
       const wp = getWrongPool();
-      let ids = (scope === 'today') ? wp.today_wrong : (scope === 'past' ? wp.past_wrong : wp.ever_wrong);
-      const title = (scope === 'today') ? '今日錯題' : (scope === 'past' ? '往日錯題' : '累積錯題');
-      document.getElementById('pageTitle').textContent = `🚩 ${title}`;
-      document.getElementById('pageDesc').textContent = `系統記錄中 ${title} 共 ${ids.length} 題`;
+      allWrongIds = (scope === 'today') ? wp.today_wrong : (scope === 'past' ? wp.past_wrong : wp.ever_wrong);
+      pageTitleText = (scope === 'today') ? '今日錯題' : (scope === 'past' ? '往日錯題' : '累積錯題');
+      document.getElementById('pageTitle').textContent = `🚩 ${pageTitleText}`;
 
-      wrongQ = ids.map(item => qMap[`${item.bank}:${item.qid}`]).filter(Boolean);
-
-      if (wrongQ.length === 0) {
+      if (allWrongIds.length === 0) {
+        document.getElementById('pageDesc').textContent = `系統記錄中 ${pageTitleText} 共 0 題`;
         document.getElementById('list').innerHTML = '<div class="card text-center" style="padding:40px"><p style="font-size:1.2rem">🎉 這裡目前沒有題目！</p><p class="text-dim mt-16">太棒了，繼續保持下去吧。</p></div>';
         document.getElementById('actions').style.display = 'none';
         return;
       }
 
-      document.getElementById('list').innerHTML = wrongQ.map((q, i) =>
-        buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })
-      ).join('');
+      document.getElementById('statFilterCard').style.display = 'block';
+      applyStatFilter();
     }
 
     function copyAllWrongPool() {

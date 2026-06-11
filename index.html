@@ -98,6 +98,10 @@
             <span class="mode-icon">⏳</span>
             <span class="mode-title">至今仍錯的題</span>
           </div>
+          <div class="mode-card" data-value="stat" id="modeCardStat" onclick="selectQuizMode('stat')">
+            <span class="mode-icon">📊</span>
+            <span class="mode-title">常錯題篩選</span>
+          </div>
           <div class="mode-card" data-value="key" id="modeCardKey" onclick="selectQuizMode('key')">
             <span class="mode-icon">⭐</span>
             <span class="mode-title">重點標記題</span>
@@ -109,6 +113,20 @@
         </div>
         <input type="hidden" id="quizMode" value="random">
         <div class="settings-hint" id="modeHelp">會從已選題庫中依題數抽題，已做過的題會降低出現機率，題組會一起保留。</div>
+        <div id="statFilterPanel" class="mode-scope-panel" style="display:none">
+          <div class="scope-head">
+            <span class="scope-title">篩選門檻</span>
+            <span class="scope-summary" id="statFilterCount"></span>
+          </div>
+          <div class="scope-hint">依每題歷史累計成績篩選，與題目上的「作答 N 次 · 對 X／錯 Y」同口徑（跳過不計，後來答對過仍算錯過）。</div>
+          <div class="stat-filter-row">
+            <span>累計答錯 ≥</span>
+            <input id="statMinWrong" class="number-input stat-num-input" type="number" min="1" step="1" value="3" inputmode="numeric" oninput="onStatFilterChange()">
+            <span>次，且正確率低於</span>
+            <input id="statMaxAcc" class="number-input stat-num-input" type="number" min="1" max="100" step="1" placeholder="不限" inputmode="numeric" oninput="onStatFilterChange()">
+            <span>%（留空＝不限）</span>
+          </div>
+        </div>
         <div id="modeScopePanel" class="mode-scope-panel" style="display:none"></div>
       </div>
 
@@ -326,6 +344,7 @@
 
       const wrongCard = document.getElementById('modeCardWrong');
       const stillWrongCard = document.getElementById('modeCardStillWrong');
+      const statCard = document.getElementById('modeCardStat');
       const keyCard = document.getElementById('modeCardKey');
 
       if (wrongCard && stillWrongCard) {
@@ -334,6 +353,8 @@
         stillWrongCard.classList.toggle('disabled', !hasWrong);
         wrongCard.querySelector('.mode-title').textContent = hasWrong ? `曾錯過的題 (${wp.ever_wrong.length})` : '曾錯過的題';
         stillWrongCard.querySelector('.mode-title').textContent = hasWrong ? `至今仍錯的題 (${wp.still_wrong.length})` : '至今仍錯的題';
+        // 常錯題篩選與「曾錯過的題」共用同一個母集合（錯 ≥ 1 次），沒錯題時一併停用
+        if (statCard) statCard.classList.toggle('disabled', !hasWrong);
       }
 
       const keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
@@ -346,7 +367,7 @@
 
       // Reset to random if active mode is disabled
       const activeVal = document.getElementById('quizMode').value;
-      if ((activeVal === 'wrong' || activeVal === 'still-wrong') && wp.ever_wrong.length === 0) {
+      if ((activeVal === 'wrong' || activeVal === 'still-wrong' || activeVal === 'stat') && wp.ever_wrong.length === 0) {
         selectQuizMode('random');
       } else if (activeVal === 'key' && keyCount === 0) {
         selectQuizMode('random');
@@ -450,6 +471,10 @@
         // scopeSelected 為 null 代表尚未渲染（視同全選）；否則需至少留一個來源題庫
         ready = !scopeSelected || scopeSelected.size > 0;
         emptyText = '請至少選擇一個來源題庫';
+        if (mode === 'stat' && getModeSourceItems('stat').length === 0) {
+          ready = false;
+          emptyText = '沒有符合篩選門檻的題目';
+        }
       } else {
         ready = selectedBanks.size > 0;
         emptyText = '請先選擇題庫';
@@ -480,10 +505,38 @@
     let scopeSelected = null;
     let scopeBanks = [];
 
+    // 「常錯題篩選」模式目前的門檻（minWrong 至少 1，避免抽到沒錯過的題）
+    function getStatFilterParams() {
+      const p = parseStatFilterInputs(
+        document.getElementById('statMinWrong')?.value,
+        document.getElementById('statMaxAcc')?.value
+      );
+      return { minWrong: Math.max(1, p.minWrong), maxAccPct: p.maxAccPct };
+    }
+
+    function updateStatFilterCount() {
+      const el = document.getElementById('statFilterCount');
+      if (!el) return;
+      el.textContent = `符合門檻 ${getModeSourceItems('stat').length} 題`;
+    }
+
+    function onStatFilterChange() {
+      // 門檻變動等於重新定義來源集合，題庫篩選重置為全選；
+      // 若沿用舊選取，被門檻暫時剔除再加回的題庫會默默維持未勾選
+      scopeSelected = null;
+      renderModeScopePanel();
+      updateStatFilterCount();
+      updateStartState();
+    }
+
     function getModeSourceItems(mode) {
       if (mode === 'wrong' || mode === 'still-wrong') {
         const wp = getWrongPool();
         return mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
+      }
+      if (mode === 'stat') {
+        const p = getStatFilterParams();
+        return getStatFilteredItems(p.minWrong, p.maxAccPct);
       }
       if (mode === 'key') {
         return getQuestionsWithTag('key')
@@ -797,6 +850,12 @@
 
       let url = `quiz.html?mode=${mode}&num=${num}&types=${typesStr}`;
 
+      if (mode === 'stat') {
+        const p = getStatFilterParams();
+        url += `&minWrong=${p.minWrong}`;
+        if (p.maxAccPct !== null) url += `&maxAcc=${p.maxAccPct}`;
+      }
+
       if (SCOPE_MODES.includes(mode)) {
         const banks = getModeSourceBanks(mode);
         if (banks.length === 0) { alert('目前沒有可練習的題目！'); return; }
@@ -866,10 +925,14 @@
         unseen: '只抽「從未實際作答過」的題（從已選題庫中濾掉做過的，跳過不算已做）；隨機模式則只是降低做過題的出現機率。',
         wrong: '會從曾答錯過的題目中依題數抽題；可在下方「限定來源題庫」勾選只練特定題庫的錯題。',
         'still-wrong': '會從目前仍未答對的錯題中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
+        stat: '會從「累計答錯次數達到門檻」的題目中依題數抽題（後來答對過也算）；可再用正確率上限與來源題庫縮小範圍。',
         key: '會從已標記為重點的題目中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
         all: '會依題庫原順序練習；如果有設定題數，只取前段題目。',
       };
       help.textContent = text[mode] || text.random;
+      const statPanel = document.getElementById('statFilterPanel');
+      if (statPanel) statPanel.style.display = mode === 'stat' ? 'block' : 'none';
+      if (mode === 'stat') updateStatFilterCount();
       updateStartState();
     }
 

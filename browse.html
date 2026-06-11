@@ -55,6 +55,16 @@
         </div>
         <button id="copyAllBtn" class="btn btn-secondary" onclick="copyAllBrowse(this)" disabled>📋 複製此題庫文字</button>
       </div>
+      <div id="browseStatFilter" style="display:none">
+        <div class="stat-filter-row">
+          <span>只顯示：累計答錯 ≥</span>
+          <input id="bMinWrong" class="number-input stat-num-input" type="number" min="1" step="1" placeholder="不限" inputmode="numeric" oninput="renderBrowseList()">
+          <span>次，且正確率低於</span>
+          <input id="bMaxAcc" class="number-input stat-num-input" type="number" min="1" max="100" step="1" placeholder="不限" inputmode="numeric" oninput="renderBrowseList()">
+          <span>%（留空＝不限）</span>
+        </div>
+        <div class="scope-hint">與題目上的「作答 N 次 · 對 X／錯 Y」同口徑（跳過不計，後來答對過仍算錯過）；設定答錯次數時會排除沒作答過的題。「複製此題庫文字」只會包含篩選後顯示的題目。</div>
+      </div>
     </div>
 
     <div id="list">
@@ -65,6 +75,7 @@
   <script src="js/shared.js?v=theme2"></script>
   <script>
     let browseQ = [];
+    let browseVisibleQ = [];
     let browseBanks = [];
     let browseVisibleBanks = [];
     let currentBankFile = '';
@@ -83,10 +94,12 @@
       
       // Reset preview state
       browseQ = [];
+      browseVisibleQ = [];
       currentBankFile = '';
       document.getElementById('currentBankTitle').textContent = '尚未選擇題庫';
       document.getElementById('count').textContent = '0';
       document.getElementById('copyAllBtn').disabled = true;
+      document.getElementById('browseStatFilter').style.display = 'none';
       document.getElementById('list').innerHTML = '<div class="empty-state">請先從上方題庫書架選擇一份題庫。</div>';
       
       applyTrackFilter();
@@ -127,9 +140,27 @@
     }
 
     function copyBrowse(idx) {
-      const q = browseQ[idx];
+      const q = browseVisibleQ[idx];
       const text = buildBrowsePrompt(q);
       copyText(text, document.getElementById(`cpbtn-${idx}`));
+    }
+
+    // 依「累計答錯次數／正確率」門檻重篩目前題庫的題目清單
+    function renderBrowseList() {
+      const p = parseStatFilterInputs(
+        document.getElementById('bMinWrong').value,
+        document.getElementById('bMaxAcc').value
+      );
+      browseVisibleQ = browseQ.filter(q => matchesStatFilter(getQuestionStats(q._bank, q.id), p.minWrong, p.maxAccPct));
+
+      const isFiltered = p.minWrong > 0 || p.maxAccPct !== null;
+      document.getElementById('count').textContent = isFiltered
+        ? `${browseVisibleQ.length} / ${browseQ.length}`
+        : browseQ.length;
+      document.getElementById('copyAllBtn').disabled = !browseVisibleQ.length;
+      document.getElementById('list').innerHTML = browseVisibleQ.length
+        ? browseVisibleQ.map((q, i) => buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })).join('')
+        : '<div class="empty-state">沒有符合篩選門檻的題目，可調低答錯次數或放寬正確率上限。</div>';
     }
 
     function renderFilterButtons(containerId, items, active, handlerName) {
@@ -236,12 +267,9 @@
         browseQ.forEach(q => q._bank = file);
         await initOverrides();
         browseQ.forEach(applyQuestionOverrides);
-        document.getElementById('count').textContent = browseQ.length;
         document.getElementById('currentBankTitle').textContent = bankDisplayName(selectedBank);
-        document.getElementById('copyAllBtn').disabled = false;
-        document.getElementById('list').innerHTML = browseQ.map((q, i) =>
-          buildReviewItemHTML(q, { idx: i, userAns: undefined, mode: 'browse' })
-        ).join('');
+        document.getElementById('browseStatFilter').style.display = 'block';
+        renderBrowseList();
       } catch (e) {
         console.error(e);
         showToast('無法讀取題庫內容');
@@ -282,14 +310,14 @@
     }
 
     function copyAllBrowse(btn) {
-      if (!browseQ.length || !currentBankFile) {
+      if (!browseVisibleQ.length || !currentBankFile) {
         showToast('請先選擇一份題庫');
         return;
       }
       const selectedBank = browseBanks.find(bank => bank.file === currentBankFile);
       const bankName = selectedBank ? bankDisplayName(selectedBank) : '目前題庫';
-      const header = `${SEARCH_HINT}\n以下為「${bankName}」共 ${browseQ.length} 題題目內容：\n請根據這些內容回答問題，若有正確答案與說明請依照對應格式呈現。\n`;
-      const texts = browseQ.map(q => buildBrowsePrompt(q, { searchHint: false }));
+      const header = `${SEARCH_HINT}\n以下為「${bankName}」共 ${browseVisibleQ.length} 題題目內容：\n請根據這些內容回答問題，若有正確答案與說明請依照對應格式呈現。\n`;
+      const texts = browseVisibleQ.map(q => buildBrowsePrompt(q, { searchHint: false }));
       const full = header + '\n' + texts.join('\n' + '='.repeat(50) + '\n');
       copyText(full, btn);
     }
