@@ -3,6 +3,10 @@
         "date":  "2026-06-11",
         "items":  [
                       {
+                          "time":  "15:41",
+                          "message":  "fix: 修正114-3道路交通法規切題錯誤並補交通部題庫梯次顯示"
+                      },
+                      {
                           "time":  "14:51",
                           "message":  "fix: 移除114交通法規第7題的錯誤warning與freeScore"
                       }
