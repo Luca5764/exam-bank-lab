@@ -1929,3 +1929,21 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   font-weight: 700;
   white-space: nowrap;
 }
+
+/* ===== 作答統計篩選門檻（首頁常錯題模式、錯題本、瀏覽頁共用） ===== */
+.stat-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.92rem;
+}
+.stat-num-input,
+.stat-num-input.number-input {
+  width: 86px;
+  max-width: 86px;
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  text-align: center;
+}

@@ -580,6 +580,40 @@ function questionAttemptLabel(bank, qid) {
   return `✍️ 作答 ${s.total} 次 · 對 ${s.correct}／錯 ${s.wrong}${often ? ' · 🔴 常錯' : ''}`;
 }
 
+// 單題統計是否通過門檻（口徑同上方標籤：跳過不計、歷史累計，後來答對過仍計入錯誤次數）。
+//   minWrong   累計答錯次數下限（0 表示不限）
+//   maxAccPct  正確率須「低於」此百分比；null 表示不限（沒作答過的題視為不限定正確率）
+function matchesStatFilter(s, minWrong, maxAccPct) {
+  if (!s || s.wrong < minWrong) return false;
+  if (maxAccPct !== null && s.total > 0 && (s.correct / s.total) * 100 >= maxAccPct) return false;
+  return true;
+}
+
+// 依作答統計挑題：只回傳目前分流內、作答過且通過門檻的題目，
+// 依錯誤次數多→少排序，元素為 { bank, qid, stats }。
+function getStatFilteredItems(minWrong, maxAccPct = null) {
+  const items = [];
+  for (const [key, s] of Object.entries(getAttemptCountMap())) {
+    const sep = key.indexOf('|');
+    const bankFile = key.slice(0, sep);
+    if (!isBankFileInActiveTrack(bankFile)) continue;
+    if (!matchesStatFilter(s, minWrong, maxAccPct)) continue;
+    items.push({ bank: bankFile, qid: parseInt(key.slice(sep + 1), 10), stats: s });
+  }
+  return items.sort((a, b) => b.stats.wrong - a.stats.wrong || a.bank.localeCompare(b.bank) || a.qid - b.qid);
+}
+
+// 統計篩選的門檻輸入框共用解析（錯題本/瀏覽頁/首頁皆用同一組規則）：
+// minWrong 空值或非法視為 0；maxAccPct 空值視為不限（null），限制在 1~100。
+function parseStatFilterInputs(minWrongRaw, maxAccRaw) {
+  const mw = parseInt(minWrongRaw, 10);
+  const acc = parseInt(maxAccRaw, 10);
+  return {
+    minWrong: Number.isFinite(mw) && mw > 0 ? mw : 0,
+    maxAccPct: Number.isFinite(acc) ? Math.min(Math.max(acc, 1), 100) : null,
+  };
+}
+
 /* ===== 進度備份（匯出/還原所有本機資料） ===== */
 // 要備份的固定鍵與前綴：歷程、題目標記/筆記、選取類別、主題、法條備註
 const BACKUP_KEYS = ['quiz_history', 'quiz_question_metadata', 'quiz_selected_track', 'exam_bank_theme'];
@@ -686,7 +720,7 @@ function isSessionInActiveTrack(session) {
 }
 
 // 需要「限定來源題庫」面板的測驗模式（index.html 的面板與 doStart 共用）
-const SCOPE_MODES = ['wrong', 'still-wrong', 'key'];
+const SCOPE_MODES = ['wrong', 'still-wrong', 'key', 'stat'];
 
 // 題庫歸屬的系列（題庫書架的分類卡片）。交通部分流依科目關鍵字分三類。
 function bankCollection(bank) {

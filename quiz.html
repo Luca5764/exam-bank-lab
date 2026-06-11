@@ -308,6 +308,15 @@
         const byBank = {};
         for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
         pool = await fetchBanksParallel(Object.keys(byBank), byBank);
+      } else if (mode === 'stat') {
+        // 常錯題篩選：門檻由首頁帶在網址上（minWrong 累計答錯下限、maxAcc 正確率上限）
+        const p = parseStatFilterInputs(params.get('minWrong'), params.get('maxAcc'));
+        let items = getStatFilteredItems(Math.max(1, p.minWrong), p.maxAccPct);
+        if (srcBanks) items = items.filter(it => srcBanks.has(it.bank));
+        if (!items.length) { alert('沒有符合篩選門檻的題目可以練習！'); location.href = 'index.html'; return; }
+        const byBank = {};
+        for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
+        pool = await fetchBanksParallel(Object.keys(byBank), byBank);
       } else if (mode === 'key') {
         let keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
         if (srcBanks) keyQuestions = keyQuestions.filter(it => srcBanks.has(it.bank));
