@@ -99,7 +99,7 @@ def parse_bank_parts(stem: str, year_map: dict[str, str]) -> dict[str, str]:
             "category": category,
             "subject": subject,
             "originalSubject": subject,
-            "displayName": f"{year} {subject}",
+            "displayName": f"{year} {subject}（{category}）",
         }
 
     name = cleaned.replace("_", " ")
