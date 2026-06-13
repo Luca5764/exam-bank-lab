@@ -1067,6 +1067,17 @@
     "count": 50
   },
   {
+    "file": "questions/交通部115-2-道路交通法規（AI模擬）.json",
+    "name": "115 道路交通法規（AI模擬）（第2梯次）（第2梯次）",
+    "displayName": "115 道路交通法規（AI模擬）（第2梯次）",
+    "year": "115",
+    "source": "交通部",
+    "category": "第2梯次",
+    "subject": "道路交通法規（AI模擬）",
+    "originalSubject": "道路交通法規（AI模擬）",
+    "count": 50
+  },
+  {
     "file": "questions/交通部115-汽車構造原理概論.json",
     "name": "115 汽車構造原理概論（年度檢定）（年度檢定）",
     "displayName": "115 汽車構造原理概論（年度檢定）",
