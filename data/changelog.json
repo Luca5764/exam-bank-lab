@@ -1,5 +1,14 @@
 [
     {
+        "date":  "2026-06-13",
+        "items":  [
+                      {
+                          "time":  "09:46",
+                          "message":  "feat: PWA 離線支援（service worker + manifest + 主畫面圖示）"
+                      }
+                  ]
+    },
+    {
         "date":  "2026-06-11",
         "items":  [
                       {

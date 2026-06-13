@@ -894,3 +894,21 @@ function toggleNotesCollapse(btn) {
     }
   }
 }
+
+// ---- PWA:註冊 Service Worker(sw.js),並請它把題庫補進離線快取 ----
+(function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+      // 每個瀏覽階段只請 SW 同步一次題庫快取(只補缺的檔,流量很小)
+      if (!sessionStorage.getItem('sw_banks_synced')) {
+        sessionStorage.setItem('sw_banks_synced', '1');
+        const sw = reg.active || reg.waiting || reg.installing;
+        if (sw) sw.postMessage({ type: 'SYNC_BANKS' });
+      }
+    } catch (e) {
+      console.warn('Service worker registration failed', e);
+    }
+  });
+})();
