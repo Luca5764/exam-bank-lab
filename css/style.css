@@ -382,7 +382,8 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 
 .collection-title,
 .collection-desc,
-.collection-count {
+.collection-count,
+.collection-practiced {
   display: block;
 }
 
@@ -405,8 +406,16 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   margin-top: 8px;
 }
 
+.collection-practiced {
+  color: var(--correct);
+  font-size: 0.74rem;
+  font-weight: 900;
+  margin-top: 4px;
+}
+
 .collection-card.active .collection-desc,
-.collection-card.active .collection-count {
+.collection-card.active .collection-count,
+.collection-card.active .collection-practiced {
   color: rgba(255, 255, 255, 0.76);
 }
 

@@ -693,15 +693,29 @@
     }
 
     function renderCollectionCards() {
+      const ps = getPracticeStats();
       document.getElementById('sourceFilters').innerHTML = COLLECTIONS.map(item => {
         const banks = item.id === '全部'
           ? BANK_INFO
           : BANK_INFO.filter(bank => bankCollection(bank) === item.id);
         const questionCount = banks.reduce((sum, bank) => sum + (bank.count || 0), 0);
+        let practicedBanks = 0;
+        let practicedQuestions = 0;
+        banks.forEach(bank => {
+          const pb = ps.perBank[bank.file];
+          if (pb && pb.attempted.size > 0) {
+            practicedBanks++;
+            practicedQuestions += pb.attempted.size;
+          }
+        });
+        const practicedLine = practicedQuestions > 0
+          ? `<span class="collection-practiced">✅ 練過 ${practicedBanks} 份 / ${practicedQuestions} 題</span>`
+          : '';
         return `<div class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setSourceFilter(${jsArg(item.id)})">
           <span class="collection-title">${esc(item.title)}</span>
           <span class="collection-desc">${esc(item.desc)}</span>
           <span class="collection-count">${banks.length} 份 / ${questionCount} 題</span>
+          ${practicedLine}
         </div>`;
       }).join('');
     }
