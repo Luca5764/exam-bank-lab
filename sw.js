@@ -124,20 +124,30 @@ async function cacheFirst(request) {
   return res;
 }
 
+// 訊號很弱的「lie-fi」(連得上但一直不回應)下,fetch 不會立刻失敗,
+// 頁面會卡到瀏覽器逾時。設一個短逾時:超過就改用快取,有副本就秒開。
+const NAV_TIMEOUT_MS = 4000;
+
 async function networkFirst(request) {
   const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request, { ignoreSearch: true });
   try {
-    const res = await fetch(request);
+    const res = await fetchWithTimeout(request, NAV_TIMEOUT_MS);
     if (res.ok) cache.put(request, res.clone());
     return res;
   } catch {
-    const hit = await cache.match(request, { ignoreSearch: true });
-    if (hit) return hit;
+    if (cached) return cached;
     // 退無可退時至少回首頁(理論上 CORE_ASSETS 已涵蓋所有頁面)
     const home = await cache.match('index.html');
     if (home) return home;
     throw new Error('offline and not cached');
   }
+}
+
+function fetchWithTimeout(request, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(request, { signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
 async function staleWhileRevalidate(request) {
