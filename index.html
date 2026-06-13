@@ -404,18 +404,32 @@
         .join('、');
     }
 
+    // 歷程紀錄預設只顯示最近幾筆，其餘可展開／收合
+    const HISTORY_COLLAPSE_THRESHOLD = 5;
+    let historyExpanded = false;
+
+    function toggleHistoryExpanded() {
+      historyExpanded = !historyExpanded;
+      renderHistoryList();
+    }
+
     function renderHistoryList() {
       const allHistory = loadLocalHistory();
       const filteredHistory = allHistory
         .map((h, index) => ({ record: h, index }))
         .filter(item => isSessionInActiveTrack(item.record));
-      
+
       const historyCard = document.getElementById('historyCard');
       const list = document.getElementById('historyList');
-      
+
       if (filteredHistory.length > 0) {
         historyCard.style.display = 'block';
-        list.innerHTML = filteredHistory.slice().reverse().map((item, dispIdx) => {
+        const ordered = filteredHistory.slice().reverse();
+        const collapsible = ordered.length > HISTORY_COLLAPSE_THRESHOLD;
+        const shown = (collapsible && !historyExpanded)
+          ? ordered.slice(0, HISTORY_COLLAPSE_THRESHOLD)
+          : ordered;
+        const rows = shown.map((item) => {
           const h = item.record;
           const realIdx = item.index;
           const pct = h.score || 0;
@@ -435,6 +449,12 @@
           </div>
         </div>`;
         }).join('');
+        const toggle = collapsible
+          ? `<div class="text-center" style="margin-top:12px">
+              <button class="btn btn-secondary btn-sm" style="font-size:0.85rem" onclick="toggleHistoryExpanded()">${historyExpanded ? '收合' : `展開全部 (${ordered.length})`}</button>
+            </div>`
+          : '';
+        list.innerHTML = rows + toggle;
       } else {
         historyCard.style.display = 'none';
         list.innerHTML = '';
