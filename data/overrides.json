@@ -2987,6 +2987,11 @@
         "114 道路交通法規"
       ]
     },
+    "13": {
+      "warning": "112年修正第45條，聞警號不避讓之罰鍰從3,600元修改為6,000元以上30,000元以下，本題正解「3,600元罰鍰並吊銷駕駛執照」之金額已不正確，且各選項均無現行正確金額。",
+      "freeScore": true,
+      "amendmentUrl": "https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=K0040012&flno=45"
+    },
     "39": {
       "repeats": [
         "112 道路交通法規",
