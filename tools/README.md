@@ -30,6 +30,15 @@ prototypes should stay outside the repository, preferably under `.tmp/`.
 - `run_management_hybrid_import.py` is the preferred end-to-end management-bank
   pipeline.
 
+## 切題守門員（CI gate, no PDF）
+
+- `check_split_errors.py` 結構式偵測「選項夾帶題幹尾段」的切題錯誤，**不需
+  PDF**，已接進 `.github/workflows/deploy.yml`：push 到 `main` 時先跑，偵測到
+  就讓 deploy 失敗、擋下上線。鎖定反覆出現的數值填空題切題（其餘選項都是純
+  數值/單位答案，卻有一個選項「以數值開頭後接題幹尾段句讀」），高精準、不
+  誤判描述型選項。`--selftest` 自測偵測器仍有效。語意類問題（題幹漏字、引錯
+  法條）無法靠結構偵測，仍須以下方 PDF 比對或人工複核。
+
 ## Bank-vs-PDF audit (traffic exams)
 
 - `check_traffic_banks.py` cross-checks every `questions/交通部*.json` bank
