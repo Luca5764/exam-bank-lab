@@ -3,6 +3,10 @@
         "date":  "2026-06-15",
         "items":  [
                       {
+                          "time":  "19:48",
+                          "message":  "fix: 114-2第13題§45避讓罰鍰過時，補上freeScore override"
+                      },
+                      {
                           "time":  "19:36",
                           "message":  "fix: 113第12題移除誤判的修法警告與freeScore"
                       },
