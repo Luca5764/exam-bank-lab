@@ -20,6 +20,11 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Validate question banks (切題守門員)
+        run: |
+          python tools/check_split_errors.py --selftest
+          python tools/check_split_errors.py
+
       - name: Generate Question Index
         run: |
           cd tools
