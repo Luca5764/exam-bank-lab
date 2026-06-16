@@ -2,13 +2,14 @@
  * Service Worker:讓網站可以加到主畫面、離線刷題。
  * 策略:
  *   - HTML(導覽請求):network-first,離線時退回快取 → 上線時永遠拿最新頁面。
- *   - 靜態資源與 JSON:stale-while-revalidate → 先回快取秒開,背景更新下次生效。
+ *   - 會更新的內容(data/、questions/):network-first → 上線即時拿到最新
+ *     (修題、送分、更新日誌不再慢一拍),離線退回快取。
+ *   - 其餘靜態資源(css/js/字型/圖片):stale-while-revalidate → 先回快取秒開。
  *   - 題庫:activate 與每次開頁(SYNC_BANKS 訊息)時,依 data/banks.json
  *     把還沒快取的題庫 JSON 補抓進來,做到「沒開過的題庫離線也能刷」。
- * CACHE_VERSION 只在 SW 本身邏輯改動、需要整批重建快取時才要 bump;
- * 內容更新(題庫、css、js)靠上面的策略自動換新,不必動版本號。
+ * CACHE_VERSION 在 SW 邏輯改動時 bump,activate 會清掉舊版快取整批重建。
  */
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `quiz-${CACHE_VERSION}`;
 
 // 頁面殼:安裝時就快取,保證離線開得起來
@@ -111,7 +112,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 其餘同源資源(css/js/json/圖片):stale-while-revalidate
+  // 會更新的內容(題庫、overrides、日誌等):network-first,上線即時拿最新,離線退快取
+  if (url.pathname.includes('/data/') || url.pathname.includes('/questions/')) {
+    event.respondWith(networkFirstFresh(request));
+    return;
+  }
+
+  // 其餘同源資源(css/js/圖片):stale-while-revalidate
   event.respondWith(staleWhileRevalidate(request));
 });
 
@@ -148,6 +155,20 @@ function fetchWithTimeout(request, ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   return fetch(request, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+// 資料/題庫:優先抓網路最新版,成功就更新快取;失敗(離線/逾時)才退回快取副本。
+async function networkFirstFresh(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const res = await fetchWithTimeout(request, NAV_TIMEOUT_MS);
+    if (res.ok) cache.put(request, res.clone());
+    return res;
+  } catch {
+    const cached = await cache.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+    throw new Error('offline and not cached');
+  }
 }
 
 async function staleWhileRevalidate(request) {
