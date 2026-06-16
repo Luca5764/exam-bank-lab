@@ -3,6 +3,10 @@
         "date":  "2026-06-16",
         "items":  [
                       {
+                          "time":  "20:48",
+                          "message":  "fix: SW 對 data/、questions/ 改用 network-first，更新即時生效"
+                      },
+                      {
                           "time":  "20:15",
                           "message":  "fix: 移除113-1 Q25、113-3 Q21錯誤的修法送分（審驗≠換發）"
                       },
