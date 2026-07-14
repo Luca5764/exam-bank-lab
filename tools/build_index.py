@@ -20,6 +20,13 @@ SUBJECT_ALIASES = {
     "農田灌溉排水概要": "農田灌溉排水概要",
     "農業概要": "農業概論",
     "農業概論": "農業概論",
+    # 115 檢考驗員練習題 → 歸入道路交通法規
+    "檢考驗員-道路交通法規練習題1": "道路交通法規",
+    "檢考驗員-道路交通法規練習題2": "道路交通法規",
+    "檢考驗員-道路交通法規練習題3": "道路交通法規",
+    "檢考驗員-道路交通法規練習題4": "道路交通法規",
+    "檢考驗員-道路交通法規練習題5": "道路交通法規",
+    "檢考驗員-道路交通法規練習題6": "道路交通法規",
 }
 
 TVE_RE = re.compile(r"^(\d{3})(統測[^-]+)-(.+)$")
@@ -91,14 +98,15 @@ def parse_bank_parts(stem: str, year_map: dict[str, str]) -> dict[str, str]:
     if traffic_match:
         year = traffic_match.group(1)
         session = traffic_match.group(2) or ""
-        subject = traffic_match.group(3)
+        raw_subject = traffic_match.group(3)
+        subject = SUBJECT_ALIASES.get(raw_subject, raw_subject)
         category = f"第{session}梯次" if session else "年度檢定"
         return {
             "year": year,
             "source": "交通部",
             "category": category,
             "subject": subject,
-            "originalSubject": subject,
+            "originalSubject": raw_subject,
             "displayName": f"{year} {subject}（{category}）",
         }
 
