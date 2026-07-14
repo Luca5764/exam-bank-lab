@@ -3,6 +3,10 @@
         "date":  "2026-07-14",
         "items":  [
                       {
+                          "time":  "21:03",
+                          "message":  "Set category to 練習題 for 115 practice exam banks"
+                      },
+                      {
                           "time":  "21:01",
                           "message":  "Normalize 115 practice exam subjects to 道路交通法規 in index"
                       },

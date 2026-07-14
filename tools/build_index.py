@@ -100,7 +100,7 @@ def parse_bank_parts(stem: str, year_map: dict[str, str]) -> dict[str, str]:
         session = traffic_match.group(2) or ""
         raw_subject = traffic_match.group(3)
         subject = SUBJECT_ALIASES.get(raw_subject, raw_subject)
-        category = f"第{session}梯次" if session else "年度檢定"
+        category = f"第{session}梯次" if session else ("練習題" if "練習題" in raw_subject else "年度檢定")
         return {
             "year": year,
             "source": "交通部",
