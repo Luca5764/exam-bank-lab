@@ -3,6 +3,10 @@
         "date":  "2026-07-14",
         "items":  [
                       {
+                          "time":  "21:01",
+                          "message":  "Normalize 115 practice exam subjects to 道路交通法規 in index"
+                      },
+                      {
                           "time":  "20:57",
                           "message":  "Add 115 traffic law exam question banks (Tests 1-6, 300 questions) and update parser/index"
                       }
