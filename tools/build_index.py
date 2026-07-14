@@ -175,10 +175,16 @@ def build_index():
                 
                 meta = parse_bank_parts(f.stem, year_map)
                 name_context = meta["source"] if meta["source"] in ("統測專二", "統測農概", "農田水利署") else meta["category"]
+                display_name = meta["displayName"]
+                if name_context and display_name.endswith(f"（{name_context}）"):
+                    full_name = display_name
+                else:
+                    full_name = f"{display_name}（{name_context}）" if name_context else display_name
+                
                 banks.append({
                     "file": f"questions/{f.name}",
-                    "name": f"{meta['displayName']}（{name_context}）" if name_context else meta["displayName"],
-                    "displayName": meta["displayName"],
+                    "name": full_name,
+                    "displayName": display_name,
                     "year": meta["year"],
                     "source": meta["source"],
                     "category": meta["category"],
