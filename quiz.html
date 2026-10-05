@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>測驗中 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005c">
+  <link rel="stylesheet" href="css/style.css?v=20261005d">
   <style>
     .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; }
@@ -84,10 +84,10 @@
     <div class="kbd-hint" style="font-size:0.72rem;color:var(--text-dim);text-align:center;margin-top:8px">⌨️ 快捷鍵：1~9 / A~H 選答案 · ← → 換題 · Enter 下一題（最後一題交卷）</div>
   </div>
 
-  <script src="js/core.js?v=20261005c"></script>
-  <script src="js/tracks.js?v=20261005c"></script>
-  <script src="js/progress.js?v=20261005c"></script>
-  <script src="js/question-view.js?v=20261005c"></script>
+  <script src="js/core.js?v=20261005d"></script>
+  <script src="js/tracks.js?v=20261005d"></script>
+  <script src="js/progress.js?v=20261005d"></script>
+  <script src="js/question-view.js?v=20261005d"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'random';
@@ -277,21 +277,6 @@
       window.addEventListener('beforeunload', saveSession);
     }
 
-    // 平行載入多個題庫檔，單檔失敗只略過該檔（與原本逐檔 try/catch 行為一致）
-    async function fetchBanksParallel(bankFiles, pickQids = null) {
-      const results = await Promise.all(bankFiles.map(async bf => {
-        try {
-          const qs = await fetchJson(bf);
-          const picked = pickQids ? qs.filter(q => pickQids[bf].has(q.id)) : qs;
-          return picked.map(q => ({ ...q, _bank: bf }));
-        } catch (e) {
-          console.error('Failed to load bank', bf, e);
-          return [];
-        }
-      }));
-      return results.flat();
-    }
-
     const EMPTY_MODE_MESSAGE = {
       wrong: '沒有錯題可以練習！',
       'still-wrong': '沒有錯題可以練習！',
@@ -342,6 +327,7 @@
         sessionStorage.removeItem('retry_questions');
         try { pool = JSON.parse(stored) || []; } catch { pool = []; }
         if (!Array.isArray(pool) || !pool.length) { location.href = 'index.html'; return; }
+        pool = await refreshQuestionsFromBanks(pool);
       } else if (mode === 'wrong' || mode === 'still-wrong' || mode === 'stat' || mode === 'key') {
         const items = getModeItems();
         if (!items.length) { alert(EMPTY_MODE_MESSAGE[mode]); location.href = 'index.html'; return; }

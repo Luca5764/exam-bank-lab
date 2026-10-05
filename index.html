@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>考古題練習室 | 靜態版</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005c">
+  <link rel="stylesheet" href="css/style.css?v=20261005d">
 </head>
 
 <body>
@@ -194,10 +194,10 @@
 
   </div>
 
-  <script src="js/core.js?v=20261005c"></script>
-  <script src="js/tracks.js?v=20261005c"></script>
-  <script src="js/progress.js?v=20261005c"></script>
-  <script src="js/question-view.js?v=20261005c"></script>
+  <script src="js/core.js?v=20261005d"></script>
+  <script src="js/tracks.js?v=20261005d"></script>
+  <script src="js/progress.js?v=20261005d"></script>
+  <script src="js/question-view.js?v=20261005d"></script>
   <script>
     let ALL_BANKS = [];
     let BANK_INFO = [];          // 目前分流的題庫
@@ -270,6 +270,13 @@
       $('totalCount').textContent = sumQuestionCount(BANK_INFO);
       renderBankBrowser();
       renderResumeCard();
+      renderStats();
+      renderHistoryList();
+    }
+
+    // 紀錄變動後只重畫跟紀錄有關的區塊，保留使用者已選的題庫
+    function refreshProgressViews() {
+      renderBankBrowser();
       renderStats();
       renderHistoryList();
     }
@@ -646,13 +653,13 @@
     function deleteSingle(idx) {
       if (!confirm('確定要刪除這筆紀錄嗎？')) return;
       deleteLocalHistory(idx);
-      applyTrackFilter();
+      refreshProgressViews();
     }
 
     function clearAll() {
       if (!confirm('確定要清空所有紀錄嗎？此動作無法復原！')) return;
       clearLocalHistory();
-      applyTrackFilter();
+      refreshProgressViews();
     }
 
     /* ===== 進度備份 ===== */

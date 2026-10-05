@@ -8,7 +8,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>錯題集 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005c">
+  <link rel="stylesheet" href="css/style.css?v=20261005d">
 </head>
 <body>
   <div class="container fade-in">
@@ -37,10 +37,10 @@
     </div>
     <div id="list"><p class="text-dim text-center mt-24">讀取中...</p></div>
   </div>
-  <script src="js/core.js?v=20261005c"></script>
-  <script src="js/tracks.js?v=20261005c"></script>
-  <script src="js/progress.js?v=20261005c"></script>
-  <script src="js/question-view.js?v=20261005c"></script>
+  <script src="js/core.js?v=20261005d"></script>
+  <script src="js/tracks.js?v=20261005d"></script>
+  <script src="js/progress.js?v=20261005d"></script>
+  <script src="js/question-view.js?v=20261005d"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const scope = params.get('scope') || 'today';
@@ -117,6 +117,11 @@
         document.getElementById('actions').style.display = 'none';
         return;
       }
+
+      // 顯示題庫裡的最新版本（含之後的錯字修正），讀不到才用交卷快照
+      const byBank = groupItemsByBank(allWrongIds);
+      const fresh = await fetchBanksParallel(Object.keys(byBank), byBank);
+      fresh.forEach(q => { qMap[`${q._bank}:${q.id}`] = q; });
 
       renderBankScopePanel();
       document.getElementById('statFilterCard').style.display = 'block';

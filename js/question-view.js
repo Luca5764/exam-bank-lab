@@ -46,6 +46,32 @@ function formatAnswerLetters(ans) {
   return LETTERS[ans] || '未設定';
 }
 
+/* ===== 讀取題目 ===== */
+// 平行載入多個題庫檔，單檔失敗只略過該檔。pickQids：{ bankFile: Set(qid) }，只取指定題號
+async function fetchBanksParallel(bankFiles, pickQids = null) {
+  const results = await Promise.all(bankFiles.map(async bf => {
+    try {
+      const qs = await fetchJson(bf);
+      const picked = pickQids ? qs.filter(q => pickQids[bf].has(q.id)) : qs;
+      return picked.map(q => ({ ...q, _bank: bf }));
+    } catch (e) {
+      console.error('Failed to load bank', bf, e);
+      return [];
+    }
+  }));
+  return results.flat();
+}
+
+// 交卷紀錄存的是當時的題目快照（選項已打亂、沒有 noShuffle、不含之後的錯字修正）。
+// 重練或複習時換回題庫裡的最新版本；題庫讀不到的才沿用快照。
+async function refreshQuestionsFromBanks(questions) {
+  const items = questions.filter(q => q && q._bank).map(q => ({ bank: q._bank, qid: q.id }));
+  const byBank = groupItemsByBank(items);
+  const fresh = await fetchBanksParallel(Object.keys(byBank), byBank);
+  const freshMap = new Map(fresh.map(q => [itemKey(q._bank, q.id), q]));
+  return questions.map(q => (q && q._bank && freshMap.get(itemKey(q._bank, q.id))) || q);
+}
+
 /* ===== 附圖、表格、閱讀資料 ===== */
 function normalizeMaterials(materials) {
   return Array.isArray(materials) ? materials.filter(Boolean) : [];
