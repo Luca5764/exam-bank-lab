@@ -10,6 +10,9 @@ prototypes should stay outside the repository, preferably under `.tmp/`.
   Bank metadata comes from the file name: `交通部YYY-N-科目`, `YYY統測專二-科目`,
   `EMT{level}-{organizer}-{subject}` (e.g. `EMT1-陸軍北區訓練中心-初複訓學科測驗`);
   anything else is treated as an irrigation bank.
+  `DERIVED_BANKS` in the same script regenerates subset banks (e.g. the EMT-1
+  指定範圍 bank, ids 20–69 and 251–300) from their source bank on every run, so
+  fix typos in the source bank only — never edit a derived bank by hand.
 - `update_changelog.ps1` is used by `.githooks/post-commit` to update
   `data/changelog.json`.
 

@@ -50,6 +50,7 @@ const TRACKS = [
     intro: '包含創傷評估、燒燙傷、心肺復甦術、呼吸道處置、傷病患搬運與到院前救護等 EMT-1 學科題目。',
     collections: [
       { id: 'emt-1', title: 'EMT-1 學科', desc: '初級救護技術員初訓／複訓學科測驗' },
+      { id: 'emt-1-range', title: '指定範圍', desc: '第 20～69、251～300 題', match: bank => (bank.subject || '').startsWith('指定範圍') },
     ],
   },
 ];

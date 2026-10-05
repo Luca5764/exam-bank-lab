@@ -51,6 +51,8 @@ Python 環境用 uv 管理（`uv.lock`、`.python-version`，Python 3.13+）。
   `交通部/`），`*.pdf` 與 `*.txt` 已 gitignore，不推上 GitHub。
 - 題庫檔名決定 metadata（見 `tools/build_index.py`）：`交通部YYY-N-科目`、
   `YYY統測專二-科目`、`EMT{級數}-{開課單位}-{科目}`，其餘歸農田水利。
+- 子題庫（例如 EMT-1 指定範圍）由 `build_index.py` 的 `DERIVED_BANKS` 從來源題庫
+  自動產生，修正題目只改來源題庫，不要手改子題庫。
 - 題目附圖、表格、閱讀資料用 `materials` 欄位保留結構，不要塞回題目文字。
 
 ## Windows 注意事項
