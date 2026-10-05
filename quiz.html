@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>測驗中 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005b">
+  <link rel="stylesheet" href="css/style.css?v=20261005c">
   <style>
     .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; }
@@ -84,10 +84,10 @@
     <div class="kbd-hint" style="font-size:0.72rem;color:var(--text-dim);text-align:center;margin-top:8px">⌨️ 快捷鍵：1~9 / A~H 選答案 · ← → 換題 · Enter 下一題（最後一題交卷）</div>
   </div>
 
-  <script src="js/core.js?v=20261005b"></script>
-  <script src="js/tracks.js?v=20261005b"></script>
-  <script src="js/progress.js?v=20261005b"></script>
-  <script src="js/question-view.js?v=20261005b"></script>
+  <script src="js/core.js?v=20261005c"></script>
+  <script src="js/tracks.js?v=20261005c"></script>
+  <script src="js/progress.js?v=20261005c"></script>
+  <script src="js/question-view.js?v=20261005c"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'random';
@@ -135,6 +135,19 @@
         m && m.type === 'text' && /^閱讀資料（第\s*\d+\s*[-－~～]\s*\d+\s*題）$/.test(m.title || '')
       );
       return reading ? `${q._bank || ''}|${reading.title}|${reading.content || ''}` : '';
+    }
+
+    // 同一份測驗不重複出題：題庫內重複的題目（或混選多年度時的同一題）只留第一個。
+    // 題組題不處理，避免拆散題組。
+    function dedupeQuestions(questions) {
+      const seen = new Set();
+      return questions.filter(q => {
+        if (getQuestionGroupKey(q)) return true;
+        const key = questionDedupKey(q);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
 
     function buildQuestionBlocks(questions) {
@@ -347,6 +360,9 @@
 
       // 排除標記為「排除」的題目
       pool = pool.filter(q => getQuestionMetadata(q._bank || bank, q.id).tag !== 'exclude');
+
+      // 去除重複題（要在「沒做過的題」篩選之前，否則做過的題會由重複的另一份補上）
+      pool = dedupeQuestions(pool);
 
       // 「未練過」模式：只留下從未實際作答過的題（跳過不算，與單題「作答 N 次」一致）
       if (mode === 'unseen') {
