@@ -50,3 +50,5 @@ jobs:
             pyproject.toml
             FUTURE.md
             README.md
+            CLAUDE.md
+            .githooks/

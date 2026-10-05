@@ -87,10 +87,15 @@ function sortItems(items) {
   return items.sort((a, b) => a.bank.localeCompare(b.bank) || a.qid - b.qid);
 }
 
+// 本地日期（YYYY-M-D）。不可用 toISOString()：那是 UTC，台灣早上 8 點前會算成前一天
+function localDateKey(date) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
 // 錯題池（只計目前分流）：
 //   ever_wrong 曾錯過、still_wrong 最後一次仍錯、today_wrong 今天錯的、past_wrong 今天以前錯的
 function getWrongPool() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateKey(new Date());
   const lastResult = {};
   const everWrong = new Set();
   const todayWrong = new Set();
@@ -101,7 +106,7 @@ function getWrongPool() {
     lastResult[key] = item.correct;
     if (!item.correct) {
       everWrong.add(key);
-      if (session.date_iso && session.date_iso.split('T')[0] === today) todayWrong.add(key);
+      if (session.date_iso && localDateKey(new Date(session.date_iso)) === today) todayWrong.add(key);
     }
   });
 
@@ -296,7 +301,8 @@ function exportAllProgress() {
   const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   link.download = `exam-bank-progress-${stamp}.json`;
   link.click();
-  URL.revokeObjectURL(link.href);
+  // 立即 revoke 在部分瀏覽器（Safari）會讓下載失敗
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
 // 以備份檔還原（覆蓋同名鍵）。回傳成功寫入的鍵數。
