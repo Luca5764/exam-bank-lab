@@ -193,6 +193,36 @@ def bank_sort_key(path: Path, year_map: dict[str, str]):
     return (extract_year(stem, year_map), format_bank_name(stem, year_map))
 
 
+# 由既有題庫抽出指定題號組成的子題庫。每次建索引都從來源重新產生，
+# 來源題庫修正錯字或答案時會自動同步；題號沿用原卷。
+DERIVED_BANKS = [
+    {
+        "source": "EMT1-陸軍北區訓練中心-初複訓學科測驗.json",
+        "output": "EMT1-陸軍北區訓練中心-指定範圍（第20～69、251～300題）.json",
+        "ids": [*range(20, 70), *range(251, 301)],
+    },
+]
+
+
+def build_derived_banks(q_dir: Path) -> None:
+    for spec in DERIVED_BANKS:
+        source = q_dir / spec["source"]
+        if not source.exists():
+            print(f"Skipped derived bank {spec['output']}: missing {spec['source']}")
+            continue
+        with open(source, "r", encoding="utf-8") as f:
+            questions = json.load(f)
+        wanted = set(spec["ids"])
+        subset = [q for q in questions if q.get("id") in wanted]
+        missing = wanted - {q.get("id") for q in subset}
+        if missing:
+            raise ValueError(f"{spec['output']}: source lacks ids {sorted(missing)}")
+        with open(q_dir / spec["output"], "w", encoding="utf-8") as f:
+            json.dump(subset, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        print(f"Derived: {spec['output']} ({len(subset)} questions)")
+
+
 def build_index():
     base_dir = Path(__file__).resolve().parent.parent
 
@@ -207,6 +237,7 @@ def build_index():
     banks = []
     
     if q_dir.exists():
+        build_derived_banks(q_dir)
         # Scan for all .json files
         for f in sorted(q_dir.glob("*.json"), key=lambda p: bank_sort_key(p, year_map)):
             if f.stem == "questions":
