@@ -14,11 +14,12 @@ function multiAnswerCorrect(userAns, answer) {
   return a.every((v, i) => v === b[i]);
 }
 
-// 判定單題作答結果（單選/複選/送分共用）：answered 是否有作答、ok 是否得分
+// 判定單題作答結果（單選/複選/送分共用）：answered 是否有作答、ok 是否得分。
+// 送分題不論有沒有作答都算得分。
 function evaluateAnswer(q, ua) {
   const multi = isMultiAnswer(q);
   const answered = multi ? (Array.isArray(ua) && ua.length > 0) : isAnswered(ua);
-  const ok = answered && (q.freeScore ? true : (multi ? multiAnswerCorrect(ua, q.answer) : ua === q.answer));
+  const ok = !!q.freeScore || (answered && (multi ? multiAnswerCorrect(ua, q.answer) : ua === q.answer));
   return { answered, ok };
 }
 
@@ -291,7 +292,7 @@ function buildReviewItemHTML(q, { idx, userAns, mode }) {
   if (isResult) {
     cls = isWrong ? 'ri-wrong' : 'ri-correct';
     badgeCls = isWrong ? 'badge-wrong' : 'badge-correct';
-    badgeText = isSkipped ? '未作答' : (isFreeScore ? '送分' : (ok ? '答對' : '答錯'));
+    badgeText = isFreeScore ? '送分' : (isSkipped ? '未作答' : (ok ? '答對' : '答錯'));
     if (multi && !isSkipped) badgeText += '（複選）';
   }
 

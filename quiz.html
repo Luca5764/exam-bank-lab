@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>測驗中 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005d">
+  <link rel="stylesheet" href="css/style.css?v=20261005e">
   <style>
     .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; }
@@ -84,10 +84,10 @@
     <div class="kbd-hint" style="font-size:0.72rem;color:var(--text-dim);text-align:center;margin-top:8px">⌨️ 快捷鍵：1~9 / A~H 選答案 · ← → 換題 · Enter 下一題（最後一題交卷）</div>
   </div>
 
-  <script src="js/core.js?v=20261005d"></script>
-  <script src="js/tracks.js?v=20261005d"></script>
-  <script src="js/progress.js?v=20261005d"></script>
-  <script src="js/question-view.js?v=20261005d"></script>
+  <script src="js/core.js?v=20261005e"></script>
+  <script src="js/tracks.js?v=20261005e"></script>
+  <script src="js/progress.js?v=20261005e"></script>
+  <script src="js/question-view.js?v=20261005e"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'random';
@@ -517,7 +517,8 @@
       const answers = quizQ.map((q, i) => {
         const ua = userAns[i];
         const { answered, ok } = evaluateAnswer(q, ua);
-        if (!answered) skip++; else if (ok) correct++; else wrong++;
+        // 送分題沒作答也算答對，所以先看 ok 再看是否跳過
+        if (ok) correct++; else if (!answered) skip++; else wrong++;
         return { qid: q.id, bank: q._bank || bank, userAnswer: answered ? ua : null, correct: ok };
       });
 

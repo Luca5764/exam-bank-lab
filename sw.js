@@ -10,7 +10,7 @@
  * CACHE_VERSION 在 SW 邏輯或核心檔案清單改動時 bump,activate 會清掉舊版快取整批重建。
  * 頁面引用 css/js 時帶 ?v=日期,快取以完整網址(含 ?v)比對,改版號即可讓舊快取失效。
  */
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const CACHE_NAME = `quiz-${CACHE_VERSION}`;
 
 // 頁面殼:安裝時就快取,保證離線開得起來
@@ -22,11 +22,11 @@ const CORE_ASSETS = [
   'review.html',
   'laws.html',
   'changelog.html',
-  'css/style.css?v=20261005d',
-  'js/core.js?v=20261005d',
-  'js/tracks.js?v=20261005d',
-  'js/progress.js?v=20261005d',
-  'js/question-view.js?v=20261005d',
+  'css/style.css?v=20261005e',
+  'js/core.js?v=20261005e',
+  'js/tracks.js?v=20261005e',
+  'js/progress.js?v=20261005e',
+  'js/question-view.js?v=20261005e',
   'assets/vendor/embla/embla-carousel.umd.js?v=8.6.0',
   'manifest.json',
   'assets/icons/icon-192.png',
