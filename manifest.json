@@ -1,7 +1,7 @@
 {
   "name": "考古題練習室",
   "short_name": "考古題",
-  "description": "農田水利、統測專二、交通部考驗員考古題練習",
+  "description": "農田水利、統測專二、交通部考驗員、初級救護技術員考古題練習",
   "lang": "zh-TW",
   "start_url": "./index.html",
   "scope": "./",

@@ -214,6 +214,7 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 .mb-12 { margin-bottom: 12px; }
 .mb-16 { margin-bottom: 16px; }
 .mb-24 { margin-bottom: 24px; }
+.mt-12 { margin-top: 12px; }
 .mt-16 { margin-top: 16px; }
 .mt-24 { margin-top: 24px; }
 .fw-900 { font-weight: 900; }
@@ -354,6 +355,8 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 }
 
 .collection-card {
+  width: 100%;
+  font: inherit;
   border: 1px solid transparent;
   border-radius: 18px;
   background: var(--surface-soft);
@@ -455,6 +458,7 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 }
 
 .bank-card {
+  font: inherit;
   display: grid;
   grid-template-columns: 30px 1fr;
   gap: 11px;
@@ -693,6 +697,10 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 .review-item.ri-neutral { border-left: 5px solid var(--border); }
 
 .ri-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ri-number { font-weight: 700; color: var(--text-dim); }
+.ri-number .repeat-badge { margin-left: 8px; }
+.ri-source { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
+.ri-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 12px; flex-wrap: wrap; }
 
 .ri-badge {
   font-size: 0.8rem; font-weight: 700; padding: 3px 10px; border-radius: 6px;
@@ -1395,23 +1403,6 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
     margin-bottom: 14px;
   }
   
-  /* Segmented switcher on mobile: stretch full width */
-  .track-switcher-wrap {
-    width: 100%;
-    padding: 0 4px;
-  }
-  .track-switcher {
-    display: flex;
-    width: 100%;
-  }
-  .track-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 8px 10px;
-    font-size: 0.88rem;
-    gap: 4px;
-  }
-
   /* Collapsible Jump Bar Wrapper inside Media Query */
 
   /* Compact option buttons and texts on mobile */
@@ -1499,12 +1490,12 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 
 .track-cards-container {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 24px;
 }
 
 .track-card {
-  background: var(--paper);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--bg) 100%);
   border: 2px solid var(--border);
   border-radius: 24px;
   padding: 32px 24px;
@@ -1512,17 +1503,27 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  font: inherit;
+  color: inherit;
+  text-align: center;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.track-card:hover {
+.track-card:hover,
+.track-card:focus-visible {
   transform: translateY(-6px);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-soft);
-  background: var(--surface-hover);
+  border-color: var(--track-accent, var(--accent));
+  box-shadow: 0 16px 36px color-mix(in srgb, var(--track-accent, var(--accent)) 18%, transparent);
+  outline: none;
+}
+
+.track-overlay.is-leaving {
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
 .track-icon {
+  display: block;
   font-size: 3.5rem;
   margin-bottom: 18px;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
@@ -1533,37 +1534,28 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   transform: scale(1.15) rotate(4deg);
 }
 
-.track-card h3 {
+.track-card-title {
+  display: block;
   font-size: 1.4rem;
   font-weight: 900;
   color: var(--text);
   margin-bottom: 12px;
 }
 
-.track-card p {
+.track-card-desc {
+  display: block;
   color: var(--text-dim);
   font-size: 0.95rem;
   line-height: 1.6;
-  text-align: center;
   flex-grow: 1;
   margin-bottom: 24px;
 }
 
-/* Beautiful gradient borders / decorations for each persona card */
-.track-card.card-irrigation {
-  background: linear-gradient(180deg, var(--paper) 0%, var(--bg) 100%);
-}
-.track-card.card-irrigation:hover {
-  border-color: #2e7d32;
-  box-shadow: 0 16px 36px rgba(46, 125, 50, 0.15);
-}
-
-.track-card.card-traffic {
-  background: linear-gradient(180deg, var(--paper) 0%, var(--bg) 100%);
-}
-.track-card.card-traffic:hover {
-  border-color: #1565c0;
-  box-shadow: 0 16px 36px rgba(21, 101, 192, 0.15);
+.track-card-cta {
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 1rem;
+  padding: 8px 16px;
 }
 
 /* Header Segmented Switcher Control */
@@ -1614,6 +1606,35 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   box-shadow: 0 4px 12px rgba(85, 199, 151, 0.2);
 }
 
+.track-name-short {
+  display: none;
+}
+
+/* 手機：切換列撐滿寬度，分流名稱改用短名（需放在基本樣式之後才會生效） */
+@media (max-width: 640px) {
+  .track-switcher-wrap {
+    width: 100%;
+    padding: 0 4px;
+  }
+  .track-switcher {
+    display: flex;
+    width: 100%;
+  }
+  .track-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px;
+    font-size: 0.88rem;
+    gap: 4px;
+  }
+  .track-name-full {
+    display: none;
+  }
+  .track-name-short {
+    display: inline;
+  }
+}
+
 @media (max-width: 640px) {
   .track-cards-container {
     grid-template-columns: 1fr;
@@ -1646,7 +1667,14 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   align-items: center;
   flex-wrap: wrap;
 }
+.q-meta-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-right: 4px;
+}
 .tag-pill {
+  font-family: inherit;
   border: 1px solid var(--border);
   background: var(--paper-soft);
   color: var(--text-dim);
@@ -1690,6 +1718,10 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
 }
 .q-meta-notes-wrapper {
   width: 100%;
+  margin-top: 8px;
+}
+.q-meta-notes-wrapper[hidden] {
+  display: none;
 }
 .q-notes-input {
   width: 100%;
@@ -1955,4 +1987,28 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   flex: 0 0 auto;
   padding: 8px 10px;
   text-align: center;
+}
+
+/* ===== 首頁歷程紀錄 ===== */
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.history-date { font-size: 0.9rem; }
+.history-score { margin-left: 12px; }
+.history-banks { font-size: 0.8rem; margin-top: 3px; }
+.history-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.history-actions .btn {
+  padding: 6px 12px;
+  min-height: 36px;
+  font-size: 0.85rem;
+}
+.btn-soft-danger {
+  background: var(--wrong-bg);
+  color: var(--wrong);
+  border: 1px solid #e57373;
 }

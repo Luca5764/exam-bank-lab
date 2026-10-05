@@ -9,25 +9,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>考古題練習室 | 靜態版</title>
-  <link rel="stylesheet" href="css/style.css?v=theme2">
+  <link rel="stylesheet" href="css/style.css?v=20261005">
 </head>
 
 <body>
   <div class="container fade-in">
 
-    <!-- Top segmented track switcher -->
-    <div class="track-switcher-wrap">
-      <div class="track-switcher">
-        <button class="track-btn" id="trackBtnIrrigation" onclick="switchTrack('irrigation')">🌾 農田水利招考</button>
-        <button class="track-btn" id="trackBtnTraffic" onclick="switchTrack('traffic')">🚗 交通部考驗員</button>
-      </div>
-    </div>
+    <!-- 考試類別切換列（由 js/tracks.js 的 TRACKS 產生） -->
+    <nav class="track-switcher-wrap" id="trackSwitcher" aria-label="考試類別"></nav>
 
     <section class="hero-panel">
       <div class="page-header">
         <div class="eyebrow">題庫持續更新</div>
         <h1>考古題練習室</h1>
-        <p class="subtitle">農田水利、統測專二與更多題庫，都用同一套流程練習。</p>
+        <p class="subtitle" id="heroSubtitle">農田水利、統測、交通部考驗員與 EMT-1 題庫，都用同一套流程練習。</p>
       </div>
 
       <div class="stat-row" id="statRow">
@@ -66,7 +61,7 @@
           <div class="selected-pill" id="selectedSummary">載入中...</div>
         </div>
 
-        <input id="bankSearch" class="bank-search" type="search" placeholder="搜尋年份、科目、來源，例如 112、會計、統測..." oninput="renderBankBrowser()">
+        <input id="bankSearch" class="bank-search" type="search" placeholder="搜尋年份、科目、來源，例如 112、會計、統測...">
         <div class="filter-label">題庫系列</div>
         <div class="collection-grid" id="sourceFilters"></div>
         <div class="filter-label">科目</div>
@@ -199,506 +194,38 @@
 
   </div>
 
-  <!-- Stunning full-screen Glassmorphic Track Selection Overlay -->
-  <div class="track-overlay" id="trackOverlay" style="display: none;">
-    <div class="track-modal fade-in">
-      <div class="track-modal-header">
-        <h2>歡迎來到考古題練習室</h2>
-        <p>請選擇您要準備的考試類別，系統將為您切換專屬的題庫與紀錄：</p>
-      </div>
-      <div class="track-cards-container">
-        <div class="track-card card-irrigation" onclick="selectTrack('irrigation')">
-          <div class="track-icon">🌾</div>
-          <h3>農田水利招考</h3>
-          <p>包含農田水利署、水利會歷屆考古題、農業概論、灌溉排水概要，以及統測專二商管群精選科目。</p>
-          <button class="btn btn-primary btn-block" style="min-height: 48px; border-radius: 12px; font-size: 1rem; padding: 8px 16px;">進入此練習室</button>
-        </div>
-        <div class="track-card card-traffic" onclick="selectTrack('traffic')">
-          <div class="track-icon">🚗</div>
-          <h3>交通部考驗員</h3>
-          <p>包含汽車構造原理概論、汽車駕駛理論、道路交通法規等汽車駕駛考驗員檢定學科題庫。</p>
-          <button class="btn btn-primary btn-block" style="min-height: 48px; border-radius: 12px; font-size: 1rem; padding: 8px 16px;">進入此練習室</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="js/shared.js?v=theme2"></script>
+  <script src="js/core.js?v=20261005"></script>
+  <script src="js/tracks.js?v=20261005"></script>
+  <script src="js/progress.js?v=20261005"></script>
+  <script src="js/question-view.js?v=20261005"></script>
   <script>
-    let allQuestions = [];
-    let currentBank = '';
-    let BANK_INFO = [];
     let ALL_BANKS = [];
+    let BANK_INFO = [];          // 目前分流的題庫
     let selectedBanks = new Set();
-    let activeSource = '全部';
-    let activeSubject = '全部';
     let visibleBanks = [];
     let useAllQuestions = false;
+    let selectedTypes = new Set(['tf', 'sc', 'mc']);
 
-    let COLLECTIONS = [];
+    // 需要「限定來源題庫」面板的測驗模式
+    const SCOPE_MODES = ['wrong', 'still-wrong', 'key', 'stat'];
 
-    function selectTrack(track) {
-      setSelectedTrack(track);
-      
-      const overlay = document.getElementById('trackOverlay');
-      overlay.style.opacity = '0';
-      setTimeout(() => {
-        overlay.style.display = 'none';
-        overlay.style.opacity = '1';
-      }, 300);
-      
-      document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
-      document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
-      
-      applyTrackFilter();
-      updateSubtitle();
-    }
+    const MODE_HELP = {
+      random: '會從已選題庫中依題數隨機抽題，已做過的題會降低出現機率，題組會一起保留。',
+      unseen: '只抽「從未實際作答過」的題（從已選題庫中濾掉做過的，跳過不算已做）；隨機模式則只是降低做過題的出現機率。',
+      wrong: '會從曾答錯過的題目中依題數抽題；可在下方「限定來源題庫」勾選只練特定題庫的錯題。',
+      'still-wrong': '會從目前仍未答對的錯題中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
+      stat: '會從「累計答錯次數達到門檻」的題目中依題數抽題（後來答對過也算）；可再用正確率上限與來源題庫縮小範圍。',
+      key: '會從已標記為重點的題目中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
+      all: '會依題庫原順序練習；如果有設定題數，只取前段題目。',
+    };
 
-    function switchTrack(track) {
-      if (getSelectedTrack() === track) return;
-      setSelectedTrack(track);
-      
-      document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
-      document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
-      
-      applyTrackFilter();
-      updateSubtitle();
-    }
+    const $ = id => document.getElementById(id);
 
-    function updateSubtitle() {
-      const track = getSelectedTrack();
-      const subtitleEl = document.querySelector('.hero-panel .subtitle');
-      if (subtitleEl) {
-        if (track === 'traffic') {
-          subtitleEl.textContent = '交通部公路局公路監理人員汽車駕駛考驗員歷年精選學科題庫。';
-        } else {
-          subtitleEl.textContent = '農田水利、統測專二與更多題庫，都用同一套流程練習。';
-        }
-      }
-    }
-
-    function applyTrackFilter() {
-      const track = getSelectedTrack();
-      
-      if (track === 'traffic') {
-        COLLECTIONS = [
-          { id: '全部', title: '全部題庫', desc: '跨系列搜尋與混合練習' },
-          { id: 'traffic-structure', title: '汽車構造原理', desc: '汽車構造與構造原理概論' },
-          { id: 'traffic-theory', title: '汽車駕駛理論', desc: '駕駛理論與安全駕駛知識' },
-          { id: 'traffic-law', title: '道路交通法規', desc: '交通安全法規與相關監理實務' }
-        ];
-      } else {
-        COLLECTIONS = [
-          { id: '全部', title: '全部題庫', desc: '跨系列搜尋與混合練習' },
-          { id: 'irrigation', title: '農田水利招考', desc: '水利會、農田水利署與共同/專業科目' },
-          { id: 'tve-business', title: '統測商管群', desc: '專二：會計學與經濟學' }
-        ];
-      }
-      
-      const colGrid = document.getElementById('sourceFilters');
-      if (colGrid) {
-        colGrid.style.setProperty('--cols', track === 'traffic' ? 4 : 3);
-      }
-
-      BANK_INFO = ALL_BANKS.filter(isBankInActiveTrack);
-      selectedBanks = new Set();
-      
-      document.getElementById('totalCount').textContent =
-        BANK_INFO.reduce((sum, bank) => sum + (bank.count || 0), 0);
-      
-      activeSource = '全部';
-      activeSubject = '全部';
-      renderBankBrowser();
-      
-      // 2. Check for saved session
-      try {
-        const raw = localStorage.getItem('quiz_session');
-        if (raw) {
-          const saved = JSON.parse(raw);
-          if (saved.quizQ && saved.quizQ.length > 0) {
-            const sessionBank = saved.bank || (saved.quizQ[0] && saved.quizQ[0]._bank) || '';
-            if (isBankFileInActiveTrack(sessionBank)) {
-              const answered = Object.keys(saved.userAns || {}).length;
-              const total = saved.quizQ.length;
-              const mins = Math.floor((saved.elapsed || 0) / 60);
-              document.getElementById('resumeInfo').textContent =
-                `${total} 題中已做 ${answered} 題，已用時 ${mins} 分鐘`;
-              document.getElementById('resumeCard').style.display = 'block';
-            } else {
-              document.getElementById('resumeCard').style.display = 'none';
-            }
-          }
-        } else {
-          document.getElementById('resumeCard').style.display = 'none';
-        }
-      } catch { }
-
-      const wp = getWrongPool();
-      document.getElementById('todayWrongCount').textContent = wp.today_wrong.length;
-      document.getElementById('pastWrongCount').textContent = wp.past_wrong.length;
-
-      const ps = getPracticeStats();
-      const trackTotal = BANK_INFO.reduce((sum, bank) => sum + (bank.count || 0), 0);
-      const pct = trackTotal ? Math.round(ps.attemptedCount / trackTotal * 100) : 0;
-      document.getElementById('practicedCount').textContent = ps.attemptedCount;
-      document.getElementById('practicedNote').textContent = ps.attemptedCount
-        ? `共 ${trackTotal} 題 · 涵蓋 ${pct}%`
-        : '尚未開始';
-
-      const wrongCard = document.getElementById('modeCardWrong');
-      const stillWrongCard = document.getElementById('modeCardStillWrong');
-      const statCard = document.getElementById('modeCardStat');
-      const keyCard = document.getElementById('modeCardKey');
-
-      if (wrongCard && stillWrongCard) {
-        const hasWrong = wp.ever_wrong.length > 0;
-        wrongCard.classList.toggle('disabled', !hasWrong);
-        stillWrongCard.classList.toggle('disabled', !hasWrong);
-        wrongCard.querySelector('.mode-title').textContent = hasWrong ? `曾錯過的題 (${wp.ever_wrong.length})` : '曾錯過的題';
-        stillWrongCard.querySelector('.mode-title').textContent = hasWrong ? `至今仍錯的題 (${wp.still_wrong.length})` : '至今仍錯的題';
-        // 常錯題篩選與「曾錯過的題」共用同一個母集合（錯 ≥ 1 次），沒錯題時一併停用
-        if (statCard) statCard.classList.toggle('disabled', !hasWrong);
-      }
-
-      const keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
-      const keyCount = keyQuestions.length;
-      if (keyCard) {
-        const hasKey = keyCount > 0;
-        keyCard.classList.toggle('disabled', !hasKey);
-        keyCard.querySelector('.mode-title').textContent = hasKey ? `重點標記題 (${keyCount})` : '重點標記題';
-      }
-
-      // Reset to random if active mode is disabled
-      const activeVal = document.getElementById('quizMode').value;
-      if ((activeVal === 'wrong' || activeVal === 'still-wrong' || activeVal === 'stat') && wp.ever_wrong.length === 0) {
-        selectQuizMode('random');
-      } else if (activeVal === 'key' && keyCount === 0) {
-        selectQuizMode('random');
-      }
-      updateModeHelp();
-      renderModeScopePanel();
-
-      renderHistoryList();
-    }
-
-    function bankFileLabel(file) {
-      const b = ALL_BANKS.find(x => x.file === file);
-      if (b) return bankTitle(b);
-      return (file || '').replace(/^.*\//, '').replace(/\.json$/, '');
-    }
-
-    function sessionBankSummary(h) {
-      const files = [...new Set((h.answers || []).map(a => a.bank).filter(Boolean))];
-      if (!files.length) return '';
-      // 依 displayName（含年份+科目）分組，組內列出梯次/年度檢定，避免同名混淆
-      const groups = new Map();
-      files.forEach(f => {
-        const b = ALL_BANKS.find(x => x.file === f);
-        const title = b ? bankTitle(b) : bankFileLabel(f);
-        const cat = b ? (b.category || '') : '';
-        if (!groups.has(title)) groups.set(title, []);
-        if (cat) groups.get(title).push(cat);
-      });
-      return [...groups.entries()]
-        .map(([title, cats]) => cats.length ? `${title}（${cats.join('、')}）` : title)
-        .join('、');
-    }
-
-    // 歷程紀錄預設只顯示最近幾筆，其餘可展開／收合
-    const HISTORY_COLLAPSE_THRESHOLD = 5;
-    let historyExpanded = false;
-
-    function toggleHistoryExpanded() {
-      historyExpanded = !historyExpanded;
-      renderHistoryList();
-    }
-
-    function renderHistoryList() {
-      const allHistory = loadLocalHistory();
-      const filteredHistory = allHistory
-        .map((h, index) => ({ record: h, index }))
-        .filter(item => isSessionInActiveTrack(item.record));
-
-      const historyCard = document.getElementById('historyCard');
-      const list = document.getElementById('historyList');
-
-      if (filteredHistory.length > 0) {
-        historyCard.style.display = 'block';
-        const ordered = filteredHistory.slice().reverse();
-        const collapsible = ordered.length > HISTORY_COLLAPSE_THRESHOLD;
-        const shown = (collapsible && !historyExpanded)
-          ? ordered.slice(0, HISTORY_COLLAPSE_THRESHOLD)
-          : ordered;
-        const rows = shown.map((item) => {
-          const h = item.record;
-          const realIdx = item.index;
-          const pct = h.score || 0;
-          const cls = pct >= 70 ? 'text-green' : 'text-red';
-          const bankSummary = sessionBankSummary(h);
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
-          <div>
-            <div>
-              <span class="text-dim" style="font-size:0.9rem">${h.date || '?'}</span>
-              <span class="fw-900 ${cls}" style="margin-left:12px">${pct}分 (${h.correct}/${h.total})</span>
-            </div>
-            ${bankSummary ? `<div class="text-dim" style="font-size:0.8rem;margin-top:3px">📄 ${esc(bankSummary)}</div>` : ''}
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-secondary btn-sm" style="padding:6px 12px;min-height:36px;font-size:0.85rem" onclick="viewHistory(${realIdx})">查閱</button>
-            <button class="btn btn-sm" style="padding:6px 12px;min-height:36px;font-size:0.85rem;background:var(--wrong-bg);color:var(--wrong);border:1px solid #e57373" onclick="deleteSingle(${realIdx})">刪除</button>
-          </div>
-        </div>`;
-        }).join('');
-        const toggle = collapsible
-          ? `<div class="text-center" style="margin-top:12px">
-              <button class="btn btn-secondary btn-sm" style="font-size:0.85rem" onclick="toggleHistoryExpanded()">${historyExpanded ? '收合' : `展開全部 (${ordered.length})`}</button>
-            </div>`
-          : '';
-        list.innerHTML = rows + toggle;
-      } else {
-        historyCard.style.display = 'none';
-        list.innerHTML = '';
-      }
-    }
-
-    function bankTitle(bank) {
-      return bank.displayName || `${bank.year || ''} ${bank.subject || bank.name || ''}`.trim();
-    }
-
-    function getSelectedBankList() {
-      return BANK_INFO.filter(bank => selectedBanks.has(bank.file));
-    }
-
-    function selectedTotalCount() {
-      return getSelectedBankList().reduce((sum, bank) => sum + (bank.count || 0), 0);
-    }
-
-    function updateSelectedSummary() {
-      const selected = getSelectedBankList();
-      const total = selectedTotalCount();
-      document.getElementById('selectedSummary').textContent = selected.length
-        ? `已選 ${selected.length} 份 / ${total} 題`
-        : '請選擇題庫';
-      currentBank = selected[0]?.file || '';
-      syncCountFromInput();
-      updateStartState();
-    }
-
-    function updateStartState() {
-      const btn = document.getElementById('startBtn');
-      if (!btn) return;
-      const mode = document.getElementById('quizMode')?.value || 'random';
-      const isScopeMode = SCOPE_MODES.includes(mode);
-      let ready, emptyText;
-      if (isScopeMode) {
-        // scopeSelected 為 null 代表尚未渲染（視同全選）；否則需至少留一個來源題庫
-        ready = !scopeSelected || scopeSelected.size > 0;
-        emptyText = '請至少選擇一個來源題庫';
-        if (mode === 'stat' && getModeSourceItems('stat').length === 0) {
-          ready = false;
-          emptyText = '沒有符合篩選門檻的題目';
-        }
-      } else {
-        ready = selectedBanks.size > 0;
-        emptyText = '請先選擇題庫';
-      }
-      btn.disabled = !ready;
-      btn.textContent = ready ? '🚀 開始測驗練習' : emptyText;
-    }
-
-    function selectQuizMode(mode) {
-      const card = document.querySelector(`.mode-card[data-value="${mode}"]`);
-      if (card && card.classList.contains('disabled')) return;
-
-      // Update active class
-      document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
-      if (card) card.classList.add('active');
-
-      // Update hidden input value
-      const modeInput = document.getElementById('quizMode');
-      if (modeInput) modeInput.value = mode;
-
-      // 切換模式時重設「來源題庫」篩選（不同模式的錯題來源不同），預設全選
-      scopeSelected = null;
-      updateModeHelp();
-      renderModeScopePanel();
-    }
-
-    // 「曾錯過/至今仍錯/重點標記」模式（SCOPE_MODES，定義於 shared.js）的來源題庫篩選（null 代表全選）
-    let scopeSelected = null;
-    let scopeBanks = [];
-
-    // 「常錯題篩選」模式目前的門檻（minWrong 至少 1，避免抽到沒錯過的題）
-    function getStatFilterParams() {
-      const p = parseStatFilterInputs(
-        document.getElementById('statMinWrong')?.value,
-        document.getElementById('statMaxAcc')?.value
-      );
-      return { minWrong: Math.max(1, p.minWrong), maxAccPct: p.maxAccPct };
-    }
-
-    function updateStatFilterCount() {
-      const el = document.getElementById('statFilterCount');
-      if (!el) return;
-      el.textContent = `符合門檻 ${getModeSourceItems('stat').length} 題`;
-    }
-
-    function onStatFilterChange() {
-      // 門檻變動等於重新定義來源集合，題庫篩選重置為全選；
-      // 若沿用舊選取，被門檻暫時剔除再加回的題庫會默默維持未勾選
-      scopeSelected = null;
-      renderModeScopePanel();
-      updateStatFilterCount();
-      updateStartState();
-    }
-
-    function getModeSourceItems(mode) {
-      if (mode === 'wrong' || mode === 'still-wrong') {
-        const wp = getWrongPool();
-        return mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
-      }
-      if (mode === 'stat') {
-        const p = getStatFilterParams();
-        return getStatFilteredItems(p.minWrong, p.maxAccPct);
-      }
-      if (mode === 'key') {
-        return getQuestionsWithTag('key')
-          .filter(item => isBankFileInActiveTrack(item.bank))
-          .map(item => ({ bank: item.bank, qid: item.qid }));
-      }
-      return [];
-    }
-
-    function getModeSourceBanks(mode) {
-      const counts = {};
-      for (const it of getModeSourceItems(mode)) counts[it.bank] = (counts[it.bank] || 0) + 1;
-      const banks = Object.keys(counts).map(file => ({ file, count: counts[file], title: bankFileLabel(file) }));
-      // 清單內若有同名（年度＋科目相同、僅梯次/組別不同）的題庫，補上 category 以利區分
-      const nameCount = {};
-      banks.forEach(b => { nameCount[b.title] = (nameCount[b.title] || 0) + 1; });
-      banks.forEach(b => {
-        if (nameCount[b.title] > 1) {
-          const info = ALL_BANKS.find(x => x.file === b.file);
-          if (info && info.category && !b.title.includes(info.category)) b.title += ` · ${info.category}`;
-        }
-      });
-      return banks.sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
-    }
-
-    function renderModeScopePanel() {
-      const mode = document.getElementById('quizMode').value;
-      const panel = document.getElementById('modeScopePanel');
-      if (!panel) return;
-      if (!SCOPE_MODES.includes(mode)) { panel.style.display = 'none'; return; }
-
-      const banks = getModeSourceBanks(mode);
-      const total = banks.reduce((s, b) => s + b.count, 0);
-      if (!banks.length) { panel.style.display = 'none'; return; }
-
-      const valid = new Set(banks.map(b => b.file));
-      if (!scopeSelected) {
-        // null 代表尚未初始化 → 預設全選（空集合是使用者刻意「全不選」，需保留）
-        scopeSelected = new Set(valid);
-      } else {
-        // 移除已不存在的題庫（例如該題庫的錯題已全部答對）
-        scopeSelected = new Set([...scopeSelected].filter(f => valid.has(f)));
-      }
-
-      scopeBanks = banks;
-      panel.style.display = 'block';
-      panel.innerHTML = `
-        <div class="scope-head">
-          <span class="scope-title">限定來源題庫</span>
-          <span class="scope-summary"></span>
-        </div>
-        <div class="scope-hint">這些是你的錯題／標記題實際所在的題庫，預設全選；取消勾選可只練特定來源。</div>
-        <div class="bank-toolbar">
-          <button class="btn btn-secondary btn-sm" onclick="setAllScope(true)">全選</button>
-          <button class="btn btn-secondary btn-sm" onclick="setAllScope(false)">全不選</button>
-        </div>
-        <div class="scope-list">
-          ${banks.map(b => `
-            <label class="scope-item ${scopeSelected.has(b.file) ? 'selected' : ''}" data-file="${esc(b.file)}">
-              <input type="checkbox" ${scopeSelected.has(b.file) ? 'checked' : ''} onchange="toggleScopeBank(this)">
-              <span class="scope-item-title"><span class="scope-marquee">${esc(b.title)}</span></span>
-              <span class="scope-item-count">${b.count} 題</span>
-            </label>`).join('')}
-        </div>`;
-      updateScopeSummary();
-      applyScopeMarquee();
-    }
-
-    // 量測每個標題是否超出可視寬度，只有超出的才啟用跑馬燈，並依超出量決定捲動距離與速度
-    function applyScopeMarquee() {
-      document.querySelectorAll('#modeScopePanel .scope-item-title').forEach(box => {
-        const inner = box.querySelector('.scope-marquee');
-        if (!inner) return;
-        box.classList.remove('is-marquee');
-        box.style.removeProperty('--marquee-shift');
-        box.style.removeProperty('--marquee-dur');
-        const overflow = inner.scrollWidth - box.clientWidth;
-        if (overflow > 2) {
-          const dist = overflow + 8;
-          box.style.setProperty('--marquee-shift', `-${dist}px`);
-          box.style.setProperty('--marquee-dur', `${Math.max(5, dist / 22).toFixed(1)}s`);
-          box.classList.add('is-marquee');
-        }
-      });
-    }
-
-    let _scopeResizeTimer = null;
-    window.addEventListener('resize', () => {
-      clearTimeout(_scopeResizeTimer);
-      _scopeResizeTimer = setTimeout(applyScopeMarquee, 150);
-    });
-    // Web 字型載入後字寬會變，首次量測可能失準，需重量一次
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(applyScopeMarquee);
-
-    // 只更新統計文字與開始鈕狀態，避免重建 innerHTML 導致清單捲動位置被重置
-    function updateScopeSummary() {
-      const panel = document.getElementById('modeScopePanel');
-      const summary = panel && panel.querySelector('.scope-summary');
-      if (!summary) return;
-      const total = scopeBanks.reduce((s, b) => s + b.count, 0);
-      const selCount = scopeBanks.filter(b => scopeSelected && scopeSelected.has(b.file)).reduce((s, b) => s + b.count, 0);
-      summary.textContent = `已選 ${selCount} 題 / 共 ${total} 題`;
-      updateStartState();
-    }
-
-    function toggleScopeBank(input) {
-      // null 代表全選，先補齊為全部來源再增刪
-      if (!scopeSelected) scopeSelected = new Set(scopeBanks.map(b => b.file));
-      const item = input.closest('.scope-item');
-      const file = item.dataset.file;
-      if (input.checked) scopeSelected.add(file); else scopeSelected.delete(file);
-      item.classList.toggle('selected', input.checked);
-      updateScopeSummary();
-    }
-
-    function setAllScope(selectAll) {
-      scopeSelected = selectAll ? new Set(scopeBanks.map(b => b.file)) : new Set();
-      document.querySelectorAll('#modeScopePanel .scope-item').forEach(item => {
-        const on = scopeSelected.has(item.dataset.file);
-        item.classList.toggle('selected', on);
-        const cb = item.querySelector('input');
-        if (cb) cb.checked = on;
-      });
-      updateScopeSummary();
-    }
-
-    function renderFilterButtons(containerId, items, active, handlerName) {
-      document.getElementById(containerId).innerHTML = items.map(item =>
-        `<button class="filter-chip ${item === active ? 'active' : ''}" onclick="${handlerName}(${jsArg(item)})">${esc(item)}</button>`
-      ).join('');
-    }
-
-    function renderCollectionCards() {
-      const ps = getPracticeStats();
-      document.getElementById('sourceFilters').innerHTML = COLLECTIONS.map(item => {
-        const banks = item.id === '全部'
-          ? BANK_INFO
-          : BANK_INFO.filter(bank => bankCollection(bank) === item.id);
-        const questionCount = banks.reduce((sum, bank) => sum + (bank.count || 0), 0);
+    const shelf = new BankShelf({
+      els: { search: $('bankSearch'), collections: $('sourceFilters'), subjects: $('subjectFilters') },
+      onChange: renderBankBrowser,
+      collectionStats: banks => {
+        const ps = getPracticeStats();
         let practicedBanks = 0;
         let practicedQuestions = 0;
         banks.forEach(bank => {
@@ -708,88 +235,174 @@
             practicedQuestions += pb.attempted.size;
           }
         });
-        const practicedLine = practicedQuestions > 0
+        return practicedQuestions > 0
           ? `<span class="collection-practiced">✅ 練過 ${practicedBanks} 份 / ${practicedQuestions} 題</span>`
           : '';
-        return `<div class="collection-card ${item.id === activeSource ? 'active' : ''}" onclick="setSourceFilter(${jsArg(item.id)})">
-          <span class="collection-title">${esc(item.title)}</span>
-          <span class="collection-desc">${esc(item.desc)}</span>
-          <span class="collection-count">${banks.length} 份 / ${questionCount} 題</span>
-          ${practicedLine}
-        </div>`;
-      }).join('');
+      },
+    });
+
+    const scopePicker = new BankScopePicker({
+      container: $('modeScopePanel'),
+      hint: '這些是你的錯題／標記題實際所在的題庫，預設全選；取消勾選可只練特定來源。',
+      onChange: updateStartState,
+    }).watchLayout();
+
+    $('bankList').addEventListener('click', e => {
+      const card = e.target.closest('[data-file]');
+      if (card) toggleBank(card.dataset.file);
+    });
+
+    /* ===== 分流 ===== */
+    function onTrackChanged() {
+      $('heroSubtitle').textContent = getActiveTrack().subtitle;
+      applyTrackFilter();
     }
 
-    function setSourceFilter(source) {
-      activeSource = source;
-      activeSubject = '全部';
+    function applyTrackFilter() {
+      BANK_INFO = ALL_BANKS.filter(isBankInActiveTrack);
+      selectedBanks = new Set();
+      shelf.reset(BANK_INFO);
+      scopePicker.reset();
+      $('totalCount').textContent = sumQuestionCount(BANK_INFO);
       renderBankBrowser();
+      renderResumeCard();
+      renderStats();
+      renderHistoryList();
     }
 
-    function setSubjectFilter(subject) {
-      activeSubject = subject;
-      renderBankBrowser();
+    function renderResumeCard() {
+      let show = false;
+      try {
+        const saved = JSON.parse(localStorage.getItem('quiz_session') || 'null');
+        if (saved && saved.quizQ && saved.quizQ.length > 0) {
+          const sessionBank = saved.bank || (saved.quizQ[0] && saved.quizQ[0]._bank) || '';
+          if (isBankFileInActiveTrack(sessionBank)) {
+            const answered = Object.values(saved.userAns || {}).filter(isAnswered).length;
+            const mins = Math.floor((saved.elapsed || 0) / 60);
+            $('resumeInfo').textContent = `${saved.quizQ.length} 題中已做 ${answered} 題，已用時 ${mins} 分鐘`;
+            show = true;
+          }
+        }
+      } catch { }
+      $('resumeCard').style.display = show ? 'block' : 'none';
     }
 
-    function bankMatchesSearch(bank, query) {
-      if (!query) return true;
-      const haystack = [
-        bank.year,
-        bank.subject,
-        bank.originalSubject,
-        bank.source,
-        collectionLabel(bankCollection(bank)),
-        bank.category,
-        bank.name,
-        bank.file,
-      ].filter(Boolean).join(' ').toLowerCase();
-      return haystack.includes(query.toLowerCase());
+    // 統計卡片與依賴紀錄的模式卡片（沒有錯題/重點題時停用）
+    function renderStats() {
+      const wp = getWrongPool();
+      $('todayWrongCount').textContent = wp.today_wrong.length;
+      $('pastWrongCount').textContent = wp.past_wrong.length;
+
+      const ps = getPracticeStats();
+      const trackTotal = sumQuestionCount(BANK_INFO);
+      const pct = trackTotal ? Math.round(ps.attemptedCount / trackTotal * 100) : 0;
+      $('practicedCount').textContent = ps.attemptedCount;
+      $('practicedNote').textContent = ps.attemptedCount ? `共 ${trackTotal} 題 · 涵蓋 ${pct}%` : '尚未開始';
+
+      const hasWrong = wp.ever_wrong.length > 0;
+      const keyCount = getModeSourceItems('key').length;
+      // 常錯題篩選與「曾錯過的題」共用同一個母集合（錯 ≥ 1 次），沒錯題時一併停用
+      setModeCard('wrong', hasWrong, hasWrong ? `曾錯過的題 (${wp.ever_wrong.length})` : '曾錯過的題');
+      setModeCard('still-wrong', hasWrong, hasWrong ? `至今仍錯的題 (${wp.still_wrong.length})` : '至今仍錯的題');
+      setModeCard('stat', hasWrong);
+      setModeCard('key', keyCount > 0, keyCount ? `重點標記題 (${keyCount})` : '重點標記題');
+
+      // 目前模式被停用時退回隨機
+      const active = document.querySelector(`.mode-card[data-value="${currentMode()}"]`);
+      if (active && active.classList.contains('disabled')) selectQuizMode('random');
+      else selectQuizMode(currentMode(), { keepScope: true });
     }
 
-    function getFilteredBanks() {
-      const query = document.getElementById('bankSearch')?.value.trim() || '';
-      return BANK_INFO.filter(bank =>
-        (activeSource === '全部' || bankCollection(bank) === activeSource) &&
-        (activeSubject === '全部' || bank.subject === activeSubject) &&
-        bankMatchesSearch(bank, query)
-      );
+    function setModeCard(mode, enabled, title) {
+      const card = document.querySelector(`.mode-card[data-value="${mode}"]`);
+      if (!card) return;
+      card.classList.toggle('disabled', !enabled);
+      if (title) card.querySelector('.mode-title').textContent = title;
     }
 
-    function renderBankBrowser() {
-      renderCollectionCards();
-      const scopedBanks = BANK_INFO.filter(bank => activeSource === '全部' || bankCollection(bank) === activeSource);
-      const subjects = ['全部', ...new Set(scopedBanks.map(bank => bank.subject).filter(Boolean))];
-      if (!subjects.includes(activeSubject)) activeSubject = '全部';
-      renderFilterButtons('subjectFilters', subjects, activeSubject, 'setSubjectFilter');
+    /* ===== 歷程紀錄 ===== */
+    // 預設只顯示最近幾筆，其餘可展開／收合
+    const HISTORY_COLLAPSE_THRESHOLD = 5;
+    let historyExpanded = false;
 
-      visibleBanks = getFilteredBanks();
-      const list = document.getElementById('bankList');
-      if (!visibleBanks.length) {
-        list.innerHTML = '<div class="empty-state">找不到符合條件的題庫。</div>';
-        updateSelectedSummary();
+    function toggleHistoryExpanded() {
+      historyExpanded = !historyExpanded;
+      renderHistoryList();
+    }
+
+    function findBank(file) {
+      return ALL_BANKS.find(b => b.file === file);
+    }
+
+    function sessionBankSummary(h) {
+      const files = [...new Set((h.answers || []).map(a => a.bank).filter(Boolean))];
+      // 依 displayName（含年份+科目）分組，組內列出梯次/年度檢定，避免同名混淆
+      const groups = new Map();
+      files.forEach(f => {
+        const b = findBank(f);
+        const title = b ? bankTitle(b) : bankLabel(f);
+        if (!groups.has(title)) groups.set(title, []);
+        if (b && b.category) groups.get(title).push(b.category);
+      });
+      return [...groups.entries()]
+        .map(([title, cats]) => cats.length ? `${title}（${cats.join('、')}）` : title)
+        .join('、');
+    }
+
+    function renderHistoryList() {
+      const ordered = loadLocalHistory()
+        .map((record, index) => ({ record, index }))
+        .filter(item => isSessionInActiveTrack(item.record))
+        .reverse();
+
+      const historyCard = $('historyCard');
+      const list = $('historyList');
+      if (!ordered.length) {
+        historyCard.style.display = 'none';
+        list.innerHTML = '';
         return;
       }
 
-      const ps = getPracticeStats();
-      list.innerHTML = visibleBanks.map(bank => {
-        const selected = selectedBanks.has(bank.file);
-        const warnCount = getBankWarningCount(bank.file);
-        const warningBadge = warnCount > 0 ? `<span class="bank-warning-badge">⚠️ ${warnCount} 題受修法影響</span>` : '';
-        const pb = ps.perBank[bank.file];
-        const practiceInfo = pb
-          ? `🕒 最後練習 ${formatMonthDay(pb.lastIso)} · 已練 ${pb.attempted.size}/${bank.count}`
-          : '尚未練習';
-        return `<div class="bank-card ${selected ? 'selected' : ''}" onclick="toggleBank(${jsArg(bank.file)})">
-          <span class="bank-check">${selected ? '✓' : ''}</span>
-          <span class="bank-main">
-            <span class="bank-title">${esc(bankTitle(bank))}</span>
-            <span class="bank-meta">${esc(bankMeta(bank))}</span>
-            <span class="bank-practice ${pb ? '' : 'is-fresh'}">${practiceInfo}</span>
-          </span>
-          <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
-          <span class="bank-count">${bank.count} 題${warningBadge}</span>
+      historyCard.style.display = 'block';
+      const collapsible = ordered.length > HISTORY_COLLAPSE_THRESHOLD;
+      const shown = collapsible && !historyExpanded ? ordered.slice(0, HISTORY_COLLAPSE_THRESHOLD) : ordered;
+      const rows = shown.map(({ record: h, index }) => {
+        const pct = h.score || 0;
+        const bankSummary = sessionBankSummary(h);
+        return `<div class="history-row">
+          <div>
+            <div>
+              <span class="text-dim history-date">${esc(h.date || '?')}</span>
+              <span class="fw-900 history-score ${pct >= 70 ? 'text-green' : 'text-red'}">${pct}分 (${h.correct}/${h.total})</span>
+            </div>
+            ${bankSummary ? `<div class="text-dim history-banks">📄 ${esc(bankSummary)}</div>` : ''}
+          </div>
+          <div class="history-actions">
+            <button class="btn btn-secondary btn-sm" onclick="viewHistory(${index})">查閱</button>
+            <button class="btn btn-sm btn-soft-danger" onclick="deleteSingle(${index})">刪除</button>
+          </div>
         </div>`;
       }).join('');
+      const toggle = collapsible
+        ? `<div class="text-center mt-12">
+            <button class="btn btn-secondary btn-sm" onclick="toggleHistoryExpanded()">${historyExpanded ? '收合' : `展開全部 (${ordered.length})`}</button>
+          </div>`
+        : '';
+      list.innerHTML = rows + toggle;
+    }
+
+    /* ===== 題庫選擇 ===== */
+    function getSelectedBankList() {
+      return BANK_INFO.filter(bank => selectedBanks.has(bank.file));
+    }
+
+    function renderBankBrowser() {
+      shelf.render();
+      visibleBanks = shelf.visibleBanks();
+      const ps = getPracticeStats();
+      $('bankList').innerHTML = visibleBanks.length
+        ? visibleBanks.map(bank => bankCardHTML(bank, { selected: selectedBanks.has(bank.file), practice: ps })).join('')
+        : '<div class="empty-state">找不到符合條件的題庫。</div>';
       updateSelectedSummary();
     }
 
@@ -809,61 +422,88 @@
       renderBankBrowser();
     }
 
-    async function loadBank(bank) {
-      if (!bank) {
-        allQuestions = [];
-        return;
-      }
-      currentBank = bank;
-      try {
-        allQuestions = await fetchJson(bank);
-      } catch (e) {
-        console.error('Failed to load question bank', bank, e);
-        allQuestions = [];
-        showToast('題庫讀取失敗，請重新整理後再試');
-      }
+    function updateSelectedSummary() {
+      const selected = getSelectedBankList();
+      $('selectedSummary').textContent = selected.length
+        ? `已選 ${selected.length} 份 / ${sumQuestionCount(selected)} 題`
+        : '請選擇題庫';
+      syncCountFromInput();
+      updateStartState();
     }
 
-    async function loadBanks() {
-      try {
-        const banks = await fetchJson('data/banks.json');
-        if (banks && banks.length > 0) {
-          registerBankIndex(banks);
-          ALL_BANKS = banks.map(b => ({
-            ...b,
-            source: b.source || '農田水利',
-            subject: b.subject || b.name,
-          }));
-          applyTrackFilter();
-          return '';
+    /* ===== 測驗模式 ===== */
+    function currentMode() {
+      return $('quizMode').value || 'random';
+    }
+
+    function selectQuizMode(mode, { keepScope = false } = {}) {
+      const card = document.querySelector(`.mode-card[data-value="${mode}"]`);
+      if (!card || card.classList.contains('disabled')) return;
+      document.querySelectorAll('.mode-card').forEach(c => c.classList.toggle('active', c === card));
+      $('quizMode').value = mode;
+      // 切換模式時重設「來源題庫」篩選（不同模式的錯題來源不同），預設全選
+      if (!keepScope) scopePicker.reset();
+      $('modeHelp').textContent = MODE_HELP[mode] || MODE_HELP.random;
+      $('statFilterPanel').style.display = mode === 'stat' ? 'block' : 'none';
+      renderModeScopePanel();
+    }
+
+    // 「常錯題篩選」模式目前的門檻（minWrong 至少 1，避免抽到沒錯過的題）
+    function getStatFilterParams() {
+      const p = parseStatFilterInputs($('statMinWrong').value, $('statMaxAcc').value);
+      return { minWrong: Math.max(1, p.minWrong), maxAccPct: p.maxAccPct };
+    }
+
+    function onStatFilterChange() {
+      // 門檻變動等於重新定義來源集合，題庫篩選重置為全選；
+      // 若沿用舊選取，被門檻暫時剔除再加回的題庫會默默維持未勾選
+      scopePicker.reset();
+      renderModeScopePanel();
+    }
+
+    function getModeSourceItems(mode) {
+      if (mode === 'wrong' || mode === 'still-wrong') {
+        const wp = getWrongPool();
+        return mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
+      }
+      if (mode === 'stat') {
+        const p = getStatFilterParams();
+        return getStatFilteredItems(p.minWrong, p.maxAccPct);
+      }
+      if (mode === 'key') {
+        return getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
+      }
+      return [];
+    }
+
+    function renderModeScopePanel() {
+      const mode = currentMode();
+      const panel = $('modeScopePanel');
+      const banks = SCOPE_MODES.includes(mode) ? summarizeItemsByBank(getModeSourceItems(mode), ALL_BANKS) : [];
+      if (mode === 'stat') $('statFilterCount').textContent = `符合門檻 ${banks.reduce((s, b) => s + b.count, 0)} 題`;
+      panel.style.display = banks.length ? 'block' : 'none';
+      if (banks.length) scopePicker.render(banks);
+      updateStartState();
+    }
+
+    function updateStartState() {
+      const btn = $('startBtn');
+      const mode = currentMode();
+      let ready, emptyText;
+      if (SCOPE_MODES.includes(mode)) {
+        ready = scopePicker.selectedBanks().length > 0;
+        emptyText = '請至少選擇一個來源題庫';
+        if (mode === 'stat' && getModeSourceItems('stat').length === 0) {
+          ready = false;
+          emptyText = '沒有符合篩選門檻的題目';
         }
-      } catch (e) { 
-        console.error("Failed to load banks", e);
-        showToast('題庫索引讀取失敗，請確認 GitHub Pages 已部署完整');
-      }
-      return '';
-    }
-
-    async function init() {
-      await initOverrides();
-      // 0. Set up persona switcher and check for saved track
-      const track = getSelectedTrack();
-      if (!track) {
-        // Show selection overlay
-        document.getElementById('trackOverlay').style.display = 'flex';
       } else {
-        document.getElementById('trackBtnIrrigation').classList.toggle('active', track === 'irrigation');
-        document.getElementById('trackBtnTraffic').classList.toggle('active', track === 'traffic');
-        updateSubtitle();
+        ready = selectedBanks.size > 0;
+        emptyText = '請先選擇題庫';
       }
-
-      // 1. Load dynamic bank list
-      const firstBank = await loadBanks();
-      if (firstBank) await loadBank(firstBank);
-
+      btn.disabled = !ready;
+      btn.textContent = ready ? '🚀 開始測驗練習' : emptyText;
     }
-
-    let selectedTypes = new Set(['tf', 'sc', 'mc']);
 
     function toggleTypeFilter(type) {
       if (selectedTypes.has(type)) {
@@ -872,105 +512,66 @@
           return;
         }
         selectedTypes.delete(type);
-        document.getElementById(`typeBtn${type.toUpperCase()}`).classList.remove('active');
       } else {
         selectedTypes.add(type);
-        document.getElementById(`typeBtn${type.toUpperCase()}`).classList.add('active');
       }
+      $(`typeBtn${type.toUpperCase()}`).classList.toggle('active', selectedTypes.has(type));
     }
 
-    function doStart() {
-      try { localStorage.removeItem('quiz_session'); } catch { }
-      const mode = document.getElementById('quizMode').value;
-      const num = getQuestionCount();
-      const typesStr = [...selectedTypes].join(',');
-
-      let url = `quiz.html?mode=${mode}&num=${num}&types=${typesStr}`;
-
-      if (mode === 'stat') {
-        const p = getStatFilterParams();
-        url += `&minWrong=${p.minWrong}`;
-        if (p.maxAccPct !== null) url += `&maxAcc=${p.maxAccPct}`;
-      }
-
-      if (SCOPE_MODES.includes(mode)) {
-        const banks = getModeSourceBanks(mode);
-        if (banks.length === 0) { alert('目前沒有可練習的題目！'); return; }
-        const chosen = scopeSelected ? banks.filter(b => scopeSelected.has(b.file)) : banks;
-        if (chosen.length === 0) { alert('請至少選擇一個來源題庫！'); return; }
-        // 只在非全選時才帶 srcBanks，全選維持原本全域行為
-        if (chosen.length < banks.length) {
-          url += `&srcBanks=${chosen.map(b => encodeURIComponent(b.file)).join(',')}`;
-        }
-        window.location.href = url;
-        return;
-      }
-
-      const selected = getSelectedBankList().map(bank => bank.file);
-      if (selected.length === 0) { alert('請至少選擇一個題庫！'); return; }
-
-      if (selected.length > 1) {
-        window.location.href = `${url}&banks=${selected.map(encodeURIComponent).join(',')}`;
-      } else {
-        window.location.href = `${url}&bank=${encodeURIComponent(selected[0])}`;
-      }
-    }
-
-    function navigateToBrowse() {
-      window.location.href = 'browse.html';
-    }
-
+    /* ===== 題數 ===== */
     function getQuestionCount() {
       if (useAllQuestions) return '0';
-      const raw = parseInt(document.getElementById('numQuestions').value, 10);
+      const raw = parseInt($('numQuestions').value, 10);
       return String(Number.isFinite(raw) && raw > 0 ? raw : 10);
     }
 
     function setQuestionCount(num) {
       useAllQuestions = num === 0;
-      const input = document.getElementById('numQuestions');
-      if (useAllQuestions) {
-        input.value = '';
-        input.placeholder = '全部';
-      } else {
-        input.value = num;
-        input.placeholder = '';
-      }
+      const input = $('numQuestions');
+      input.value = useAllQuestions ? '' : num;
+      input.placeholder = useAllQuestions ? '全部' : '';
       syncCountFromInput();
     }
 
     function syncCountFromInput() {
-      const input = document.getElementById('numQuestions');
-      if (input.value) useAllQuestions = false;
-      const total = selectedTotalCount();
-      const countHelp = document.getElementById('countHelp');
+      if ($('numQuestions').value) useAllQuestions = false;
+      const total = sumQuestionCount(getSelectedBankList());
       const requested = getQuestionCount();
+      let text;
       if (requested === '0') {
-        countHelp.textContent = total ? `將使用目前選取題庫的全部 ${total} 題。` : '請先選擇題庫。';
+        text = total ? `將使用目前選取題庫的全部 ${total} 題。` : '請先選擇題庫。';
       } else if (total && Number(requested) > total) {
-        countHelp.textContent = `目前選取題庫共有 ${total} 題，實際會以可用題數為上限。`;
+        text = `目前選取題庫共有 ${total} 題，實際會以可用題數為上限。`;
       } else {
-        countHelp.textContent = `將出 ${requested} 題；題組題會一起保留。`;
+        text = `將出 ${requested} 題；題組題會一起保留。`;
       }
+      $('countHelp').textContent = text;
     }
 
-    function updateModeHelp() {
-      const mode = document.getElementById('quizMode').value;
-      const help = document.getElementById('modeHelp');
-      const text = {
-        random: '會從已選題庫中依題數隨機抽題，已做過的題會降低出現機率，題組會一起保留。',
-        unseen: '只抽「從未實際作答過」的題（從已選題庫中濾掉做過的，跳過不算已做）；隨機模式則只是降低做過題的出現機率。',
-        wrong: '會從曾答錯過的題目中依題數抽題；可在下方「限定來源題庫」勾選只練特定題庫的錯題。',
-        'still-wrong': '會從目前仍未答對的錯題中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
-        stat: '會從「累計答錯次數達到門檻」的題目中依題數抽題（後來答對過也算）；可再用正確率上限與來源題庫縮小範圍。',
-        key: '會從已標記為重點的題目中依題數抽題；可在下方「限定來源題庫」縮小範圍。',
-        all: '會依題庫原順序練習；如果有設定題數，只取前段題目。',
-      };
-      help.textContent = text[mode] || text.random;
-      const statPanel = document.getElementById('statFilterPanel');
-      if (statPanel) statPanel.style.display = mode === 'stat' ? 'block' : 'none';
-      if (mode === 'stat') updateStatFilterCount();
-      updateStartState();
+    /* ===== 開始 / 續作 ===== */
+    function doStart() {
+      try { localStorage.removeItem('quiz_session'); } catch { }
+      const mode = currentMode();
+      const query = new URLSearchParams({ mode, num: getQuestionCount(), types: [...selectedTypes].join(',') });
+
+      if (mode === 'stat') {
+        const p = getStatFilterParams();
+        query.set('minWrong', p.minWrong);
+        if (p.maxAccPct !== null) query.set('maxAcc', p.maxAccPct);
+      }
+
+      if (SCOPE_MODES.includes(mode)) {
+        const chosen = scopePicker.selectedBanks();
+        if (!scopePicker.banks.length) { alert('目前沒有可練習的題目！'); return; }
+        if (!chosen.length) { alert('請至少選擇一個來源題庫！'); return; }
+        // 只在非全選時才帶 srcBanks，全選維持原本全域行為
+        if (scopePicker.isNarrowed()) query.set('srcBanks', chosen.map(b => b.file).join(','));
+      } else {
+        const selected = getSelectedBankList().map(bank => bank.file);
+        if (!selected.length) { alert('請至少選擇一個題庫！'); return; }
+        query.set('banks', selected.join(','));
+      }
+      window.location.href = `quiz.html?${query}`;
     }
 
     function doResume() {
@@ -980,25 +581,30 @@
     function discardSession() {
       if (!confirm('確定要捨棄未完成的測驗進度嗎？')) return;
       try { localStorage.removeItem('quiz_session'); } catch { }
-      document.getElementById('resumeCard').style.display = 'none';
+      $('resumeCard').style.display = 'none';
+    }
+
+    function navigateToBrowse() {
+      navigateTo('browse.html');
     }
 
     function viewHistory(idx) {
-      window.location.href = `review.html?historyIdx=${idx}`;
+      navigateTo(`review.html?historyIdx=${idx}`);
     }
 
     function deleteSingle(idx) {
       if (!confirm('確定要刪除這筆紀錄嗎？')) return;
       deleteLocalHistory(idx);
-      location.reload();
+      applyTrackFilter();
     }
 
     function clearAll() {
       if (!confirm('確定要清空所有紀錄嗎？此動作無法復原！')) return;
       clearLocalHistory();
-      location.reload();
+      applyTrackFilter();
     }
 
+    /* ===== 進度備份 ===== */
     function doExportProgress() {
       try {
         exportAllProgress();
@@ -1021,6 +627,23 @@
       } catch (e) {
         console.error('Import failed', e);
         alert('匯入失敗，請確認檔案是本站匯出的進度備份 JSON。');
+      }
+    }
+
+    async function init() {
+      renderTrackSwitcher($('trackSwitcher'), onTrackChanged);
+      const [banks] = await Promise.all([loadBankIndex(), initOverrides()]);
+      if (!banks.length) showToast('題庫索引讀取失敗，請確認 GitHub Pages 已部署完整');
+      ALL_BANKS = banks;
+
+      if (getSelectedTrack()) {
+        onTrackChanged();
+      } else {
+        applyTrackFilter();
+        showTrackPicker(() => {
+          markActiveTrack($('trackSwitcher'));
+          onTrackChanged();
+        });
       }
     }
 

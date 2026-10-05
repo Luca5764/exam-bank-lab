@@ -7,9 +7,10 @@
  *   - 其餘靜態資源(css/js/字型/圖片):stale-while-revalidate → 先回快取秒開。
  *   - 題庫:activate 與每次開頁(SYNC_BANKS 訊息)時,依 data/banks.json
  *     把還沒快取的題庫 JSON 補抓進來,做到「沒開過的題庫離線也能刷」。
- * CACHE_VERSION 在 SW 邏輯改動時 bump,activate 會清掉舊版快取整批重建。
+ * CACHE_VERSION 在 SW 邏輯或核心檔案清單改動時 bump,activate 會清掉舊版快取整批重建。
+ * 頁面引用 css/js 時帶 ?v=日期,快取以完整網址(含 ?v)比對,改版號即可讓舊快取失效。
  */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `quiz-${CACHE_VERSION}`;
 
 // 頁面殼:安裝時就快取,保證離線開得起來
@@ -21,9 +22,12 @@ const CORE_ASSETS = [
   'review.html',
   'laws.html',
   'changelog.html',
-  'css/style.css',
-  'js/shared.js',
-  'assets/vendor/embla/embla-carousel.umd.js',
+  'css/style.css?v=20261005',
+  'js/core.js?v=20261005',
+  'js/tracks.js?v=20261005',
+  'js/progress.js?v=20261005',
+  'js/question-view.js?v=20261005',
+  'assets/vendor/embla/embla-carousel.umd.js?v=8.6.0',
   'manifest.json',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
@@ -173,7 +177,9 @@ async function networkFirstFresh(request) {
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
-  const hit = await cache.match(request, { ignoreSearch: true });
+  // 帶版本參數(?v=)的資源要完整比對,否則改版後仍會拿到舊版 js/css
+  const versioned = new URL(request.url).searchParams.has('v');
+  const hit = await cache.match(request, { ignoreSearch: !versioned });
   const refresh = fetch(request).then((res) => {
     if (res.ok) cache.put(request, res.clone());
     return res;

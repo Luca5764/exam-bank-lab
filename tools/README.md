@@ -7,6 +7,9 @@ prototypes should stay outside the repository, preferably under `.tmp/`.
 ## Site maintenance
 
 - `build_index.py` rebuilds `data/banks.json` from `questions/*.json`.
+  Bank metadata comes from the file name: `交通部YYY-N-科目`, `YYY統測專二-科目`,
+  `EMT{level}-{organizer}-{subject}` (e.g. `EMT1-陸軍北區訓練中心-初複訓學科測驗`);
+  anything else is treated as an irrigation bank.
 - `update_changelog.ps1` is used by `.githooks/post-commit` to update
   `data/changelog.json`.
 

@@ -34,6 +34,14 @@ TVE_RE = re.compile(r"^(\d{3})(統測[^-]+)-(.+)$")
 # 交通部 pattern: 交通部YYY-N-科目 or 交通部YYY-科目
 TRAFFIC_RE = re.compile(r"^交通部(\d{3})(?:-(\d+))?-(.+)$")
 
+# 救護技術員 pattern: EMT{級數}-{開課單位}-{科目}，例如 EMT1-陸軍北區訓練中心-初複訓學科測驗
+EMT_RE = re.compile(r"^EMT(\d)-([^-]+)-(.+)$")
+
+EMT_SOURCES = {
+    "1": "初級救護技術員",
+    "2": "中級救護技術員",
+}
+
 TVE_CATEGORIES = {
     "統測專二": "商業與管理群",
     "統測農概": "農業群",
@@ -92,6 +100,18 @@ def parse_bank_parts(stem: str, year_map: dict[str, str]) -> dict[str, str]:
             "subject": normalized_subject,
             "originalSubject": subject,
             "displayName": f"{year} {normalized_subject}",
+        }
+
+    emt_match = EMT_RE.match(cleaned)
+    if emt_match:
+        level, organizer, subject = emt_match.groups()
+        return {
+            "year": "",
+            "source": EMT_SOURCES.get(level, f"EMT-{level}"),
+            "category": organizer,
+            "subject": subject,
+            "originalSubject": subject,
+            "displayName": f"EMT-{level} {subject}",
         }
 
     traffic_match = TRAFFIC_RE.match(cleaned)
