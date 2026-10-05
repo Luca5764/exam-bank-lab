@@ -29,6 +29,18 @@ function questionType(q) {
   return isTrueFalse ? 'tf' : 'sc';
 }
 
+// 判斷「同一題」用的鍵：忽略空白、全半形括號與標點、選項順序
+function normalizeQuestionText(text) {
+  return String(text ?? '')
+    .replace(/[（]/g, '(').replace(/[）]/g, ')')
+    .replace(/[\s。、，,.？?：:；;()「」『』]/g, '');
+}
+
+function questionDedupKey(q) {
+  const options = (q.options || []).map(normalizeQuestionText).sort();
+  return `${normalizeQuestionText(q.question)}||${options.join('|')}`;
+}
+
 function formatAnswerLetters(ans) {
   if (Array.isArray(ans)) return ans.map(i => LETTERS[i]).filter(Boolean).join(',');
   return LETTERS[ans] || '未設定';
