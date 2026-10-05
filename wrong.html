@@ -8,16 +8,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>錯題集 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005">
+  <link rel="stylesheet" href="css/style.css?v=20261005b">
 </head>
 <body>
   <div class="container fade-in">
     <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
+    <div class="page-track" id="pageTrack"></div>
     <h2 id="pageTitle" style="margin-bottom:4px">錯題複習</h2>
     <p class="text-dim mb-16" id="pageDesc">讀取中...</p>
-    <div id="actions" class="mb-16" style="display:flex;gap:12px;flex-wrap:wrap">
-      <button class="btn btn-secondary" id="btnCopyAll" onclick="copyAllWrongPool()">📋 複製所有錯題 (傳送給 AI)</button>
+    <div id="actions" class="review-actions review-actions-start mb-16">
       <button class="btn btn-primary" id="btnRetry" onclick="retryAll()">🔥 開始錯題挑戰測驗</button>
+      <button class="btn btn-secondary" id="btnCopyAll" onclick="copyAllWrongPool()">📋 複製錯題給 AI 解析</button>
     </div>
     <div class="card mb-16" id="bankScopeCard" style="display:none"></div>
     <div class="card mb-16" id="statFilterCard" style="display:none">
@@ -36,10 +37,10 @@
     </div>
     <div id="list"><p class="text-dim text-center mt-24">讀取中...</p></div>
   </div>
-  <script src="js/core.js?v=20261005"></script>
-  <script src="js/tracks.js?v=20261005"></script>
-  <script src="js/progress.js?v=20261005"></script>
-  <script src="js/question-view.js?v=20261005"></script>
+  <script src="js/core.js?v=20261005b"></script>
+  <script src="js/tracks.js?v=20261005b"></script>
+  <script src="js/progress.js?v=20261005b"></script>
+  <script src="js/question-view.js?v=20261005b"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const scope = params.get('scope') || 'today';
@@ -107,6 +108,8 @@
       allWrongIds = (scope === 'today') ? wp.today_wrong : (scope === 'past' ? wp.past_wrong : wp.ever_wrong);
       pageTitleText = (scope === 'today') ? '今日錯題' : (scope === 'past' ? '往日錯題' : '累積錯題');
       document.getElementById('pageTitle').textContent = `🚩 ${pageTitleText}`;
+      // 錯題只計目前考試類別，標題下註明避免以為其他類別的錯題消失了
+      if (getSelectedTrack()) document.getElementById('pageTrack').textContent = `${getActiveTrack().icon} ${getActiveTrack().name}`;
 
       if (allWrongIds.length === 0) {
         document.getElementById('pageDesc').textContent = `系統記錄中 ${pageTitleText} 共 0 題`;

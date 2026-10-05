@@ -2012,3 +2012,191 @@ label { display: block; font-weight: 700; margin-bottom: 6px; }
   color: var(--wrong);
   border: 1px solid #e57373;
 }
+
+/* ===== 2026-10 UI/UX 調整 ===== */
+/* hidden 屬性一律生效（避免被 display:grid/flex 蓋掉） */
+[hidden] {
+  display: none !important;
+}
+
+/* 已選題庫狀態：是資訊不是按鈕，改成淡色標籤 */
+.selected-pill {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: none;
+}
+.selected-pill.is-empty {
+  background: transparent;
+  color: var(--text-dim);
+  border-style: dashed;
+  border-color: var(--border);
+}
+
+/* 測驗模式的題數徽章（右上角，不擠壓標題） */
+.mode-card {
+  position: relative;
+}
+.mode-count {
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  min-width: 24px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--wrong);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: center;
+}
+.mode-card[data-value="key"] .mode-count {
+  background: var(--gold);
+}
+
+/* 題庫卡片：系列、題數、修法提示排成一列 */
+.bank-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 6px;
+}
+.bank-tags .bank-series,
+.bank-tags .bank-count {
+  margin-top: 0;
+}
+.bank-tags .bank-warning-badge {
+  margin-left: 0;
+}
+
+/* 沒有該題型的題型按鈕 */
+.filter-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 題數：輸入框與快捷鈕同一列 */
+.quiz-count-row {
+  flex-wrap: nowrap;
+}
+.quiz-count-row .number-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.quiz-count-row .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* 交卷頁 / 錯題本動作列 */
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.review-actions-start {
+  justify-content: flex-start;
+}
+/* 交卷統計不可點，不要有可點的游標與浮起效果 */
+.stat-row-compact .stat-box {
+  cursor: default;
+}
+.stat-row-compact .stat-box:hover {
+  transform: none;
+  background: var(--card);
+  border-color: var(--card-border);
+}
+.stat-box .num.text-green { color: var(--correct); }
+.stat-box .num.text-red { color: var(--wrong); }
+.stat-box .num.text-gold { color: var(--gold); }
+
+.page-track {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+/* 更新日誌：新增/修正標籤 */
+.changelog-kind {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  vertical-align: 1px;
+}
+.changelog-kind.kind-feat { background: var(--correct-bg); color: var(--correct); }
+.changelog-kind.kind-fix { background: var(--count-bg); color: var(--gold); }
+.changelog-kind.kind-chore { background: var(--bg); color: var(--text-dim); }
+
+/* 觸控裝置不顯示鍵盤快捷鍵說明 */
+@media (hover: none) {
+  .kbd-hint {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  /* 系列卡片改兩欄、精簡說明，少佔一整個螢幕 */
+  .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .collection-card {
+    min-height: 0;
+    padding: 11px 12px;
+  }
+  .collection-desc {
+    display: none;
+  }
+
+  /* 設定很長，開始按鈕黏在畫面底部隨時可按 */
+  .quiz-dashboard > #startBtn:not(:disabled) {
+    position: sticky;
+    bottom: 12px;
+    z-index: 20;
+  }
+
+  /* 交卷統計四格一列 */
+  .stat-row.stat-row-compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .stat-row-compact .stat-box {
+    min-width: 0;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-row-compact .stat-box .num {
+    font-size: 1.45rem;
+  }
+  .stat-row-compact .stat-box .lbl {
+    font-size: 0.8rem;
+  }
+
+  .review-actions .btn {
+    flex: 1 1 100%;
+  }
+
+  /* 作答頁：上一題/下一題/交卷黏在底部，不用捲到最下面 */
+  .nav-row {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: 0 -14px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+  }
+}

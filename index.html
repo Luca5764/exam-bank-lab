@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>考古題練習室 | 靜態版</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005">
+  <link rel="stylesheet" href="css/style.css?v=20261005b">
 </head>
 
 <body>
@@ -136,7 +136,7 @@
           <button class="filter-chip active" id="typeBtnSC" onclick="toggleTypeFilter('sc')">單選題</button>
           <button class="filter-chip active" id="typeBtnMC" onclick="toggleTypeFilter('mc')">複選題</button>
         </div>
-        <div class="settings-hint">預設全選。若只挑特定題型，可取消點選不需要的題型。</div>
+        <div class="settings-hint" id="typeHelp">預設全選。若只挑特定題型，可取消點選不需要的題型。</div>
       </div>
 
       <div class="settings-section">
@@ -188,16 +188,16 @@
     </div>
 
     <div class="footer-links">
-      <a href="laws.html">法條字卡</a>
+      <a href="laws.html" id="lawsLink">法條字卡</a>
       <a href="changelog.html">更新日誌</a>
     </div>
 
   </div>
 
-  <script src="js/core.js?v=20261005"></script>
-  <script src="js/tracks.js?v=20261005"></script>
-  <script src="js/progress.js?v=20261005"></script>
-  <script src="js/question-view.js?v=20261005"></script>
+  <script src="js/core.js?v=20261005b"></script>
+  <script src="js/tracks.js?v=20261005b"></script>
+  <script src="js/progress.js?v=20261005b"></script>
+  <script src="js/question-view.js?v=20261005b"></script>
   <script>
     let ALL_BANKS = [];
     let BANK_INFO = [];          // 目前分流的題庫
@@ -255,6 +255,8 @@
     /* ===== 分流 ===== */
     function onTrackChanged() {
       $('heroSubtitle').textContent = getActiveTrack().subtitle;
+      // 法條字卡目前只收錄農田水利相關法規
+      $('lawsLink').hidden = getSelectedTrack() !== '' && getSelectedTrack() !== 'irrigation';
       applyTrackFilter();
     }
 
@@ -263,6 +265,8 @@
       selectedBanks = new Set();
       shelf.reset(BANK_INFO);
       scopePicker.reset();
+      // 只有一份題庫的分流（例如 EMT-1）直接幫忙選好
+      if (BANK_INFO.length === 1) selectedBanks.add(BANK_INFO[0].file);
       $('totalCount').textContent = sumQuestionCount(BANK_INFO);
       renderBankBrowser();
       renderResumeCard();
@@ -302,10 +306,10 @@
       const hasWrong = wp.ever_wrong.length > 0;
       const keyCount = getModeSourceItems('key').length;
       // 常錯題篩選與「曾錯過的題」共用同一個母集合（錯 ≥ 1 次），沒錯題時一併停用
-      setModeCard('wrong', hasWrong, hasWrong ? `曾錯過的題 (${wp.ever_wrong.length})` : '曾錯過的題');
-      setModeCard('still-wrong', hasWrong, hasWrong ? `至今仍錯的題 (${wp.still_wrong.length})` : '至今仍錯的題');
+      setModeCard('wrong', hasWrong, wp.ever_wrong.length);
+      setModeCard('still-wrong', wp.still_wrong.length > 0, wp.still_wrong.length);
       setModeCard('stat', hasWrong);
-      setModeCard('key', keyCount > 0, keyCount ? `重點標記題 (${keyCount})` : '重點標記題');
+      setModeCard('key', keyCount > 0, keyCount);
 
       // 目前模式被停用時退回隨機
       const active = document.querySelector(`.mode-card[data-value="${currentMode()}"]`);
@@ -313,11 +317,19 @@
       else selectQuizMode(currentMode(), { keepScope: true });
     }
 
-    function setModeCard(mode, enabled, title) {
+    // 停用沒有題目可練的模式；count 顯示成右側的數字徽章
+    function setModeCard(mode, enabled, count = 0) {
       const card = document.querySelector(`.mode-card[data-value="${mode}"]`);
       if (!card) return;
       card.classList.toggle('disabled', !enabled);
-      if (title) card.querySelector('.mode-title').textContent = title;
+      let badge = card.querySelector('.mode-count');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'mode-count';
+        card.appendChild(badge);
+      }
+      badge.textContent = count || '';
+      badge.hidden = !count;
     }
 
     /* ===== 歷程紀錄 ===== */
@@ -426,9 +438,44 @@
       const selected = getSelectedBankList();
       $('selectedSummary').textContent = selected.length
         ? `已選 ${selected.length} 份 / ${sumQuestionCount(selected)} 題`
-        : '請選擇題庫';
+        : '尚未選擇題庫';
+      $('selectedSummary').classList.toggle('is-empty', !selected.length);
       syncCountFromInput();
+      renderTypeFilters();
       updateStartState();
+    }
+
+    /* ===== 題型 ===== */
+    const TYPE_LABELS = { tf: '是非題', sc: '單選題', mc: '複選題' };
+
+    // 目前範圍內各題型題數：一般模式看已選題庫（沒選就看整個分流），錯題/標記模式看整個分流
+    function availableTypeCounts() {
+      const banks = !SCOPE_MODES.includes(currentMode()) && selectedBanks.size ? getSelectedBankList() : BANK_INFO;
+      const counts = { tf: 0, sc: 0, mc: 0 };
+      banks.forEach(bank => {
+        Object.keys(counts).forEach(type => {
+          // 舊版索引沒有 types 時視為各題型都可能有
+          counts[type] += bank.types ? (bank.types[type] || 0) : 1;
+        });
+      });
+      return counts;
+    }
+
+    function renderTypeFilters() {
+      const counts = availableTypeCounts();
+      const available = Object.keys(counts).filter(type => counts[type] > 0);
+      // 換了題庫後若勾選的題型都不存在，恢復全選，避免抽不到題
+      if (available.length && !available.some(type => selectedTypes.has(type))) available.forEach(type => selectedTypes.add(type));
+      Object.keys(TYPE_LABELS).forEach(type => {
+        const btn = $(`typeBtn${type.toUpperCase()}`);
+        const has = counts[type] > 0;
+        btn.disabled = !has;
+        btn.classList.toggle('active', has && selectedTypes.has(type));
+        btn.title = has ? '' : '目前題庫沒有這種題型';
+      });
+      $('typeHelp').textContent = available.length === 1
+        ? `目前題庫只有${TYPE_LABELS[available[0]]}。`
+        : '預設全選。若只挑特定題型，可取消點選不需要的題型。';
     }
 
     /* ===== 測驗模式 ===== */
@@ -446,6 +493,7 @@
       $('modeHelp').textContent = MODE_HELP[mode] || MODE_HELP.random;
       $('statFilterPanel').style.display = mode === 'stat' ? 'block' : 'none';
       renderModeScopePanel();
+      renderTypeFilters();
     }
 
     // 「常錯題篩選」模式目前的門檻（minWrong 至少 1，避免抽到沒錯過的題）
@@ -506,8 +554,11 @@
     }
 
     function toggleTypeFilter(type) {
+      const counts = availableTypeCounts();
+      if (!counts[type]) return;
       if (selectedTypes.has(type)) {
-        if (selectedTypes.size === 1) {
+        const activeAvailable = [...selectedTypes].filter(t => counts[t] > 0);
+        if (activeAvailable.length === 1) {
           showToast('請至少選擇一種題型！');
           return;
         }
@@ -515,7 +566,7 @@
       } else {
         selectedTypes.add(type);
       }
-      $(`typeBtn${type.toUpperCase()}`).classList.toggle('active', selectedTypes.has(type));
+      renderTypeFilters();
     }
 
     /* ===== 題數 ===== */
