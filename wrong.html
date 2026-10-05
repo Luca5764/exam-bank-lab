@@ -8,7 +8,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>錯題集 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=theme2">
+  <link rel="stylesheet" href="css/style.css?v=20261005">
 </head>
 <body>
   <div class="container fade-in">
@@ -36,7 +36,10 @@
     </div>
     <div id="list"><p class="text-dim text-center mt-24">讀取中...</p></div>
   </div>
-  <script src="js/shared.js?v=theme2"></script>
+  <script src="js/core.js?v=20261005"></script>
+  <script src="js/tracks.js?v=20261005"></script>
+  <script src="js/progress.js?v=20261005"></script>
+  <script src="js/question-view.js?v=20261005"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const scope = params.get('scope') || 'today';
@@ -44,87 +47,27 @@
     let allWrongIds = [];
     let qMap = {};
     let pageTitleText = '';
+    let ALL_BANKS = [];
 
-    // 來源題庫篩選（與首頁「曾錯過的題」同套 UX，null 代表尚未初始化＝全選）
-    let scopeSelected = null;
-    let scopeBanks = [];
+    // 來源題庫篩選（與首頁「曾錯過的題」同一套元件）
+    const scopePicker = new BankScopePicker({
+      container: document.getElementById('bankScopeCard'),
+      hint: '',
+      onChange: applyStatFilter,
+    }).watchLayout();
 
     function copyBrowse(idx) {
-      const q = wrongQ[idx];
-      copyText(buildBrowsePrompt(q), document.getElementById(`cpbtn-${idx}`));
-    }
-
-    // 套用來源題庫篩選後的錯題清單（門檻篩選之前先過這層）
-    function getScopeFilteredIds() {
-      if (!scopeSelected) return allWrongIds.slice();
-      return allWrongIds.filter(it => scopeSelected.has(it.bank));
+      copyText(buildBrowsePrompt(wrongQ[idx]), document.getElementById(`cpbtn-${idx}`));
     }
 
     function renderBankScopePanel() {
-      const counts = {};
-      for (const it of allWrongIds) counts[it.bank] = (counts[it.bank] || 0) + 1;
-      scopeBanks = Object.keys(counts)
-        .map(file => ({ file, count: counts[file], title: bankLabel(file) }))
-        .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
-
+      const banks = summarizeItemsByBank(allWrongIds, ALL_BANKS);
       const card = document.getElementById('bankScopeCard');
       // 只有單一來源時無從篩選，直接隱藏
-      if (scopeBanks.length <= 1) { card.style.display = 'none'; scopeSelected = null; return; }
-
-      const valid = new Set(scopeBanks.map(b => b.file));
-      scopeSelected = scopeSelected
-        ? new Set([...scopeSelected].filter(f => valid.has(f)))
-        : new Set(valid);
-
+      if (banks.length <= 1) { card.style.display = 'none'; scopePicker.reset(); return; }
+      scopePicker.hint = `這些是${pageTitleText}實際所在的題庫，預設全選；取消勾選可只練特定來源（與下方門檻一起作用）。`;
       card.style.display = 'block';
-      card.innerHTML = `
-        <div class="scope-head">
-          <span class="scope-title">限定來源題庫</span>
-          <span class="scope-summary" id="scopeSummary"></span>
-        </div>
-        <div class="scope-hint">這些是${pageTitleText}實際所在的題庫，預設全選；取消勾選可只練特定來源（與下方門檻一起作用）。</div>
-        <div class="bank-toolbar">
-          <button class="btn btn-secondary btn-sm" onclick="setAllScope(true)">全選</button>
-          <button class="btn btn-secondary btn-sm" onclick="setAllScope(false)">全不選</button>
-        </div>
-        <div class="scope-list">
-          ${scopeBanks.map(b => `
-            <label class="scope-item ${scopeSelected.has(b.file) ? 'selected' : ''}" data-file="${esc(b.file)}">
-              <input type="checkbox" ${scopeSelected.has(b.file) ? 'checked' : ''} onchange="toggleScopeBank(this)">
-              <span class="scope-item-title"><span class="scope-marquee">${esc(b.title)}</span></span>
-              <span class="scope-item-count">${b.count} 題</span>
-            </label>`).join('')}
-        </div>`;
-      updateScopeSummary();
-    }
-
-    function updateScopeSummary() {
-      const summary = document.getElementById('scopeSummary');
-      if (!summary) return;
-      const total = scopeBanks.reduce((s, b) => s + b.count, 0);
-      const sel = scopeBanks.filter(b => scopeSelected && scopeSelected.has(b.file)).reduce((s, b) => s + b.count, 0);
-      summary.textContent = `已選 ${sel} 題 / 共 ${total} 題`;
-    }
-
-    function toggleScopeBank(input) {
-      const item = input.closest('.scope-item');
-      const file = item.dataset.file;
-      if (input.checked) scopeSelected.add(file); else scopeSelected.delete(file);
-      item.classList.toggle('selected', input.checked);
-      updateScopeSummary();
-      applyStatFilter();
-    }
-
-    function setAllScope(on) {
-      scopeSelected = on ? new Set(scopeBanks.map(b => b.file)) : new Set();
-      document.querySelectorAll('#bankScopeCard .scope-item').forEach(item => {
-        const sel = scopeSelected.has(item.dataset.file);
-        item.classList.toggle('selected', sel);
-        const cb = item.querySelector('input');
-        if (cb) cb.checked = sel;
-      });
-      updateScopeSummary();
-      applyStatFilter();
+      scopePicker.render(banks);
     }
 
     // 依「來源題庫」＋「累計答錯次數／正確率」門檻重篩清單；複製與挑戰測驗都吃篩選後的 wrongQ
@@ -133,10 +76,10 @@
         document.getElementById('fMinWrong').value,
         document.getElementById('fMaxAcc').value
       );
-      const ids = getScopeFilteredIds().filter(it => matchesStatFilter(getQuestionStats(it.bank, it.qid), p.minWrong, p.maxAccPct));
+      const ids = allWrongIds.filter(it => scopePicker.isSelected(it.bank)).filter(it => matchesStatFilter(getQuestionStats(it.bank, it.qid), p.minWrong, p.maxAccPct));
       wrongQ = ids.map(item => qMap[`${item.bank}:${item.qid}`]).filter(Boolean);
 
-      const scopeNarrowed = scopeSelected && scopeBanks.length > 1 && scopeSelected.size < scopeBanks.length;
+      const scopeNarrowed = scopePicker.banks.length > 1 && scopePicker.isNarrowed();
       const isFiltered = p.minWrong > 0 || p.maxAccPct !== null || scopeNarrowed;
       document.getElementById('statFilterCount').textContent = `符合門檻 ${ids.length} 題 / 共 ${allWrongIds.length} 題`;
       document.getElementById('pageDesc').textContent = isFiltered
@@ -149,13 +92,12 @@
     }
 
     async function init() {
-      await initOverrides();
-      await loadBankLabels();
-      const history = loadLocalHistory();
+      const [banks] = await Promise.all([loadBankIndex(), initOverrides()]);
+      ALL_BANKS = banks;
       // 鍵的推導方式必須與 getWrongPool 一致（item.bank || session 預設值），
       // 不可退回裸 qid：不同題庫共用小整數題號，會撈到別的題庫的題目
-      history.forEach(session => {
-        const sessionBank = session.bank || 'questions/questions.json';
+      loadLocalHistory().forEach(session => {
+        const sessionBank = session.bank || LEGACY_BANK;
         (session.questions || []).forEach(q => {
           qMap[`${q._bank || sessionBank}:${q.id}`] = q;
         });
@@ -179,8 +121,8 @@
     }
 
     function copyAllWrongPool() {
-      const header = `${SEARCH_HINT}\n以下為我在「${document.getElementById('pageTitle').textContent}」分類中的 ${wrongQ.length} 題考古題：\n請詳細為我解析正確答案與相關法規。\n`;
-      copyText(header + '\n' + wrongQ.map(q => buildBrowsePrompt(q, { searchHint: false })).join('\n' + '='.repeat(50) + '\n'), document.getElementById('btnCopyAll'));
+      const header = `以下為我在「${pageTitleText}」分類中的 ${wrongQ.length} 題考古題：\n請詳細為我解析正確答案與判斷關鍵。`;
+      copyText(buildBatchPrompt(header, wrongQ.map(q => buildBrowsePrompt(q, { searchHint: false }))), document.getElementById('btnCopyAll'));
     }
 
     function retryAll() {

@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>測驗中 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=theme2">
+  <link rel="stylesheet" href="css/style.css?v=20261005">
   <style>
     .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; }
@@ -84,18 +84,21 @@
     <div class="kbd-hint" style="font-size:0.72rem;color:var(--text-dim);text-align:center;margin-top:8px">⌨️ 快捷鍵：1~9 / A~H 選答案 · ← → 換題 · Enter 下一題（最後一題交卷）</div>
   </div>
 
-  <script src="js/shared.js?v=theme2"></script>
+  <script src="js/core.js?v=20261005"></script>
+  <script src="js/tracks.js?v=20261005"></script>
+  <script src="js/progress.js?v=20261005"></script>
+  <script src="js/question-view.js?v=20261005"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const mode = params.get('mode') || 'random';
-    let numQ = parseInt(params.get('num') || '50');
-    const retryIds = params.get('retryIds');
+    let numQ = parseInt(params.get('num') || '50', 10);
     const isResume = params.get('resume') === '1';
-    const bank = params.get('bank') || 'questions/questions.json';
+    // 題庫清單：banks=a,b（目前格式）或 bank=a（舊網址）
+    const bankFiles = (params.get('banks') || params.get('bank') || LEGACY_BANK).split(',').filter(Boolean);
+    const bank = bankFiles[0];
     const srcBanksParam = params.get('srcBanks');
-    const srcBanks = srcBanksParam ? new Set(srcBanksParam.split(',').map(decodeURIComponent)) : null;
+    const srcBanks = srcBanksParam ? new Set(srcBanksParam.split(',')) : null;
 
-    let allQ = [];
     let quizQ = [];
     let cur = 0;
     let userAns = {};
@@ -211,7 +214,7 @@
     }
 
     function getQuestionHistoryKey(q) {
-      return `${q._bank || bank}|${q.id}`;
+      return itemKey(q._bank || bank, q.id);
     }
 
     function getBlockAttemptScore(block, statsMap) {
@@ -222,7 +225,7 @@
     }
 
     function weightedShuffleQuestionBlocks(blocks) {
-      // 共用 shared.js 的作答統計快取（跳過不計，與「沒做過的題」模式同口徑）
+      // 共用 js/progress.js 的作答統計快取（跳過不計，與「沒做過的題」模式同口徑）
       const attemptCounts = getAttemptCountMap();
       if (!Object.keys(attemptCounts).length) return shuffle(blocks);
 
@@ -276,11 +279,34 @@
       return results.flat();
     }
 
+    const EMPTY_MODE_MESSAGE = {
+      wrong: '沒有錯題可以練習！',
+      'still-wrong': '沒有錯題可以練習！',
+      stat: '沒有符合篩選門檻的題目可以練習！',
+      key: '沒有重點標記題可以練習！',
+    };
+
+    // 錯題/常錯/重點模式要練的 { bank, qid }，並套用首頁勾選的來源題庫
+    function getModeItems() {
+      let items;
+      if (mode === 'stat') {
+        // 門檻由首頁帶在網址上（minWrong 累計答錯下限、maxAcc 正確率上限）
+        const p = parseStatFilterInputs(params.get('minWrong'), params.get('maxAcc'));
+        items = getStatFilteredItems(Math.max(1, p.minWrong), p.maxAccPct);
+      } else if (mode === 'key') {
+        items = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
+      } else {
+        const wp = getWrongPool();
+        items = mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
+      }
+      return srcBanks ? items.filter(it => srcBanks.has(it.bank)) : items;
+    }
+
     async function init() {
       // 先把 overrides 與題庫名稱索引的下載踢出去，跟題庫檔平行載入；
       // 名稱索引不阻塞開場（載入前「顯示來源」會暫以檔名呈現）
-      const overridesReady = initOverrides();
-      loadBankLabels();
+      initOverrides();
+      loadBankIndex();
 
       if (isResume) {
         const saved = loadSession();
@@ -303,59 +329,24 @@
         sessionStorage.removeItem('retry_questions');
         try { pool = JSON.parse(stored) || []; } catch { pool = []; }
         if (!Array.isArray(pool) || !pool.length) { location.href = 'index.html'; return; }
-      } else if (mode === 'wrong' || mode === 'still-wrong') {
-        const wp = getWrongPool();
-        let items = mode === 'wrong' ? wp.ever_wrong : wp.still_wrong;
-        if (srcBanks) items = items.filter(it => srcBanks.has(it.bank));
-        if (!items.length) { alert('沒有錯題可以練習！'); location.href = 'index.html'; return; }
-        const byBank = {};
-        for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
-        pool = await fetchBanksParallel(Object.keys(byBank), byBank);
-      } else if (mode === 'stat') {
-        // 常錯題篩選：門檻由首頁帶在網址上（minWrong 累計答錯下限、maxAcc 正確率上限）
-        const p = parseStatFilterInputs(params.get('minWrong'), params.get('maxAcc'));
-        let items = getStatFilteredItems(Math.max(1, p.minWrong), p.maxAccPct);
-        if (srcBanks) items = items.filter(it => srcBanks.has(it.bank));
-        if (!items.length) { alert('沒有符合篩選門檻的題目可以練習！'); location.href = 'index.html'; return; }
-        const byBank = {};
-        for (const { bank: b, qid } of items) { (byBank[b] = byBank[b] || new Set()).add(qid); }
-        pool = await fetchBanksParallel(Object.keys(byBank), byBank);
-      } else if (mode === 'key') {
-        let keyQuestions = getQuestionsWithTag('key').filter(item => isBankFileInActiveTrack(item.bank));
-        if (srcBanks) keyQuestions = keyQuestions.filter(it => srcBanks.has(it.bank));
-        if (!keyQuestions.length) { alert('沒有重點標記題可以練習！'); location.href = 'index.html'; return; }
-        const byBank = {};
-        for (const { bank: b, qid } of keyQuestions) { (byBank[b] = byBank[b] || new Set()).add(qid); }
+      } else if (mode === 'wrong' || mode === 'still-wrong' || mode === 'stat' || mode === 'key') {
+        const items = getModeItems();
+        if (!items.length) { alert(EMPTY_MODE_MESSAGE[mode]); location.href = 'index.html'; return; }
+        const byBank = groupItemsByBank(items);
         pool = await fetchBanksParallel(Object.keys(byBank), byBank);
       } else {
-        const banksParam = params.get('banks');
-        const bankFiles = banksParam
-          ? banksParam.split(',').map(decodeURIComponent)
-          : [decodeURIComponent(bank)];
         pool = await fetchBanksParallel(bankFiles);
       }
 
-      // Filter by question type if requested
+      // 題型篩選（是非/單選/複選）
       const typesParam = params.get('types');
       if (typesParam) {
-        const allowed = typesParam.split(',');
-        pool = pool.filter(q => {
-          const isTF = !isMultiAnswer(q) && q.options.length === 2;
-          const isMC = isMultiAnswer(q);
-          const isSC = !isMultiAnswer(q) && q.options.length > 2;
-          
-          if (allowed.includes('tf') && isTF) return true;
-          if (allowed.includes('sc') && isSC) return true;
-          if (allowed.includes('mc') && isMC) return true;
-          return false;
-        });
+        const allowed = new Set(typesParam.split(','));
+        pool = pool.filter(q => allowed.has(questionType(q)));
       }
 
-      // Filter out excluded questions
-      pool = pool.filter(q => {
-        const meta = getQuestionMetadata(q._bank || bank, q.id);
-        return meta.tag !== 'exclude';
-      });
+      // 排除標記為「排除」的題目
+      pool = pool.filter(q => getQuestionMetadata(q._bank || bank, q.id).tag !== 'exclude');
 
       // 「未練過」模式：只留下從未實際作答過的題（跳過不算，與單題「作答 N 次」一致）
       if (mode === 'unseen') {
@@ -407,17 +398,9 @@
         const i = +b.dataset.i;
         b.className = 'q-jump-btn';
         if (i === cur) b.classList.add('current');
-        else {
-          const ans = userAns[i];
-          const answered = Array.isArray(ans) ? ans.length > 0 : ans !== undefined;
-          if (answered) b.classList.add('answered');
-        }
+        else if (isAnswered(userAns[i])) b.classList.add('answered');
       });
-      const answeredCount = Object.keys(userAns).filter(k => {
-        const ans = userAns[k];
-        return Array.isArray(ans) ? ans.length > 0 : ans !== undefined;
-      }).length;
-      document.getElementById('ansCount').textContent = answeredCount;
+      document.getElementById('ansCount').textContent = answeredCount();
     }
 
     function render() {
@@ -427,55 +410,30 @@
       document.getElementById('progFill').style.width = `${((cur + 1) / quizQ.length) * 100}%`;
       const sel = userAns[cur];
 
-      let optionsHtml;
-      if (multi) {
-        const selSet = new Set(Array.isArray(sel) ? sel : []);
-        optionsHtml = q.options.map((o, i) => `<button class="option-btn ${selSet.has(i) ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('');
-      } else {
-        optionsHtml = q.options.map((o, i) => `<button class="option-btn ${sel === i ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('');
-      }
+      const selSet = new Set(multi ? (Array.isArray(sel) ? sel : []) : [sel]);
+      const optionsHtml = q.options.map((o, i) => `<button class="option-btn ${selSet.has(i) ? 'selected' : ''}" onclick="pick(${i}, event)"><span class="opt-letter">${LETTERS[i]}</span><span>${esc(o)}</span></button>`).join('');
+      const qBank = q._bank || bank;
 
-      const meta = getQuestionMetadata(q._bank || bank, q.id);
-      const hasNotes = !!meta.notes;
-      const metaHtml = `
-        <div class="q-meta-panel" data-bank="${q._bank || bank}" data-qid="${q.id}">
-          <div class="q-meta-tags">
-            <span style="font-size:0.85rem;color:var(--text-dim);font-weight:700;margin-right:4px">題目標記：</span>
-            <div class="tag-pill tag-key ${meta.tag === 'key' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'key', this)">⭐ 重點</div>
-            <div class="tag-pill tag-exclude ${meta.tag === 'exclude' ? 'active' : ''}" onclick="toggleQuestionTag('${q._bank || bank}', ${q.id}, 'exclude', this)">🚫 排除</div>
-            <div class="tag-pill tag-notes-toggle ${hasNotes ? 'has-notes' : ''}" onclick="toggleNotesCollapse(this)">📝 筆記</div>
-          </div>
-          <div class="q-meta-notes-wrapper" style="display: none; margin-top: 8px;">
-            <textarea class="q-notes-input" placeholder="對此題撰寫筆記心得..." oninput="saveQuestionNotes('${q._bank || bank}', ${q.id}, this.value, this)">${esc(meta.notes)}</textarea>
-          </div>
-        </div>`;
-
-      const repeatsHtml = q._repeats && q._repeats.length > 1
-        ? `<span class="repeat-badge" title="重複考過年份：${q._repeats.join('、')}">🔄 ${q._repeats.map(r => r.split(' ')[0]).join('、')} 年</span>`
-        : '';
-      const attemptHtml = `<span style="font-size:0.75rem;color:var(--text-dim)" title="此題歷史作答次數（不含本次）">${questionAttemptLabel(q._bank || bank, q.id)}</span>`;
-      const warningHtml = q._warning
-        ? `<div class="amendment-warning">${esc(q._warning)}</div>`
-        : '';
+      const attemptHtml = `<span style="font-size:0.75rem;color:var(--text-dim)" title="此題歷史作答次數（不含本次）">${questionAttemptLabel(qBank, q.id)}</span>`;
 
       document.getElementById('qCard').innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${showSource ? '8px' : '16px'};flex-wrap:wrap;gap:8px">
           <span style="display:inline-block;font-size:0.9rem;font-weight:700;color:var(--accent);background:var(--accent-light);padding:5px 14px;border-radius:8px">第 ${cur + 1} 題</span>
           <div style="display:flex;align-items:center;gap:8px">
-            ${repeatsHtml}
+            ${repeatsBadgeHTML(q)}
             ${attemptHtml}
             <button onclick="showSource=!showSource;render()" style="font-size:0.75rem;color:var(--text-dim);background:none;border:1.5px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:inherit">${showSource ? '隱藏來源' : '顯示來源'}</button>
           </div>
         </div>
-        ${showSource ? `<div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:14px">來源：${bankLabel(q._bank)} · 原試卷第 ${q.id} 題</div>` : ''}
+        ${showSource ? `<div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:14px">來源：${esc(bankLabel(qBank))} · 原試卷第 ${esc(q.id)} 題</div>` : ''}
         <div class="q-text">${esc(q.question)}</div>
-        ${warningHtml}
+        ${amendmentWarningHTML(q)}
         ${renderMaterialsHTML(q.materials)}
         ${multi ? '<div class="multi-badge">☑ 複選題（請選出所有正確答案）</div>' : ''}
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
           ${optionsHtml}
         </div>
-        ${metaHtml}`;
+        ${questionMetaPanelHTML(qBank, q.id, { notesOpen: false })}`;
       document.getElementById('btnPrev').style.visibility = cur > 0 ? 'visible' : 'hidden';
       document.getElementById('btnNext').style.visibility = cur < quizQ.length - 1 ? 'visible' : 'hidden';
       updateJump();
@@ -535,11 +493,12 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function answeredCount() {
+      return Object.values(userAns).filter(isAnswered).length;
+    }
+
     function trySubmit() {
-      const unanswered = quizQ.length - Object.keys(userAns).filter(k => {
-        const ans = userAns[k];
-        return Array.isArray(ans) ? ans.length > 0 : ans !== undefined;
-      }).length;
+      const unanswered = quizQ.length - answeredCount();
       if (unanswered > 0) {
         document.getElementById('warnNum').textContent = unanswered;
         document.getElementById('warnBox').style.display = 'block';
