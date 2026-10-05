@@ -8,17 +8,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>測驗結果 | 考古題練習室</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005">
+  <link rel="stylesheet" href="css/style.css?v=20261005b">
 </head>
 <body>
   <div class="container fade-in">
     <div class="back-link" onclick="location.href='index.html'">← 返回主選單</div>
     <div id="content"><p class="text-dim text-center mt-24">讀取中...</p></div>
   </div>
-  <script src="js/core.js?v=20261005"></script>
-  <script src="js/tracks.js?v=20261005"></script>
-  <script src="js/progress.js?v=20261005"></script>
-  <script src="js/question-view.js?v=20261005"></script>
+  <script src="js/core.js?v=20261005b"></script>
+  <script src="js/tracks.js?v=20261005b"></script>
+  <script src="js/progress.js?v=20261005b"></script>
+  <script src="js/question-view.js?v=20261005b"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const histIdx = parseInt(params.get('historyIdx'));
@@ -68,13 +68,16 @@
       <h2 style="margin:10px 0 4px;font-size:1.3rem">${title}</h2>
       <p class="text-dim">${desc} (${s.correct}/${s.total})&nbsp;&nbsp;${s.date || ''}</p>
     </div>
-    <div class="stat-row mb-24">
+    <div class="stat-row stat-row-compact mb-24">
       <div class="stat-box"><div class="num text-green">${s.correct}</div><div class="lbl">答對</div></div>
       <div class="stat-box"><div class="num text-red">${s.wrong}</div><div class="lbl">答錯</div></div>
       <div class="stat-box"><div class="num">${s.skip || 0}</div><div class="lbl">未答</div></div>
       <div class="stat-box"><div class="num text-gold">${timeStr}</div><div class="lbl">用時</div></div>
     </div>
-    <div class="text-center mb-16"><button class="btn btn-secondary" onclick="copyAllWrong(this)">📋 複製所有錯題 (傳送給 AI)</button></div>
+    <div class="review-actions mb-16">
+      ${wrongIds.length > 0 ? `<button class="btn btn-primary" onclick="retryWrong()">🔥 重新挑戰錯題 (${wrongIds.length})</button>` : ''}
+      ${wrongIds.length > 0 ? `<button class="btn btn-secondary" onclick="copyAllWrong(this)">📋 複製錯題給 AI 解析</button>` : ''}
+    </div>
     ${wrongHtml ? `<div class="mb-24"><h3 style="background:var(--wrong-bg);color:var(--wrong);padding:12px 16px;border-radius:10px;margin-bottom:12px">❌ 答錯或未答 (${wrongIds.length} 題)</h3>${wrongHtml}</div>` : ''}
     ${correctHtml ? `<div class="mb-24"><h3 style="background:var(--correct-bg);color:var(--correct);padding:12px 16px;border-radius:10px;margin-bottom:12px">✅ 答對題目 (${s.correct} 題)</h3>${correctHtml}</div>` : ''}
     <div class="gap-row" style="justify-content:center;margin:28px 0 40px">

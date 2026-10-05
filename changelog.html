@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>更新日誌 | 題庫練習</title>
-  <link rel="stylesheet" href="css/style.css?v=20261005">
+  <link rel="stylesheet" href="css/style.css?v=20261005b">
 </head>
 
 <body>
@@ -26,8 +26,18 @@
     </div>
   </div>
 
-  <script src="js/core.js?v=20261005"></script>
+  <script src="js/core.js?v=20261005b"></script>
   <script>
+    // commit 前綴（feat:/fix:/chore:）改成中文標籤，訊息本身不顯示英文前綴
+    const CHANGE_KINDS = { feat: ['新增', 'kind-feat'], fix: ['修正', 'kind-fix'], chore: ['維護', 'kind-chore'], refactor: ['重構', 'kind-chore'] };
+
+    function changelogMessageHTML(message) {
+      const match = message.match(/^(\w+)(?:\([^)]*\))?:\s*/);
+      const kind = match && CHANGE_KINDS[match[1].toLowerCase()];
+      if (!kind) return esc(message);
+      return `<span class="changelog-kind ${kind[1]}">${kind[0]}</span>${esc(message.slice(match[0].length))}`;
+    }
+
     function formatDate(date) {
       try {
         return new Intl.DateTimeFormat('zh-TW', {
@@ -55,7 +65,7 @@
           const rows = items.map((item) => `
             <li class="changelog-item">
               <span class="changelog-time">${esc(item.time || '')}</span>
-              <span class="changelog-message">${esc(item.message || '')}</span>
+              <span class="changelog-message">${changelogMessageHTML(item.message || '')}</span>
               ${item.hash ? `<span class="changelog-hash">${esc(item.hash)}</span>` : ''}
             </li>
           `).join('');

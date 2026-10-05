@@ -338,8 +338,16 @@ class BankShelf {
     );
   }
 
+  // 只有一個選項時不必讓使用者選：連同上方的 .filter-label 一起隱藏
+  static setSectionVisible(el, visible) {
+    el.hidden = !visible;
+    const label = el.previousElementSibling;
+    if (label && label.classList.contains('filter-label')) label.hidden = !visible;
+  }
+
   render() {
     const collections = getTrackCollections();
+    BankShelf.setSectionVisible(this.els.collections, collections.length > 2);
     this.els.collections.style.setProperty('--cols', Math.min(collections.length, 4));
     this.els.collections.innerHTML = collections.map(item => {
       const banks = item.id === ALL_FILTER ? this.banks : this.banks.filter(b => bankCollection(b) === item.id);
@@ -354,6 +362,7 @@ class BankShelf {
 
     const subjects = [ALL_FILTER, ...new Set(this.banks.filter(b => this.inSource(b)).map(b => b.subject).filter(Boolean))];
     if (!subjects.includes(this.subject)) this.subject = ALL_FILTER;
+    BankShelf.setSectionVisible(this.els.subjects, subjects.length > 2);
     this.els.subjects.innerHTML = subjects.map(s =>
       `<button type="button" class="filter-chip ${s === this.subject ? 'active' : ''}" data-subject="${esc(s)}">${esc(s)}</button>`
     ).join('');
@@ -377,8 +386,11 @@ function bankCardHTML(bank, { selected = false, practice = null } = {}) {
         <span class="bank-title">${esc(bankTitle(bank))}</span>
         <span class="bank-meta">${esc(bankMeta(bank))}</span>
         ${practiceLine}
+        <span class="bank-tags">
+          <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
+          <span class="bank-count">${bank.count} 題</span>
+          ${warningBadge}
+        </span>
       </span>
-      <span class="bank-series">${esc(collectionLabel(bankCollection(bank)))}</span>
-      <span class="bank-count">${bank.count} 題${warningBadge}</span>
     </button>`;
 }

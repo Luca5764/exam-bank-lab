@@ -8,7 +8,12 @@
     "category": "不分職等 / 灌溉管理人員(灌溉管理組)",
     "subject": "農田灌溉排水概要",
     "originalSubject": "灌溉排水概要",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/102_不分職等-灌溉管理人員(灌溉管理組)-農業概論.json",
@@ -19,7 +24,12 @@
     "category": "不分職等 / 灌溉管理人員(灌溉管理組)",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/105_不分職等-共同科目-公文與農田水利相關法規.json",
@@ -30,7 +40,12 @@
     "category": "不分職等 / 共同科目",
     "subject": "公文與法學緒論",
     "originalSubject": "公文與農田水利相關法規",
-    "count": 35
+    "count": 35,
+    "types": {
+      "tf": 0,
+      "sc": 35,
+      "mc": 0
+    }
   },
   {
     "file": "questions/105_不分職等-一般行政人員(會計組)-會計學概要.json",
@@ -41,7 +56,12 @@
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "會計學概要",
     "originalSubject": "會計學概要",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/105_不分職等-共同科目-法學緒論.json",
@@ -52,7 +72,12 @@
     "category": "不分職等 / 共同科目",
     "subject": "公文與法學緒論",
     "originalSubject": "法學緒論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/105_不分職等-灌溉管理人員(灌溉管理組)-灌溉排水概要.json",
@@ -63,7 +88,12 @@
     "category": "不分職等 / 灌溉管理人員(灌溉管理組)",
     "subject": "農田灌溉排水概要",
     "originalSubject": "灌溉排水概要",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/105_不分職等-一般行政人員(會計組)-經濟學概要.json",
@@ -74,7 +104,12 @@
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "經濟學概要",
     "originalSubject": "經濟學概要",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/105_不分職等-灌溉管理人員(灌溉管理組)-農業概論.json",
@@ -85,7 +120,12 @@
     "category": "不分職等 / 灌溉管理人員(灌溉管理組)",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/109_不分職等-共同科目-公文與法學緒論.json",
@@ -96,7 +136,12 @@
     "category": "不分職等 / 共同科目",
     "subject": "公文與法學緒論",
     "originalSubject": "公文與法學緒論",
-    "count": 35
+    "count": 35,
+    "types": {
+      "tf": 0,
+      "sc": 35,
+      "mc": 0
+    }
   },
   {
     "file": "questions/109_不分職等-一般行政人員(會計組)-會計學概要.json",
@@ -107,7 +152,12 @@
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "會計學概要",
     "originalSubject": "會計學概要",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/109 不分職等-一般行政人員(會計組)-經濟學概要.json",
@@ -118,7 +168,12 @@
     "category": "不分職等 / 一般行政人員(會計組)",
     "subject": "經濟學概要",
     "originalSubject": "經濟學概要",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/109_不分職等-灌溉管理人員(灌溉管理組)-農業概論.json",
@@ -129,7 +184,12 @@
     "category": "不分職等 / 灌溉管理人員(灌溉管理組)",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/109_不分職等-共同科目-農田水利概論與相關法規.json",
@@ -140,7 +200,12 @@
     "category": "不分職等 / 共同科目",
     "subject": "農田水利概論與相關法規",
     "originalSubject": "農田水利概論與相關法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/109_不分職等-灌溉管理人員(灌溉管理組)-農田灌溉排水概要.json",
@@ -151,7 +216,12 @@
     "category": "不分職等 / 灌溉管理人員(灌溉管理組)",
     "subject": "農田灌溉排水概要",
     "originalSubject": "農田灌溉排水概要",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/共同科目一-公文及法學緒論.json",
@@ -162,7 +232,12 @@
     "category": "共同科目一",
     "subject": "公文與法學緒論",
     "originalSubject": "公文及法學緒論",
-    "count": 35
+    "count": 35,
+    "types": {
+      "tf": 0,
+      "sc": 35,
+      "mc": 0
+    }
   },
   {
     "file": "questions/專業科目一-會計學概要.json",
@@ -173,7 +248,12 @@
     "category": "專業科目一",
     "subject": "會計學概要",
     "originalSubject": "會計學概要",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/專業科目二-經濟學概要.json",
@@ -184,7 +264,12 @@
     "category": "專業科目二",
     "subject": "經濟學概要",
     "originalSubject": "經濟學概要",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/111_灌溉管理組-農業概論.json",
@@ -195,7 +280,12 @@
     "category": "灌溉管理組",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/共同科目二-農田水利概論與相關法規.json",
@@ -206,7 +296,12 @@
     "category": "共同科目二",
     "subject": "農田水利概論與相關法規",
     "originalSubject": "農田水利概論與相關法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/111_灌溉管理組-農田灌溉排水概要.json",
@@ -217,7 +312,12 @@
     "category": "灌溉管理組",
     "subject": "農田灌溉排水概要",
     "originalSubject": "農田灌溉排水概要",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/113農田水利署-公文與法學緒論.json",
@@ -228,7 +328,12 @@
     "category": "共同科目",
     "subject": "公文與法學緒論",
     "originalSubject": "公文與法學緒論",
-    "count": 33
+    "count": 33,
+    "types": {
+      "tf": 0,
+      "sc": 33,
+      "mc": 0
+    }
   },
   {
     "file": "questions/113農田水利署-會計學概要.json",
@@ -239,7 +344,12 @@
     "category": "專業科目",
     "subject": "會計學概要",
     "originalSubject": "會計學概要",
-    "count": 32
+    "count": 32,
+    "types": {
+      "tf": 0,
+      "sc": 32,
+      "mc": 0
+    }
   },
   {
     "file": "questions/113農田水利署-經濟學概要.json",
@@ -250,7 +360,12 @@
     "category": "專業科目",
     "subject": "經濟學概要",
     "originalSubject": "經濟學概要",
-    "count": 33
+    "count": 33,
+    "types": {
+      "tf": 0,
+      "sc": 33,
+      "mc": 0
+    }
   },
   {
     "file": "questions/113農田水利署-農田水利概論與相關法規 (1).json",
@@ -261,7 +376,12 @@
     "category": "專業科目",
     "subject": "農田水利概論與相關法規",
     "originalSubject": "農田水利概論與相關法規",
-    "count": 27
+    "count": 27,
+    "types": {
+      "tf": 0,
+      "sc": 27,
+      "mc": 0
+    }
   },
   {
     "file": "questions/109統測專二-會計學與經濟學.json",
@@ -272,7 +392,12 @@
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
     "originalSubject": "會計學與經濟學",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/110統測專二-會計學與經濟學.json",
@@ -283,7 +408,12 @@
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
     "originalSubject": "會計學與經濟學",
-    "count": 49
+    "count": 49,
+    "types": {
+      "tf": 0,
+      "sc": 49,
+      "mc": 0
+    }
   },
   {
     "file": "questions/111統測專二-會計學與經濟學.json",
@@ -294,7 +424,12 @@
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
     "originalSubject": "會計學與經濟學",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/112統測專二-會計學與經濟學.json",
@@ -305,7 +440,12 @@
     "category": "商業與管理群",
     "subject": "會計學與經濟學",
     "originalSubject": "會計學與經濟學",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/112統測農概-農業概論.json",
@@ -316,7 +456,12 @@
     "category": "農業群",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/113統測農概-農業概論.json",
@@ -327,7 +472,12 @@
     "category": "農業群",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/113農田水利署-農業概論.json",
@@ -338,7 +488,12 @@
     "category": "專業科目",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/113農田水利署-農田灌溉排水概要.json",
@@ -349,7 +504,12 @@
     "category": "專業科目",
     "subject": "農田灌溉排水概要",
     "originalSubject": "農田灌溉排水概要",
-    "count": 15
+    "count": 15,
+    "types": {
+      "tf": 0,
+      "sc": 15,
+      "mc": 0
+    }
   },
   {
     "file": "questions/114統測農概-農業概論.json",
@@ -360,7 +520,12 @@
     "category": "農業群",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/115統測農概-農業概論.json",
@@ -371,7 +536,12 @@
     "category": "農業群",
     "subject": "農業概論",
     "originalSubject": "農業概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 50,
+      "mc": 0
+    }
   },
   {
     "file": "questions/EMT1-陸軍北區訓練中心-初複訓學科測驗.json",
@@ -382,7 +552,12 @@
     "category": "陸軍北區訓練中心",
     "subject": "初複訓學科測驗",
     "originalSubject": "初複訓學科測驗",
-    "count": 300
+    "count": 300,
+    "types": {
+      "tf": 0,
+      "sc": 300,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部110-2-汽車構造原理概論.json",
@@ -393,7 +568,12 @@
     "category": "第2梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部110-2-汽車駕駛理論.json",
@@ -404,7 +584,12 @@
     "category": "第2梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部110-2-道路交通法規.json",
@@ -415,7 +600,12 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部110-3-汽車構造原理概論.json",
@@ -426,7 +616,12 @@
     "category": "第3梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部110-3-汽車駕駛理論.json",
@@ -437,7 +632,12 @@
     "category": "第3梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部110-3-道路交通法規.json",
@@ -448,7 +648,12 @@
     "category": "第3梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部110-汽車構造原理概論.json",
@@ -459,7 +664,12 @@
     "category": "年度檢定",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部110-汽車駕駛理論.json",
@@ -470,7 +680,12 @@
     "category": "年度檢定",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部110-道路交通法規.json",
@@ -481,7 +696,12 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-1-汽車構造原理概論.json",
@@ -492,7 +712,12 @@
     "category": "第1梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-1-汽車駕駛理論.json",
@@ -503,7 +728,12 @@
     "category": "第1梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部111-1-道路交通法規.json",
@@ -514,7 +744,12 @@
     "category": "第1梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-2-汽車構造原理概論.json",
@@ -525,7 +760,12 @@
     "category": "第2梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-2-汽車駕駛理論.json",
@@ -536,7 +776,12 @@
     "category": "第2梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部111-2-道路交通法規.json",
@@ -547,7 +792,12 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-3-汽車構造原理概論.json",
@@ -558,7 +808,12 @@
     "category": "第3梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-3-汽車駕駛理論.json",
@@ -569,7 +824,12 @@
     "category": "第3梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部111-3-道路交通法規.json",
@@ -580,7 +840,12 @@
     "category": "第3梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-汽車構造原理概論.json",
@@ -591,7 +856,12 @@
     "category": "年度檢定",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部111-汽車駕駛理論.json",
@@ -602,7 +872,12 @@
     "category": "年度檢定",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部111-道路交通法規.json",
@@ -613,7 +888,12 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部112-1-汽車構造原理概論.json",
@@ -624,7 +904,12 @@
     "category": "第1梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部112-1-汽車駕駛理論.json",
@@ -635,7 +920,12 @@
     "category": "第1梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部112-1-道路交通法規.json",
@@ -646,7 +936,12 @@
     "category": "第1梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部112-2-汽車構造原理概論.json",
@@ -657,7 +952,12 @@
     "category": "第2梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部112-2-汽車駕駛理論.json",
@@ -668,7 +968,12 @@
     "category": "第2梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部112-2-道路交通法規.json",
@@ -679,7 +984,12 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部112-3-汽車構造原理概論.json",
@@ -690,7 +1000,12 @@
     "category": "第3梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部112-3-汽車駕駛理論.json",
@@ -701,7 +1016,12 @@
     "category": "第3梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部112-3-道路交通法規.json",
@@ -712,7 +1032,12 @@
     "category": "第3梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部112-汽車構造原理概論.json",
@@ -723,7 +1048,12 @@
     "category": "年度檢定",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部112-汽車駕駛理論.json",
@@ -734,7 +1064,12 @@
     "category": "年度檢定",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 30,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部112-道路交通法規.json",
@@ -745,7 +1080,12 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 40
+    "count": 40,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部113-1-汽車構造原理概論.json",
@@ -756,7 +1096,12 @@
     "category": "第1梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部113-1-汽車駕駛理論.json",
@@ -767,7 +1112,12 @@
     "category": "第1梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-1-道路交通法規.json",
@@ -778,7 +1128,12 @@
     "category": "第1梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-2-汽車構造原理概論.json",
@@ -789,7 +1144,12 @@
     "category": "第2梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部113-2-汽車駕駛理論.json",
@@ -800,7 +1160,12 @@
     "category": "第2梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-2-道路交通法規.json",
@@ -811,7 +1176,12 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-3-汽車構造原理概論.json",
@@ -822,7 +1192,12 @@
     "category": "第3梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部113-3-汽車駕駛理論.json",
@@ -833,7 +1208,12 @@
     "category": "第3梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-3-道路交通法規.json",
@@ -844,7 +1224,12 @@
     "category": "第3梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-4-汽車構造原理概論.json",
@@ -855,7 +1240,12 @@
     "category": "第4梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部113-4-汽車駕駛理論.json",
@@ -866,7 +1256,12 @@
     "category": "第4梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-4-道路交通法規.json",
@@ -877,7 +1272,12 @@
     "category": "第4梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-汽車構造原理概論.json",
@@ -888,7 +1288,12 @@
     "category": "年度檢定",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部113-汽車駕駛理論.json",
@@ -899,7 +1304,12 @@
     "category": "年度檢定",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部113-道路交通法規.json",
@@ -910,7 +1320,12 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-1-汽車構造原理概論.json",
@@ -921,7 +1336,12 @@
     "category": "第1梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部114-1-汽車駕駛理論.json",
@@ -932,7 +1352,12 @@
     "category": "第1梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-1-道路交通法規.json",
@@ -943,7 +1368,12 @@
     "category": "第1梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-2-汽車構造原理概論.json",
@@ -954,7 +1384,12 @@
     "category": "第2梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部114-2-汽車駕駛理論.json",
@@ -965,7 +1400,12 @@
     "category": "第2梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-2-道路交通法規.json",
@@ -976,7 +1416,12 @@
     "category": "第2梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-3-汽車構造原理概論.json",
@@ -987,7 +1432,12 @@
     "category": "第3梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部114-3-汽車駕駛理論.json",
@@ -998,7 +1448,12 @@
     "category": "第3梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-3-道路交通法規.json",
@@ -1009,7 +1464,12 @@
     "category": "第3梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-汽車構造原理概論.json",
@@ -1020,7 +1480,12 @@
     "category": "年度檢定",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部114-汽車駕駛理論.json",
@@ -1031,7 +1496,12 @@
     "category": "年度檢定",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部114-道路交通法規.json",
@@ -1042,7 +1512,12 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-1-汽車構造原理概論.json",
@@ -1053,7 +1528,12 @@
     "category": "第1梯次",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部115-1-汽車駕駛理論.json",
@@ -1064,7 +1544,12 @@
     "category": "第1梯次",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-1-道路交通法規.json",
@@ -1075,7 +1560,12 @@
     "category": "第1梯次",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-2-道路交通法規（AI模擬）.json",
@@ -1086,7 +1576,12 @@
     "category": "第2梯次",
     "subject": "道路交通法規（AI模擬）",
     "originalSubject": "道路交通法規（AI模擬）",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-檢考驗員-道路交通法規練習題1.json",
@@ -1097,7 +1592,12 @@
     "category": "練習題",
     "subject": "道路交通法規",
     "originalSubject": "檢考驗員-道路交通法規練習題1",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-檢考驗員-道路交通法規練習題2.json",
@@ -1108,7 +1608,12 @@
     "category": "練習題",
     "subject": "道路交通法規",
     "originalSubject": "檢考驗員-道路交通法規練習題2",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-檢考驗員-道路交通法規練習題3.json",
@@ -1119,7 +1624,12 @@
     "category": "練習題",
     "subject": "道路交通法規",
     "originalSubject": "檢考驗員-道路交通法規練習題3",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-檢考驗員-道路交通法規練習題4.json",
@@ -1130,7 +1640,12 @@
     "category": "練習題",
     "subject": "道路交通法規",
     "originalSubject": "檢考驗員-道路交通法規練習題4",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-檢考驗員-道路交通法規練習題5.json",
@@ -1141,7 +1656,12 @@
     "category": "練習題",
     "subject": "道路交通法規",
     "originalSubject": "檢考驗員-道路交通法規練習題5",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-檢考驗員-道路交通法規練習題6.json",
@@ -1152,7 +1672,12 @@
     "category": "練習題",
     "subject": "道路交通法規",
     "originalSubject": "檢考驗員-道路交通法規練習題6",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-汽車構造原理概論.json",
@@ -1163,7 +1688,12 @@
     "category": "年度檢定",
     "subject": "汽車構造原理概論",
     "originalSubject": "汽車構造原理概論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 25,
+      "sc": 25,
+      "mc": 0
+    }
   },
   {
     "file": "questions/交通部115-汽車駕駛理論.json",
@@ -1174,7 +1704,12 @@
     "category": "年度檢定",
     "subject": "汽車駕駛理論",
     "originalSubject": "汽車駕駛理論",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   },
   {
     "file": "questions/交通部115-道路交通法規.json",
@@ -1185,6 +1720,11 @@
     "category": "年度檢定",
     "subject": "道路交通法規",
     "originalSubject": "道路交通法規",
-    "count": 50
+    "count": 50,
+    "types": {
+      "tf": 0,
+      "sc": 40,
+      "mc": 10
+    }
   }
 ]

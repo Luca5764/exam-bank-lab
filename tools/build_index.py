@@ -48,6 +48,23 @@ TVE_CATEGORIES = {
 }
 
 
+def question_type(q: dict) -> str:
+    """與前端 js/question-view.js 的 questionType() 同規則：tf 是非、sc 單選、mc 複選。"""
+    if isinstance(q.get("answer"), list):
+        return "mc"
+    options = q.get("options") or []
+    if len(options) == 2 and all(len(str(o).strip()) <= 2 for o in options):
+        return "tf"
+    return "sc"
+
+
+def count_types(questions: list) -> dict[str, int]:
+    counts = {"tf": 0, "sc": 0, "mc": 0}
+    for q in questions:
+        counts[question_type(q)] += 1
+    return counts
+
+
 def build_pdf_year_map(pdf_root: Path) -> dict[str, str]:
     year_map = {}
     if not pdf_root.exists():
@@ -200,6 +217,7 @@ def build_index():
                 with open(f, 'r', encoding='utf-8') as j:
                     data = json.load(j)
                     count = len(data) if isinstance(data, list) else 0
+                    types = count_types(data) if isinstance(data, list) else {}
                 
                 meta = parse_bank_parts(f.stem, year_map)
                 name_context = meta["source"] if meta["source"] in ("統測專二", "統測農概", "農田水利署") else meta["category"]
@@ -218,7 +236,8 @@ def build_index():
                     "category": meta["category"],
                     "subject": meta["subject"],
                     "originalSubject": meta["originalSubject"],
-                    "count": count
+                    "count": count,
+                    "types": types,
                 })
                 print(f"Indexed: {f.name} ({count} questions)")
             except Exception as e:
